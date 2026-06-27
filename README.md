@@ -164,16 +164,20 @@ cp .env.example apps/web/.env.local      # fill NEXT_PUBLIC_FIREBASE_* values
 
 Mirrors DESIGN_DOC §17 (Phase 1 — Core Audit Workflow):
 
-- [ ] Authentication + multi-tenant setup
-- [ ] Client / organization management
-- [ ] Audit creation and planning
-- [ ] Clause-by-clause assessment (all 10 clauses, all sub-clauses)
-- [ ] Finding creation (MNC, NC, OFI, SP)
-- [ ] Photo evidence capture and upload
-- [ ] Opening and closing meeting recording
-- [ ] Basic audit report generation (PDF)
-- [ ] Offline mode (WatermelonDB sync)
-- [ ] AI Co-Pilot (NCR drafting, clause questions)
+- [x] Authentication + multi-tenant setup — Email/Password + Google + Phone (web & mobile); `setTenantClaims` Cloud Function sets JWT custom claims; tenant-scoped Firestore rules + helpers
+- [x] Client / organization management — types, web & mobile screens
+- [x] Audit creation and planning — New Audit wizard (web), audit screens, `AuditPlan` model
+- [x] Clause-by-clause assessment (all 10 clauses, all sub-clauses) — canonical ISO 45001 dataset + clause navigator (web & mobile)
+- [x] Finding creation (MNC, NC, OFI, SP) — finding forms + `FINDING_TYPE_META`, AI-draft button
+- [x] Photo evidence capture and upload — mobile capture+compress+geotag service; tenant-scoped storage helpers
+- [~] Opening and closing meeting recording — data model + screens scaffolded (audio capture/transcription is a follow-up)
+- [~] Basic audit report generation (PDF) — `generateReport` assembles report data + HTML; PDF rendering (Puppeteer) is a follow-up
+- [x] Offline mode (WatermelonDB sync) — mobile schema + models + background `syncManager`
+- [x] AI Co-Pilot (NCR drafting, clause questions) — `draftNCR`/`suggestQuestions` Cloud Functions + web panel + mobile service
+
+**Verification:** 325 unit/integration tests green (`@soteria/core` 160, `@soteria/ui` 38, `@soteria/firebase` 55, `functions` 72); `apps/web` `next build` produces the static Hosting bundle; `apps/mobile` passes `tsc --noEmit`. Legend: `[x]` implemented · `[~]` partial / follow-up.
+
+**Not yet done (needs privileged access / native toolchain):** live Hosting deploy + provider enablement on `soteria-assurance` (org policy blocks service-account keys — use `firebase login:ci` or `bash scripts/deploy.sh`); native iOS/Android EAS build; E2E suites (Detox/Playwright).
 
 ---
 

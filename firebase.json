@@ -28,18 +28,12 @@
   "hosting": {
     "target": "web",
     "public": "apps/web/out",
-    "cleanUrls": true,
-    "trailingSlash": false,
+    "cleanUrls": false,
+    "trailingSlash": true,
     "ignore": [
       "firebase.json",
       "**/.*",
       "**/node_modules/**"
-    ],
-    "rewrites": [
-      {
-        "source": "**",
-        "destination": "/index.html"
-      }
     ],
     "headers": [
       {
