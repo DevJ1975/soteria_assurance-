@@ -58,6 +58,34 @@ describe('handleSetTenantClaims — authorization', () => {
   });
 });
 
+describe('handleSetTenantClaims — payload validation', () => {
+  const adminToken = { tenantId: 'tenant-1', role: 'super_admin', permissions: [] };
+
+  it.each([
+    ['missing targetUid', { ...PAYLOAD, targetUid: '' }],
+    ['missing tenantId', { ...PAYLOAD, tenantId: '' }],
+    ['invalid tenantType', { ...PAYLOAD, tenantType: 'bogus' }],
+    ['invalid role', { ...PAYLOAD, role: 'wizard' }],
+  ])('rejects %s', async (_label, payload) => {
+    await expect(handleSetTenantClaims(request(payload, adminToken))).rejects.toMatchObject({
+      code: 'invalid-argument',
+    });
+  });
+
+  it('rejects a non-object body', async () => {
+    await expect(handleSetTenantClaims(request(null, adminToken))).rejects.toMatchObject({
+      code: 'invalid-argument',
+    });
+  });
+
+  it('carries through optional clientIds', async () => {
+    const result = await handleSetTenantClaims(
+      request({ ...PAYLOAD, clientIds: ['c1', 'c2'] }, adminToken),
+    );
+    expect(result.claims.clientIds).toEqual(['c1', 'c2']);
+  });
+});
+
 describe('handleSetTenantClaims — success', () => {
   it('sets claims with RBAC-derived permissions (tenant_admin in own tenant)', async () => {
     const token = { tenantId: 'tenant-1', role: 'tenant_admin', permissions: [] };
