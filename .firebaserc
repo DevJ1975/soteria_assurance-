@@ -1,9 +1,9 @@
 {
   "projects": {
-    "default": "830573978482"
+    "default": "soteria-assurance"
   },
   "targets": {
-    "830573978482": {
+    "soteria-assurance": {
       "hosting": {
         "web": [
           "soteria-assurance"
