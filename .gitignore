@@ -5,8 +5,10 @@ node_modules/
 dist/
 build/
 .next/
+out/
 web-build/
 .expo/
+lib/
 
 # Turborepo
 .turbo/
