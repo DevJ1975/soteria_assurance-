@@ -77,6 +77,8 @@ export function getFirebaseConfig(): FirebaseOptions {
   const storageBucket = readPublicEnv('STORAGE_BUCKET');
   const appId = readPublicEnv('APP_ID');
   const messagingSenderId = readPublicEnv('MESSAGING_SENDER_ID') ?? DEFAULT_MESSAGING_SENDER_ID;
+  // Optional: only present when Google Analytics is enabled for the web app.
+  const measurementId = readPublicEnv('MEASUREMENT_ID');
 
   const missing: string[] = [];
   if (apiKey === undefined) missing.push('API_KEY');
@@ -102,7 +104,19 @@ export function getFirebaseConfig(): FirebaseOptions {
     storageBucket: storageBucket!,
     messagingSenderId,
     appId: appId!,
+    // measurementId is optional in FirebaseOptions; include it only when set so
+    // analytics can be initialised by the web app when desired.
+    ...(measurementId !== undefined ? { measurementId } : {}),
   };
+}
+
+/**
+ * Returns the Google Analytics `measurementId` when configured, else
+ * `undefined`. The web app uses this to lazily initialise Firebase Analytics
+ * (a browser-only feature); mobile ignores it.
+ */
+export function getFirebaseMeasurementId(): string | undefined {
+  return readPublicEnv('MEASUREMENT_ID');
 }
 
 /**
