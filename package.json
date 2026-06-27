@@ -1,0 +1,42 @@
+{
+  "name": "soteria-assurance",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ISO 45001:2018 AI-powered audit management platform — Turborepo monorepo",
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "clean": "turbo run clean",
+    "format": "prettier --write .",
+    "dev:web": "turbo run dev --filter=@soteria/web",
+    "dev:mobile": "turbo run dev --filter=@soteria/mobile",
+    "dev:functions": "turbo run dev --filter=soteria-functions",
+    "test:core": "turbo run test --filter=@soteria/core",
+    "test:functions": "turbo run test --filter=soteria-functions",
+    "build:web": "turbo run build --filter=@soteria/web",
+    "build:mobile": "turbo run build --filter=@soteria/mobile",
+    "deploy:functions": "echo '[soteria] deploy:functions not yet implemented — run from functions/ via firebase deploy --only functions once backend-agent lands'",
+    "deploy:rules": "echo '[soteria] deploy:rules not yet implemented — firebase deploy --only firestore:rules,storage once rules land'",
+    "deploy:web": "echo '[soteria] deploy:web not yet implemented — wire to Next.js hosting target once web app lands'",
+    "emulators": "echo '[soteria] emulators not yet implemented — firebase emulators:start once firebase.json lands'"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.13.0",
+    "@types/jest": "^29.5.0",
+    "@types/node": "^22.0.0",
+    "eslint": "^9.13.0",
+    "jest": "^29.7.0",
+    "prettier": "^3.3.0",
+    "rimraf": "^6.0.0",
+    "ts-jest": "^29.2.0",
+    "turbo": "^2.3.0",
+    "typescript": "^5.6.0",
+    "typescript-eslint": "^8.10.0"
+  }
+}
