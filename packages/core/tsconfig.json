@@ -2,7 +2,12 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "dist",
-    "rootDir": "src"
+    "rootDir": "src",
+    // Emit CommonJS: @soteria/core is consumed at runtime by Firebase Cloud
+    // Functions (Node CommonJS) and by Jest. Bundled apps (Next.js, Expo/Metro)
+    // interop with CJS fine. Overrides the base ESNext/Bundler module setup.
+    "module": "CommonJS",
+    "moduleResolution": "Node"
   },
   "include": ["src/**/*"],
   "exclude": ["dist", "**/*.test.ts", "src/__tests__"]

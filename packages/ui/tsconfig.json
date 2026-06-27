@@ -1,0 +1,21 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "baseUrl": ".",
+    // Emit CommonJS: the Tailwind preset (@soteria/ui/tailwind) is loaded in a
+    // Node context by the web app's config, and CJS interops everywhere.
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    // Resolve @soteria/core from its BUILT output rather than the base
+    // tsconfig's source mapping, so core's src files are not pulled under this
+    // package's rootDir (which would break the build with TS6059).
+    "paths": {
+      "@soteria/core": ["../core/dist/index.d.ts"],
+      "@soteria/core/*": ["../core/dist/*"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["dist", "**/*.test.ts", "src/__tests__"]
+}

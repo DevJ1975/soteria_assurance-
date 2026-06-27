@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "830573978482"
+  },
+  "targets": {
+    "830573978482": {
+      "hosting": {
+        "web": [
+          "soteria-assurance"
+        ]
+      }
+    }
+  }
+}

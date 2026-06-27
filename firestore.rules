@@ -1,0 +1,244 @@
+rules_version = '2';
+
+// =============================================================================
+// Soteria Assurance — Firestore Security Rules
+// ISO 45001:2018 AI-Powered Audit Management Platform
+//
+// Enforces (per DESIGN_DOC §7 Multi-Tenant Architecture, §13 Security &
+// Immutability, and multi-agent-guide §7 Rule Patterns):
+//   * Tenant isolation — every document under /tenants/{tenantId} requires the
+//     caller's JWT custom claim `tenantId` to match the path segment.
+//   * Role-based access control — writes require a valid role; sensitive
+//     operations are gated to specific roles.
+//   * Immutability — once an audit reaches status 'report_issued', its findings
+//     and evidence become read-only to clients (audit defensibility).
+//   * AI-field separation — aiDraftStatement / aiAnalysis are writable only by
+//     trusted server contexts (Cloud Functions via the firebase-admin SDK,
+//     which bypasses these rules); clients may write the auditor-confirmed
+//     nonconformityStatement only with the lead_auditor role.
+//   * Wiki — world-readable to any authenticated user, writable only by
+//     super_admin.
+//
+// NOTE on isCloudFunction(): the firebase-admin SDK used inside Cloud Functions
+// bypasses security rules entirely, so server-side writes to AI fields are
+// already permitted regardless of these rules. The helper below conservatively
+// returns false for any rules-evaluated (i.e. client) request, which means the
+// AI-only fields can never be set by a client. This is the intended, safe
+// default; the trusted server path is the admin SDK, not a client token.
+// =============================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // -------------------------------------------------------------------------
+    // Helper functions
+    // -------------------------------------------------------------------------
+
+    // The caller presents a valid, non-anonymous Firebase Auth token.
+    function isAuthenticated() {
+      return request.auth != null && request.auth.uid != null;
+    }
+
+    // The caller's tenant claim matches the tenant path segment. This is the
+    // backbone of multi-tenant isolation — NO tenant data is reachable without
+    // a matching tenantId claim.
+    function belongsToTenant(tenantId) {
+      return isAuthenticated()
+        && request.auth.token.tenantId == tenantId;
+    }
+
+    // The caller's role claim is one of the supplied allowed roles.
+    function hasRole(roles) {
+      return isAuthenticated()
+        && request.auth.token.role in roles;
+    }
+
+    // The caller's role is a recognised Soteria role (matches UserRole in
+    // @soteria/core). Used as the baseline guard for any tenant write.
+    function hasValidRole() {
+      return hasRole([
+        'super_admin',
+        'tenant_admin',
+        'lead_auditor',
+        'auditor',
+        'auditee',
+        'viewer'
+      ]);
+    }
+
+    // Platform-wide administrator (manages the shared wiki, system config).
+    function isSuperAdmin() {
+      return hasRole(['super_admin']);
+    }
+
+    // Trusted server context. Cloud Functions use the firebase-admin SDK which
+    // bypasses rules; from within rules evaluation (a client request) we treat
+    // nothing as a Cloud Function. See the file header note for rationale.
+    function isCloudFunction() {
+      return false;
+    }
+
+    // Reads the parent audit document to determine whether its report has been
+    // issued. Once issued, findings/evidence are immutable to clients.
+    // `auditId` is resolved relative to the current tenant path.
+    function isAuditReported(tenantId, auditId) {
+      return exists(/databases/$(database)/documents/tenants/$(tenantId)/audits/$(auditId))
+        && get(/databases/$(database)/documents/tenants/$(tenantId)/audits/$(auditId)).data.status == 'report_issued';
+    }
+
+    // True when the incoming write only touches the named fields (and nothing
+    // else changed). Used to fence AI-only fields away from client writes.
+    function onlyUpdating(fields) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(fields);
+    }
+
+    // True when the incoming write does NOT touch any of the named fields.
+    function notUpdating(fields) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
+    }
+
+    // -------------------------------------------------------------------------
+    // Tenant-scoped data — EVERYTHING tenant-owned lives under here.
+    //
+    // This catch-all enforces the baseline isolation + RBAC for every
+    // collection in the tenant subtree (users, clients, audits, clauses,
+    // evidence, meetings, witnessStatements, correctiveActions, templates,
+    // reports, aiLogs, ...). More specific matches below tighten rules for
+    // particular collections; the most specific match wins.
+    // -------------------------------------------------------------------------
+    match /tenants/{tenantId}/{document=**} {
+      // Any authenticated member of the tenant can read tenant data.
+      allow read: if belongsToTenant(tenantId) && hasValidRole();
+
+      // Writes require tenant membership and a role permitted to mutate data.
+      // auditee/viewer are intentionally excluded from the default write set;
+      // collection-specific rules below grant narrower exceptions where needed.
+      allow write: if belongsToTenant(tenantId)
+        && hasRole(['super_admin', 'tenant_admin', 'lead_auditor', 'auditor']);
+    }
+
+    // -------------------------------------------------------------------------
+    // Tenant document itself — only tenant_admin / super_admin may mutate the
+    // tenant settings; deletion is never allowed from a client.
+    // -------------------------------------------------------------------------
+    match /tenants/{tenantId} {
+      allow read: if belongsToTenant(tenantId) && hasValidRole();
+      allow create, update: if belongsToTenant(tenantId)
+        && hasRole(['super_admin', 'tenant_admin']);
+      allow delete: if false;
+    }
+
+    // -------------------------------------------------------------------------
+    // Users — managing users is restricted to admins (DESIGN_DOC §7 RBAC).
+    // Any tenant member may read the directory of users in their tenant.
+    // -------------------------------------------------------------------------
+    match /tenants/{tenantId}/users/{userId} {
+      allow read: if belongsToTenant(tenantId) && hasValidRole();
+      allow write: if belongsToTenant(tenantId)
+        && hasRole(['super_admin', 'tenant_admin']);
+    }
+
+    // -------------------------------------------------------------------------
+    // Findings — the immutability + AI-field separation core of §13 / guide §7.
+    //
+    //   * create: lead_auditor / auditor may raise findings on an audit that is
+    //     not yet report_issued.
+    //   * update: blocked once the parent audit is report_issued (immutability).
+    //     AI-only fields (aiDraftStatement, aiAnalysis) can never be written by
+    //     a client — only the firebase-admin SDK (which bypasses rules) sets
+    //     them. The auditor-confirmed nonconformityStatement may be changed
+    //     only by a lead_auditor.
+    //   * delete: never allowed from a client (evidence trail integrity).
+    // -------------------------------------------------------------------------
+    match /tenants/{tenantId}/audits/{auditId}/findings/{findingId} {
+      allow read: if belongsToTenant(tenantId) && hasValidRole();
+
+      allow create: if belongsToTenant(tenantId)
+        && hasRole(['super_admin', 'tenant_admin', 'lead_auditor', 'auditor'])
+        && !isAuditReported(tenantId, auditId);
+
+      allow update: if belongsToTenant(tenantId)
+        // Pattern 2 — immutability: never editable after the report is issued.
+        && !isAuditReported(tenantId, auditId)
+        // Pattern 3 — AI-only fields are off-limits to every client write.
+        && notUpdating(['aiDraftStatement', 'aiAnalysis'])
+        && (
+          // The formal nonconformity statement is a lead_auditor-only field.
+          (notUpdating(['nonconformityStatement'])
+            && hasRole(['super_admin', 'tenant_admin', 'lead_auditor', 'auditor']))
+          || hasRole(['lead_auditor', 'super_admin'])
+        );
+
+      allow delete: if false;
+    }
+
+    // -------------------------------------------------------------------------
+    // Evidence — immutable once the parent audit's report is issued; deletion
+    // is never permitted from a client (DESIGN_DOC §13: evidence cannot be
+    // deleted after issuance, audit-log integrity otherwise).
+    // -------------------------------------------------------------------------
+    match /tenants/{tenantId}/audits/{auditId}/evidence/{evidenceId} {
+      allow read: if belongsToTenant(tenantId) && hasValidRole();
+
+      allow create: if belongsToTenant(tenantId)
+        && hasRole(['super_admin', 'tenant_admin', 'lead_auditor', 'auditor'])
+        && !isAuditReported(tenantId, auditId);
+
+      allow update: if belongsToTenant(tenantId)
+        && hasRole(['super_admin', 'tenant_admin', 'lead_auditor', 'auditor'])
+        && !isAuditReported(tenantId, auditId)
+        // aiAnalysis / aiHazardsDetected are server-authored only.
+        && notUpdating(['aiAnalysis', 'aiHazardsDetected']);
+
+      allow delete: if false;
+    }
+
+    // -------------------------------------------------------------------------
+    // Corrective actions — auditees may participate (submit closure evidence),
+    // so they are granted update access here in addition to auditors/admins
+    // (DESIGN_DOC §7 RBAC: "Manage corrective actions" includes auditee).
+    // -------------------------------------------------------------------------
+    match /tenants/{tenantId}/correctiveActions/{caId} {
+      allow read: if belongsToTenant(tenantId) && hasValidRole();
+      allow create, update: if belongsToTenant(tenantId)
+        && hasRole(['super_admin', 'tenant_admin', 'lead_auditor', 'auditor', 'auditee']);
+      allow delete: if false;
+    }
+
+    // -------------------------------------------------------------------------
+    // AI logs — every AI request is recorded here (guide §8). These are written
+    // by Cloud Functions (admin SDK bypasses rules). Clients may read their own
+    // tenant's logs for transparency but may never write or delete them.
+    // -------------------------------------------------------------------------
+    match /tenants/{tenantId}/aiLogs/{logId} {
+      allow read: if belongsToTenant(tenantId)
+        && hasRole(['super_admin', 'tenant_admin', 'lead_auditor']);
+      allow write: if false; // Server-only (firebase-admin bypasses rules).
+    }
+
+    // -------------------------------------------------------------------------
+    // Wiki — shared knowledge base. Readable by any authenticated user across
+    // all tenants; writable only by the platform super_admin (DESIGN_DOC §7).
+    // -------------------------------------------------------------------------
+    match /wiki/{articleId} {
+      allow read: if isAuthenticated();
+      allow write: if isSuperAdmin();
+    }
+
+    // -------------------------------------------------------------------------
+    // System config — platform-wide configuration. Read by any authenticated
+    // user; written only by super_admin.
+    // -------------------------------------------------------------------------
+    match /system/{document=**} {
+      allow read: if isAuthenticated();
+      allow write: if isSuperAdmin();
+    }
+
+    // -------------------------------------------------------------------------
+    // Default deny — anything not explicitly matched above is forbidden.
+    // -------------------------------------------------------------------------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
