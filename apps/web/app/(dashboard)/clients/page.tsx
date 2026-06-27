@@ -11,7 +11,7 @@ export default function ClientsPage() {
 
   return (
     <div className="flex flex-col gap-lg">
-      <h1 className="font-display text-2xl font-bold text-text-primary">Clients</h1>
+      <h1 className="font-display text-2xl font-bold tracking-tight text-primary-800">Clients</h1>
 
       {isLoading ? (
         <LoadingState />

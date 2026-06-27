@@ -18,7 +18,7 @@ export default function ReportsPage() {
 
   return (
     <div className="flex flex-col gap-lg">
-      <h1 className="font-display text-2xl font-bold text-text-primary">Reports</h1>
+      <h1 className="font-display text-2xl font-bold tracking-tight text-primary-800">Reports</h1>
 
       {isLoading ? (
         <LoadingState />

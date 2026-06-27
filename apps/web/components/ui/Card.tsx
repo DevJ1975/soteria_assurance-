@@ -7,12 +7,16 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
 }
 
-/** Surface container styled from tokens (surface bg, border, card shadow). */
+/**
+ * Surface container per the design-system card recipe: 12px radius
+ * (rounded-lg token), 1px soft border (#E6EBF2) and the
+ * `0 2px 8px rgba(10,38,71,.06)` elevation.
+ */
 export function Card({ className, children, ...rest }: CardProps) {
   return (
     <div
       className={cn(
-        'rounded-lg border border-border bg-surface shadow-card',
+        'rounded-lg border border-border-soft bg-surface shadow-card-soft',
         className,
       )}
       {...rest}
@@ -24,7 +28,7 @@ export function Card({ className, children, ...rest }: CardProps) {
 
 export function CardHeader({ className, children, ...rest }: CardProps) {
   return (
-    <div className={cn('border-b border-border px-lg py-md', className)} {...rest}>
+    <div className={cn('border-b border-border-soft px-lg py-md', className)} {...rest}>
       {children}
     </div>
   );

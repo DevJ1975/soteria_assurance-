@@ -18,7 +18,7 @@ export default function AuditsPage() {
   return (
     <div className="flex flex-col gap-lg">
       <div className="flex items-center justify-between">
-        <h1 className="font-display text-2xl font-bold text-text-primary">
+        <h1 className="font-display text-2xl font-bold tracking-tight text-primary-800">
           {SoteriaStrings.audit.listTitle}
         </h1>
         <Button onClick={() => setWizardOpen(true)}>

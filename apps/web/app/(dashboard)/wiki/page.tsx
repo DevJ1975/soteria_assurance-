@@ -35,7 +35,7 @@ export default function WikiPage() {
 
   return (
     <div className="flex flex-col gap-lg">
-      <h1 className="font-display text-2xl font-bold text-text-primary">ISO 45001:2018 Wiki</h1>
+      <h1 className="font-display text-2xl font-bold tracking-tight text-primary-800">ISO 45001:2018 Wiki</h1>
 
       <div className="grid grid-cols-1 gap-lg lg:grid-cols-[20rem_1fr]">
         <Card className="max-h-[70vh] overflow-y-auto">

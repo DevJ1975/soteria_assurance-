@@ -12,7 +12,7 @@ export default function CorrectiveActionsPage() {
 
   return (
     <div className="flex flex-col gap-lg">
-      <h1 className="font-display text-2xl font-bold text-text-primary">
+      <h1 className="font-display text-2xl font-bold tracking-tight text-primary-800">
         {SoteriaStrings.correctiveActions.listTitle}
       </h1>
 

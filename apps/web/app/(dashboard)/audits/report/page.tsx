@@ -43,7 +43,7 @@ function ReportView() {
   return (
     <div className="flex flex-col gap-lg">
       <div>
-        <h1 className="font-display text-2xl font-bold text-text-primary">Audit report</h1>
+        <h1 className="font-display text-2xl font-bold tracking-tight text-primary-800">Audit report</h1>
         <p className="font-mono text-sm text-primary-700">{audit.auditNumber}</p>
       </div>
 

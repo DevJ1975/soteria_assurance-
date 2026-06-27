@@ -15,9 +15,9 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 const FIELD_BASE =
-  'w-full rounded-md border border-border bg-surface px-md py-2 text-md text-text-primary ' +
-  'placeholder:text-text-muted focus:border-primary-400 focus:outline-none focus:ring-2 ' +
-  'focus:ring-primary-400/40 disabled:cursor-not-allowed disabled:opacity-60';
+  'w-full rounded-md border border-border-soft bg-surface px-md py-2 text-md text-text-primary ' +
+  'placeholder:text-text-muted focus:border-primary-400 focus:outline-none focus:ring-[3px] ' +
+  'focus:ring-focus disabled:cursor-not-allowed disabled:opacity-60';
 
 /** Labeled text input with token styling and inline error display. */
 export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(

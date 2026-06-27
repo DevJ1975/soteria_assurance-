@@ -139,8 +139,8 @@ export function NewAuditWizard({ open, onClose, onCreated }: NewAuditWizardProps
   const clients = clientsQuery.data ?? [];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-primary-900/40 p-md">
-      <Card className="w-full max-w-lg">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-primary-900/40 p-md backdrop-blur-[1px]">
+      <Card className="w-full max-w-lg shadow-overlay">
         <CardHeader className="flex items-center justify-between">
           <CardTitle>{SoteriaStrings.audit.newAudit}</CardTitle>
           <button

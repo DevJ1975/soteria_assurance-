@@ -58,21 +58,21 @@ export function AICopilotPanel({ open, onClose }: AICopilotPanelProps) {
     <>
       {open ? (
         <div
-          className="fixed inset-0 z-40 bg-primary-900/30"
+          className="fixed inset-0 z-40 bg-primary-900/40 backdrop-blur-[1px]"
           onClick={onClose}
           aria-hidden
         />
       ) : null}
       <aside
         className={cn(
-          'fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col bg-surface shadow-lg transition-transform duration-300',
+          'fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col bg-surface shadow-overlay transition-transform duration-300',
           open ? 'translate-x-0' : 'translate-x-full',
         )}
         role="dialog"
         aria-label={SoteriaStrings.ai.copilotTitle}
         aria-hidden={!open}
       >
-        <div className="flex h-16 items-center justify-between border-b border-border px-lg">
+        <div className="flex h-16 items-center justify-between border-b border-border-soft px-lg">
           <span className="inline-flex items-center gap-sm font-display text-lg font-semibold text-text-primary">
             <Sparkles className="h-5 w-5 text-gold-500" aria-hidden />
             {SoteriaStrings.ai.copilotTitle}

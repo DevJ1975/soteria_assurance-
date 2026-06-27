@@ -19,7 +19,7 @@ export function Topbar({ onOpenCopilot }: TopbarProps) {
   const { user, claims, signOut } = useAuth();
 
   return (
-    <header className="flex h-16 items-center justify-between gap-md border-b border-border bg-surface px-lg">
+    <header className="flex h-16 items-center justify-between gap-md border-b border-border-soft bg-surface px-lg">
       <div className="flex items-center gap-md">
         <SyncIndicator />
         {claims ? (

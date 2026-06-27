@@ -15,6 +15,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { SoteriaStrings } from '@soteria/core';
+import { Logo } from '@/components/brand/Logo';
 import { cn } from '@/lib/cn';
 
 interface NavItem {
@@ -43,18 +44,30 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/settings', label: 'Settings', icon: Settings },
 ];
 
+/**
+ * Deep-navy app navigation rail (FRAME 03). The active item is highlighted with
+ * a translucent white panel, a gold-light icon and a gold left indicator;
+ * inactive items sit in a muted steel and lift to white on hover.
+ */
 export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-64 shrink-0 flex-col border-r border-border bg-primary-800 md:flex">
-      <div className="flex h-16 items-center gap-sm px-lg">
-        <ShieldCheck className="h-6 w-6 text-gold-500" aria-hidden />
-        <span className="font-display text-lg font-bold text-white">
-          {SoteriaStrings.common.appName}
-        </span>
+    <aside className="hidden w-64 shrink-0 flex-col bg-sidebar md:flex">
+      {/* Brand lockup: shield mark + Montserrat wordmark. */}
+      <div className="flex items-center gap-sm px-lg py-lg">
+        <Logo size={29} aria-hidden />
+        <div className="leading-tight">
+          <span className="block font-display text-base font-bold text-white">
+            {SoteriaStrings.common.appName}
+          </span>
+          <span className="block text-[9px] font-medium uppercase tracking-[0.04em] text-[#7D90AE]">
+            Trainovate Technologies
+          </span>
+        </div>
       </div>
-      <nav className="flex flex-1 flex-col gap-1 px-sm py-md">
+
+      <nav className="flex flex-1 flex-col gap-0.5 px-sm py-md">
         {NAV_ITEMS.map((item) => {
           const active =
             pathname === item.href ||
@@ -64,20 +77,41 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              aria-current={active ? 'page' : undefined}
               className={cn(
-                'flex items-center gap-sm rounded-md px-md py-2 text-sm font-medium transition-colors',
+                'group relative flex items-center gap-sm rounded-md px-md py-2.5 text-sm transition-colors',
                 active
-                  ? 'bg-primary-600 text-white'
-                  : 'text-primary-100 hover:bg-primary-700 hover:text-white',
+                  ? 'bg-white/10 font-semibold text-white'
+                  : 'font-medium text-[#A9B8CE] hover:bg-white/5 hover:text-white',
               )}
             >
-              <Icon className="h-4 w-4" aria-hidden />
-              {item.label}
+              {/* Gold left indicator on the active item. */}
+              {active ? (
+                <span
+                  aria-hidden
+                  className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-full bg-gold-500"
+                />
+              ) : null}
+              <Icon
+                className={cn(
+                  'h-[18px] w-[18px] shrink-0',
+                  active ? 'text-gold-light' : 'text-current',
+                )}
+                aria-hidden
+              />
+              <span className="flex-1">{item.label}</span>
             </Link>
           );
         })}
       </nav>
-      <div className="px-lg py-md text-xs text-primary-200">ISO 45001:2018</div>
+
+      <div className="mx-sm mt-sm flex items-center gap-sm border-t border-white/10 px-md py-md">
+        <span
+          aria-hidden
+          className="h-2 w-2 rounded-full bg-conforming shadow-[0_0_0_3px_rgba(46,204,113,0.2)]"
+        />
+        <span className="text-xs font-medium text-[#9DB2CE]">ISO 45001:2018</span>
+      </div>
     </aside>
   );
 }

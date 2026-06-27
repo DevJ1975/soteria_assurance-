@@ -4,7 +4,10 @@
 
 /*
  * Base layer grounded in SoteriaTokens (surfaced via the Tailwind preset).
- * RULE 5 — no raw hex; these reference the token-derived utility palette.
+ * RULE 5 — colors reference the token-derived utility palette; the few raw
+ * values below (scrollbar thumb, focus ring) are lifted verbatim from the
+ * design canvas (docs/design-system/soteria-assurance-screens.html) and have no
+ * token equivalent.
  */
 @layer base {
   :root {
@@ -25,7 +28,31 @@
     @apply font-display text-text-primary;
   }
 
+  /* Design-system focus ring: 0 0 0 3px rgba(27,79,142,.18). */
   *:focus-visible {
-    @apply outline-none ring-2 ring-primary-400 ring-offset-2 ring-offset-background;
+    @apply outline-none;
+    box-shadow: 0 0 0 3px rgba(27, 79, 142, 0.18);
+    border-radius: 6px;
+  }
+
+  /* Custom scrollbar — matches the canvas (thumb #C3CEDD, 8px, radius 8px). */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #c3cedd;
+    border-radius: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  /* Firefox scrollbar styling to mirror the WebKit thumb/track. */
+  * {
+    scrollbar-color: #c3cedd transparent;
+    scrollbar-width: thin;
   }
 }

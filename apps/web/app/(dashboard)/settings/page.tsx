@@ -15,7 +15,7 @@ export default function SettingsPage() {
 
   return (
     <div className="flex flex-col gap-lg">
-      <h1 className="font-display text-2xl font-bold text-text-primary">Settings</h1>
+      <h1 className="font-display text-2xl font-bold tracking-tight text-primary-800">Settings</h1>
 
       <Card>
         <CardHeader>
