@@ -1,0 +1,32 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"],
+      "@soteria/core": ["../../packages/core/src/index.ts"],
+      "@soteria/core/*": ["../../packages/core/src/*"],
+      "@soteria/ui": ["../../packages/ui/src/index.ts"],
+      "@soteria/ui/*": ["../../packages/ui/src/*"],
+      "@soteria/firebase": ["../../packages/firebase/src/index.ts"],
+      "@soteria/firebase/*": ["../../packages/firebase/src/*"]
+    }
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts"
+  ],
+  "exclude": ["node_modules"]
+}

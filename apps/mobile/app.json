@@ -1,0 +1,74 @@
+{
+  "expo": {
+    "name": "Soteria Assurance",
+    "slug": "soteria-assurance",
+    "scheme": "soteria",
+    "version": "1.0.0",
+    "orientation": "default",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0A2647"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.trainovate.soteria",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Soteria Assurance uses the camera to capture audit evidence photos and videos in the field.",
+        "NSLocationWhenInUseUsageDescription": "Soteria Assurance geotags evidence captured during a site audit so findings can be located precisely.",
+        "NSMicrophoneUsageDescription": "Soteria Assurance records opening and closing meeting audio for AI transcription.",
+        "NSPhotoLibraryUsageDescription": "Soteria Assurance attaches existing photos as audit evidence."
+      }
+    },
+    "android": {
+      "package": "com.trainovate.soteria",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0A2647"
+      },
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Soteria Assurance to use the camera to capture audit evidence."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow Soteria Assurance to geotag audit evidence."
+        }
+      ],
+      [
+        "expo-av",
+        {
+          "microphonePermission": "Allow Soteria Assurance to record meeting audio for transcription."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      }
+    }
+  }
+}

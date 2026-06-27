@@ -1,0 +1,24 @@
+# Expo / RN
+.expo/
+dist/
+web-build/
+node_modules/
+
+# Native
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# Env
+.env*.local
+
+# Debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
