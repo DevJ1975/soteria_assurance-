@@ -11,6 +11,7 @@ import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { FindingTypeBadge } from '@/components/FindingTypeBadge';
 import { LoadingState, EmptyState, ErrorState } from '@/components/ui/States';
+import { DownloadReportButton } from '@/components/DownloadReportButton';
 import { useAudit, useFindings } from '@/lib/hooks';
 
 function ReportView() {
@@ -42,9 +43,12 @@ function ReportView() {
 
   return (
     <div className="flex flex-col gap-lg">
-      <div>
-        <h1 className="font-display text-2xl font-bold tracking-tight text-primary-800">Audit report</h1>
-        <p className="font-mono text-sm text-primary-700">{audit.auditNumber}</p>
+      <div className="flex items-start justify-between gap-md">
+        <div>
+          <h1 className="font-display text-2xl font-bold tracking-tight text-primary-800">Audit report</h1>
+          <p className="font-mono text-sm text-primary-700">{audit.auditNumber}</p>
+        </div>
+        <DownloadReportButton auditId={auditId} />
       </div>
 
       <Card>

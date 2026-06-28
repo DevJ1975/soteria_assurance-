@@ -6,10 +6,10 @@
  * generator. The PDF itself is produced server-side (`generateReport`); this
  * screen is the auditor's on-device preview before issuing.
  */
-import { useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { Linking, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-import { Text } from 'react-native-paper';
+import { Button, Text } from 'react-native-paper';
 import type {
   ClauseAssessment as ClauseDoc,
   Finding as FindingDoc,
@@ -19,15 +19,38 @@ import {
   computeCertificationReadinessScore,
   computeFindingsSummary,
 } from '@soteria/core';
+import { getDownloadUrlForPath } from '@soteria/firebase';
 import { Screen } from '../../../../components/common/Screen';
 import { LoadingState, SectionHeading } from '../../../../components/common/StateViews';
 import { cardSurface, colors, fontSize, fontWeight, spacing } from '../../../../theme';
 import { useClauseAssessments, useFindings } from '../../../../lib/useLocalData';
+import { generateReportPdf } from '../../../../services/reportService';
+import { useAuthStore } from '../../../../stores/authStore';
 
 export default function ReportScreen(): JSX.Element {
   const { auditId } = useLocalSearchParams<{ auditId: string }>();
   const { data: findings, loading: findingsLoading } = useFindings(auditId);
   const { data: assessments, loading: clausesLoading } = useClauseAssessments(auditId);
+  const tenantId = useAuthStore((s) => s.claims?.tenantId ?? '');
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+
+  const handleDownload = async (): Promise<void> => {
+    if (tenantId === '' || auditId === undefined || downloading) {
+      return;
+    }
+    setDownloadError(null);
+    setDownloading(true);
+    try {
+      const result = await generateReportPdf({ tenantId, auditId });
+      const url = await getDownloadUrlForPath(result.storagePath);
+      await Linking.openURL(url);
+    } catch {
+      setDownloadError(SoteriaStrings.audit.reportFailed);
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   const summary = useMemo(
     // The core summariser reads only `type` + `status`; project the local rows
@@ -76,6 +99,18 @@ export default function ReportScreen(): JSX.Element {
         <Stat label="Open NCs" value={summary.openNCs} color={colors.warning} />
         <Stat label="Closed NCs" value={summary.closedNCs} color={colors.conforming} />
       </View>
+
+      <Button
+        mode="contained"
+        icon="file-pdf-box"
+        loading={downloading}
+        disabled={tenantId === '' || downloading}
+        onPress={handleDownload}
+        style={styles.downloadButton}
+      >
+        {downloading ? SoteriaStrings.audit.generatingPdf : SoteriaStrings.audit.downloadPdf}
+      </Button>
+      {downloadError !== null ? <Text style={styles.error}>{downloadError}</Text> : null}
     </Screen>
   );
 }
@@ -114,4 +149,6 @@ const styles = StyleSheet.create({
   },
   statValue: { fontSize: fontSize['2xl'], fontWeight: fontWeight.bold },
   statLabel: { fontSize: fontSize.sm, color: colors.textSecondary, textAlign: 'center' },
+  downloadButton: { marginTop: spacing.lg },
+  error: { fontSize: fontSize.sm, color: colors.majorNC, textAlign: 'center', marginTop: spacing.sm },
 });

@@ -21,6 +21,7 @@
       "firebase-admin/app": ["src/__tests__/mocks/admin-app.ts"],
       "firebase-admin/auth": ["src/__tests__/mocks/admin-auth.ts"],
       "firebase-admin/firestore": ["src/__tests__/mocks/admin-firestore.ts"],
+      "firebase-admin/storage": ["src/__tests__/mocks/admin-storage.ts"],
       "@anthropic-ai/sdk": ["src/__tests__/mocks/anthropic.ts"]
     }
   },
