@@ -1,0 +1,1426 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;}
+  ::-webkit-scrollbar{width:8px;height:8px;}
+  ::-webkit-scrollbar-thumb{background:#C3CEDD;border-radius:8px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  @keyframes somaPulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.3;transform:scale(.78);}}
+  @keyframes somaBlink{0%,100%{opacity:1;}50%{opacity:.2;}}
+  @keyframes somaSweep{0%{transform:translateX(-110%);}100%{transform:translateX(240%);}}
+  @keyframes somaWave{0%,100%{transform:scaleY(.32);}50%{transform:scaleY(1);}}
+</style>
+</helmet>
+
+<div style="position:absolute; left:140px; top:38px; width:1300px; display:flex; align-items:center; gap:16px;">
+  <svg width="34" height="38" viewBox="0 0 34 38" fill="none">
+    <path d="M17 2 31 7.4v9.8c0 8.7-5.9 15.6-14 18.4C8.9 32.8 3 25.9 3 17.2V7.4L17 2Z" fill="#0A2647" stroke="#C9A84C" stroke-width="1.6"/>
+    <path d="M10 18.6 14.8 23.4 24.4 12" stroke="#C9A84C" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M10 13.2 12.8 16" stroke="#C9A84C" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" opacity=".55"/>
+  </svg>
+  <div>
+    <div style="font:800 25px/1 Montserrat,sans-serif; color:#0A2647; letter-spacing:-.012em;">Soteria Assurance</div>
+    <div style="font:500 13px/1.4 Inter,sans-serif; color:#6B7280; margin-top:5px;">Design system &amp; screen library · ISO&nbsp;45001:2018 audit platform · Trainovate Technologies</div>
+  </div>
+</div>
+
+<!-- ============ FRAME 01 — iPad Field Audit ============ -->
+<div style="position:absolute; left:140px; top:150px; width:1360px;">
+  <div data-drags-parent="1" style="display:flex; align-items:center; gap:10px; margin-bottom:14px; font:600 12px Inter,sans-serif; color:#8A94A6; letter-spacing:.1em; text-transform:uppercase;">
+    <span style="font-family:'JetBrains Mono',monospace; font-weight:700; color:#0A2647; background:#E7C66B; padding:2px 8px; border-radius:6px;">01</span>
+    iPad · Field Audit Workspace
+  </div>
+  <div style="background:#0a0c10; border-radius:44px; padding:20px; box-shadow:0 30px 80px rgba(10,38,71,.28); position:relative;">
+    <div style="position:absolute; top:50%; left:10px; transform:translateY(-50%); width:7px; height:7px; border-radius:50%; background:#1b2331;"></div>
+    <div data-screen-label="iPad — Field Audit" style="width:1320px; height:940px; background:#F4F7FB; border-radius:26px; overflow:hidden; position:relative; font-family:Inter,sans-serif;">
+
+      <!-- top status bar -->
+      <div style="height:52px; background:#0A2647; display:flex; align-items:center; padding:0 18px; gap:16px; position:relative; z-index:5;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <svg width="19" height="22" viewBox="0 0 34 38" fill="none"><path d="M17 2 31 7.4v9.8c0 8.7-5.9 15.6-14 18.4C8.9 32.8 3 25.9 3 17.2V7.4L17 2Z" fill="#0A2647" stroke="#C9A84C" stroke-width="2"/><path d="M10 18.6 14.8 23.4 24.4 12" stroke="#C9A84C" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span style="font:700 14px Montserrat,sans-serif; color:#fff; letter-spacing:.01em;">Soteria</span>
+          <span style="font-family:'JetBrains Mono',monospace; font-weight:600; font-size:11px; color:#E7C66B; border:1px solid rgba(201,168,76,.5); padding:3px 8px; border-radius:99px;">AUD-2026-001</span>
+        </div>
+        <div style="flex:1; text-align:center; display:flex; align-items:center; justify-content:center; gap:12px;">
+          <span style="font:600 13.5px Inter,sans-serif; color:#fff;">Hartsfield-Jackson Atlanta Int'l Airport</span>
+          <span style="width:1px; height:14px; background:rgba(255,255,255,.22);"></span>
+          <span style="font:500 12.5px Inter,sans-serif; color:#9DB2CE;">Audit Day 1 of 2</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:16px;">
+          <span style="display:flex; align-items:center; gap:6px; font:600 11.5px Inter,sans-serif; color:#7FD8A8;"><span style="width:7px; height:7px; border-radius:50%; background:#2ECC71; box-shadow:0 0 0 3px rgba(46,204,113,.2);"></span>Synced</span>
+          <span style="font:500 12.5px 'JetBrains Mono',monospace; color:#9DB2CE;">09:42</span>
+          <span style="width:30px; height:30px; border-radius:50%; background:#C9A84C; color:#0A2647; font:700 12px Montserrat,sans-serif; display:flex; align-items:center; justify-content:center;">JJ</span>
+        </div>
+      </div>
+
+      <!-- body -->
+      <div style="display:flex; height:888px;">
+
+        <!-- LEFT: clause navigator -->
+        <div style="width:500px; flex:none; background:#FFFFFF; border-right:1px solid #D1D9E6; display:flex; flex-direction:column;">
+          <div style="height:46px; background:#0A2647; display:flex; align-items:center; justify-content:space-between; padding:0 16px;">
+            <span style="font:700 13px Montserrat,sans-serif; color:#E7C66B; letter-spacing:.04em;">ISO 45001:2018</span>
+            <span style="font:500 11px Inter,sans-serif; color:#9DB2CE;">Clause Navigator</span>
+          </div>
+          <div style="flex:1; overflow-y:auto; padding:8px 0;">
+            <sc-for list="{{ groups }}" as="g" hint-placeholder-count="4">
+              <div style="display:flex; align-items:center; gap:9px; padding:11px 16px 6px;">
+                <span style="font:700 12px Montserrat,sans-serif; color:#0A2647; background:#EEF2F8; width:24px; height:24px; border-radius:6px; display:flex; align-items:center; justify-content:center;">{{ g.num }}</span>
+                <span style="font:600 11px Inter,sans-serif; color:#0A2647; letter-spacing:.05em; text-transform:uppercase;">{{ g.title }}</span>
+              </div>
+              <sc-for list="{{ g.clauses }}" as="c" hint-placeholder-count="4">
+                <div style="{{ c.rowStyle }}" onClick="{{ c.onClick }}">
+                  <span style="{{ c.numStyle }}">§ {{ c.n }}</span>
+                  <span style="{{ c.titleStyle }}">{{ c.t }}</span>
+                  <span style="{{ c.dotStyle }}"></span>
+                  <span style="{{ c.pillStyle }}">{{ c.pillLabel }}</span>
+                </div>
+              </sc-for>
+            </sc-for>
+          </div>
+          <div style="flex:none; border-top:1px solid #E3E8F0; padding:12px 16px 14px; background:#FBFCFE;">
+            <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;">
+              <span style="font:500 11.5px Inter,sans-serif; color:#6B7280;">{{ progressText }}</span>
+              <span style="font:600 13px Montserrat,sans-serif; color:#0A2647;">{{ progressPct }}</span>
+            </div>
+            <div style="height:7px; background:#E3E8F0; border-radius:99px; overflow:hidden;">
+              <div style="width:23%; height:100%; background:linear-gradient(90deg,#1B4F8E,#1B8CA8); border-radius:99px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CENTER: workspace -->
+        <div style="flex:1; min-width:0; display:flex; flex-direction:column; position:relative;">
+          <div style="flex:1; min-height:0; overflow-y:auto; padding:22px 24px 14px;">
+            <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px;">
+              <div>
+                <div style="font:700 28px 'JetBrains Mono',monospace; color:#C9A84C; line-height:1; letter-spacing:-.01em;">§ 6.1.2</div>
+                <div style="font:700 21px Montserrat,sans-serif; color:#0A2647; margin-top:7px; letter-spacing:-.01em;">Hazard Identification &amp; Assessment of OH&amp;S Risks</div>
+              </div>
+              <span style="flex:none; display:flex; align-items:center; gap:7px; font:600 11px Inter,sans-serif; color:#1B4F8E; background:#E4ECF7; padding:6px 12px; border-radius:99px; letter-spacing:.03em; text-transform:uppercase;"><span style="width:7px; height:7px; border-radius:50%; background:#1B4F8E; animation:somaPulse 1.6s ease-in-out infinite;"></span>In Progress</span>
+            </div>
+
+            <div style="margin-top:16px; background:#EAF1F9; border-left:4px solid #0A2647; border-radius:0 10px 10px 0; padding:13px 16px;">
+              <div style="font:700 9.5px 'JetBrains Mono',monospace; color:#C9A84C; letter-spacing:.1em; margin-bottom:5px;">ISO REQUIREMENT</div>
+              <div style="font:400 13.5px/1.55 Inter,sans-serif; color:#26303F;">The organization shall establish, implement and maintain a process for hazard identification that is <strong style="font-weight:600;">ongoing and proactive</strong> — accounting for how work is organized, social factors, routine and non-routine activities, past incidents, and potential emergency situations.</div>
+            </div>
+
+            <div style="display:flex; gap:0; margin-top:20px; border-bottom:1px solid #E3E8F0;">
+              <div style="{{ tabQuestions }}" onClick="{{ setTabQuestions }}">Questions</div>
+              <div style="{{ tabNotes }}" onClick="{{ setTabNotes }}">Notes</div>
+              <div style="{{ tabEvidence }}" onClick="{{ setTabEvidence }}">Evidence</div>
+            </div>
+
+            <sc-if value="{{ showQuestions }}" hint-placeholder-val="{{ true }}">
+              <div style="padding-top:14px;">
+                <sc-for list="{{ questions }}" as="q" hint-placeholder-count="5">
+                  <div style="background:#fff; border:1px solid #E6EBF2; border-radius:10px; padding:13px 15px; margin-bottom:10px; box-shadow:0 1px 3px rgba(10,38,71,.05);">
+                    <div style="display:flex; gap:9px; align-items:flex-start;">
+                      <span style="font:700 11px 'JetBrains Mono',monospace; color:#9AA6B6; flex:none; margin-top:2px;">{{ q.idx }}</span>
+                      <div style="font:500 13px/1.45 Inter,sans-serif; color:#1A1D23;">{{ q.text }}</div>
+                    </div>
+                    <div style="display:flex; gap:7px; margin-top:11px; padding-left:24px; flex-wrap:wrap;">
+                      <sc-for list="{{ q.opts }}" as="o">
+                        <div style="{{ o.style }}" onClick="{{ o.onClick }}"><span style="font-size:11px;">{{ o.sym }}</span>{{ o.label }}</div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ showNotes }}">
+              <div style="padding-top:16px;">
+                <div style="background:#fff; border:1px solid #E6EBF2; border-radius:10px; padding:16px; min-height:220px; box-shadow:0 1px 3px rgba(10,38,71,.05);">
+                  <div style="font:400 13.5px/1.7 Inter,sans-serif; color:#26303F;">HIRA register reviewed (rev. 4, dated 12 Jun 2026). Methodology uses a 5×5 risk matrix. Toolbox-talk records sighted for Terminal F ground crews. <span style="background:#FBEBDD; padding:1px 4px; border-radius:3px;">Gap: no evidence of worker consultation for the de-icing pad night shift.</span> Follow up in §5.4.</div>
+                  <div style="margin-top:14px; display:flex; align-items:center; gap:8px; font:500 12px Inter,sans-serif; color:#8893A4; border-top:1px dashed #E3E8F0; padding-top:12px;">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8893A4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 20 9-9-3-3-9 9zM15 8l1-1"/></svg>Continue typing your assessment notes…
+                  </div>
+                </div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ showEvidence }}">
+              <div style="padding-top:16px; display:grid; grid-template-columns:repeat(3,1fr); gap:12px;">
+                <sc-for list="{{ evidence }}" as="e" hint-placeholder-count="3">
+                  <div style="border:1px solid #E6EBF2; border-radius:10px; overflow:hidden; background:#fff; box-shadow:0 1px 3px rgba(10,38,71,.05);">
+                    <div style="height:104px; background:{{ e.bg }}; position:relative; display:flex; align-items:center; justify-content:center;">
+                      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h3l2-2.5h8L18 8h3v11H3z"/><circle cx="12" cy="13" r="3.2"/></svg>
+                      <span style="position:absolute; top:7px; left:7px; font-family:'JetBrains Mono',monospace; font-size:8.5px; font-weight:600; color:#fff; background:rgba(10,38,71,.55); padding:2px 6px; border-radius:99px; border:1px solid rgba(201,168,76,.6);">§ 6.1.2</span>
+                    </div>
+                    <div style="padding:8px 10px; font:500 11px Inter,sans-serif; color:#26303F;">{{ e.label }}</div>
+                  </div>
+                </sc-for>
+                <div style="border:1.5px dashed #C3CEDD; border-radius:10px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px; color:#8893A4; min-height:144px; cursor:pointer;">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8893A4" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                  <span style="font:600 11px Inter,sans-serif;">Add Photo</span>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+
+          <!-- clause verdict bar -->
+          <div style="flex:none; border-top:1px solid #E3E8F0; background:#FBFCFE; padding:12px 24px;">
+            <div style="font:600 9.5px Inter,sans-serif; color:#8893A4; letter-spacing:.1em; text-transform:uppercase; margin-bottom:9px;">Overall Clause Verdict</div>
+            <div style="display:flex; gap:10px;">
+              <sc-for list="{{ clauseVerdicts }}" as="v">
+                <div style="{{ v.style }}" onClick="{{ v.onClick }}"><span style="font-size:14px;">{{ v.sym }}</span>{{ v.label }}</div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: AI drawer -->
+        <div style="width:{{ drawerW }}; flex:none; overflow:hidden; transition:width .28s cubic-bezier(.4,0,.2,1); background:#fff; border-left:1px solid #D1D9E6;">
+          <div style="width:322px; height:100%; display:flex; flex-direction:column;">
+            <div style="background:linear-gradient(135deg,#1B8CA8,#125E72); padding:14px 16px; color:#fff; display:flex; align-items:center; gap:11px;">
+              <span style="width:34px; height:34px; border-radius:9px; background:rgba(255,255,255,.16); display:flex; align-items:center; justify-content:center;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v2M12 19v2M5 12H3M21 12h-2"/><circle cx="12" cy="12" r="4.2"/><path d="M9.2 9.2 8 8M14.8 9.2 16 8M9.2 14.8 8 16M14.8 14.8 16 16"/></svg>
+              </span>
+              <div style="flex:1;">
+                <div style="font:700 14px Montserrat,sans-serif;">ARIA</div>
+                <div style="font:500 10.5px Inter,sans-serif; color:rgba(255,255,255,.8);">AI Audit Assistant</div>
+              </div>
+              <div onClick="{{ toggleAi }}" style="cursor:pointer; width:26px; height:26px; border-radius:7px; background:rgba(255,255,255,.14); display:flex; align-items:center; justify-content:center;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+              </div>
+            </div>
+            <div style="flex:1; overflow-y:auto; padding:16px 14px; background:#F7FAFB; display:flex; flex-direction:column; gap:12px;">
+              <div style="align-self:flex-end; max-width:84%; background:#0A2647; color:#fff; font:500 12px/1.5 Inter,sans-serif; padding:9px 12px; border-radius:13px 13px 4px 13px;">What objective evidence should I look for to verify 6.1.2?</div>
+              <div style="align-self:flex-start; max-width:90%; background:#fff; border:1px solid #D7E6EA; border-left:3px solid #1B8CA8; color:#26303F; font:400 12px/1.55 Inter,sans-serif; padding:10px 12px; border-radius:4px 13px 13px 13px; box-shadow:0 1px 3px rgba(10,38,71,.05);">
+                Look for a <strong style="font-weight:600;">current HIRA register</strong> within its review cycle, the documented risk methodology (e.g. a 5×5 matrix), and records of worker consultation — toolbox talks, committee minutes. Confirm that <strong style="font-weight:600;">non-routine &amp; emergency scenarios</strong> are included, and that recent incidents fed back into the register.
+                <div style="margin-top:9px; display:flex; gap:6px; flex-wrap:wrap;">
+                  <span style="font:600 10px Inter,sans-serif; color:#1B8CA8; background:#E5F2F5; padding:4px 9px; border-radius:99px;">HIRA register</span>
+                  <span style="font:600 10px Inter,sans-serif; color:#1B8CA8; background:#E5F2F5; padding:4px 9px; border-radius:99px;">Worker consult</span>
+                </div>
+              </div>
+            </div>
+            <div style="flex:none; padding:11px 13px; border-top:1px solid #E3E8F0; background:#fff;">
+              <div style="display:flex; align-items:center; gap:8px; background:#F1F4F9; border:1px solid #E0E6EF; border-radius:10px; padding:8px 11px;">
+                <input placeholder="Ask ARIA…" style="flex:1; border:none; background:transparent; outline:none; font:400 12.5px Inter,sans-serif; color:#1A1D23;" />
+                <span style="width:28px; height:28px; border-radius:8px; background:#1B8CA8; display:flex; align-items:center; justify-content:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7Z"/></svg></span>
+              </div>
+              <div style="text-align:center; margin-top:8px; font:500 9.5px Inter,sans-serif; color:#A4AEBD; letter-spacing:.02em;">Powered by Claude · verify before use</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- floating toolbar -->
+      <div style="position:absolute; bottom:88px; left:0; right:{{ toolbarRight }}; display:flex; justify-content:center; pointer-events:none; transition:right .28s cubic-bezier(.4,0,.2,1);">
+        <div style="pointer-events:auto; display:flex; gap:8px; padding:9px 12px; background:rgba(255,255,255,.82); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); border:1px solid rgba(255,255,255,.7); border-radius:18px; box-shadow:0 8px 28px rgba(10,38,71,.18);">
+          <div style="display:flex; flex-direction:column; align-items:center; gap:4px; padding:5px 12px; cursor:pointer;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0A2647" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h3l2-2.5h8L18 8h3v11H3z"/><circle cx="12" cy="13" r="3.2"/></svg>
+            <span style="font:600 9.5px Inter,sans-serif; color:#3A4658;">Evidence</span>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:center; gap:4px; padding:5px 12px; cursor:pointer;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E67E22" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z"/></svg>
+            <span style="font:600 9.5px Inter,sans-serif; color:#3A4658;">Finding</span>
+          </div>
+          <div onClick="{{ toggleAi }}" style="display:flex; flex-direction:column; align-items:center; gap:4px; padding:5px 12px; cursor:pointer; background:#E5F2F5; border-radius:12px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1B8CA8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M6 6l1.4 1.4M16.6 16.6 18 18M18 6l-1.4 1.4M7.4 16.6 6 18"/></svg>
+            <span style="font:600 9.5px Inter,sans-serif; color:#147086;">AI Assist</span>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:center; gap:4px; padding:5px 12px; cursor:pointer;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0A2647" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+            <span style="font:600 9.5px Inter,sans-serif; color:#3A4658;">Voice</span>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:center; gap:4px; padding:5px 12px; cursor:pointer;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0A2647" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3h6v1M9 10h6M9 14h4"/></svg>
+            <span style="font:600 9.5px Inter,sans-serif; color:#3A4658;">Checklist</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ============ FRAME 02 — Finding Creation Modal ============ -->
+<div style="position:absolute; left:1620px; top:150px; width:1360px;">
+  <div data-drags-parent="1" style="display:flex; align-items:center; gap:10px; margin-bottom:14px; font:600 12px Inter,sans-serif; color:#8A94A6; letter-spacing:.1em; text-transform:uppercase;">
+    <span style="font-family:'JetBrains Mono',monospace; font-weight:700; color:#0A2647; background:#E7C66B; padding:2px 8px; border-radius:6px;">02</span>
+    iPad · Create Finding — NCR Sheet
+  </div>
+  <div style="background:#0a0c10; border-radius:44px; padding:20px; box-shadow:0 30px 80px rgba(10,38,71,.28); position:relative;">
+    <div style="position:absolute; top:50%; left:10px; transform:translateY(-50%); width:7px; height:7px; border-radius:50%; background:#1b2331;"></div>
+    <div data-screen-label="iPad — Create Finding" style="width:1320px; height:940px; background:#F4F7FB; border-radius:26px; overflow:hidden; position:relative; font-family:Inter,sans-serif;">
+
+      <!-- dimmed audit backdrop -->
+      <div style="height:52px; background:#0A2647; display:flex; align-items:center; padding:0 18px; gap:16px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <svg width="19" height="22" viewBox="0 0 34 38" fill="none"><path d="M17 2 31 7.4v9.8c0 8.7-5.9 15.6-14 18.4C8.9 32.8 3 25.9 3 17.2V7.4L17 2Z" fill="#0A2647" stroke="#C9A84C" stroke-width="2"/><path d="M10 18.6 14.8 23.4 24.4 12" stroke="#C9A84C" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span style="font:700 14px Montserrat,sans-serif; color:#fff;">Soteria</span>
+          <span style="font-family:'JetBrains Mono',monospace; font-weight:600; font-size:11px; color:#E7C66B; border:1px solid rgba(201,168,76,.5); padding:3px 8px; border-radius:99px;">AUD-2026-001</span>
+        </div>
+        <div style="flex:1; text-align:center; font:600 13.5px Inter,sans-serif; color:#fff;">Hartsfield-Jackson Atlanta Int'l Airport</div>
+        <div style="display:flex; align-items:center; gap:16px;"><span style="display:flex; align-items:center; gap:6px; font:600 11.5px Inter,sans-serif; color:#7FD8A8;"><span style="width:7px; height:7px; border-radius:50%; background:#2ECC71;"></span>Synced</span><span style="width:30px; height:30px; border-radius:50%; background:#C9A84C; color:#0A2647; font:700 12px Montserrat,sans-serif; display:flex; align-items:center; justify-content:center;">JJ</span></div>
+      </div>
+      <div style="position:absolute; inset:52px 0 0 0; background:rgba(10,38,71,.55); backdrop-filter:blur(2px);"></div>
+
+      <!-- modal sheet -->
+      <div style="position:absolute; left:0; right:0; bottom:0; height:712px; background:#fff; border-radius:24px 24px 0 0; box-shadow:0 -22px 60px rgba(10,38,71,.28); overflow:hidden; display:flex;">
+        <div style="width:4px; background:{{ findingStrip }}; flex:none;"></div>
+        <div style="flex:1; min-width:0; display:flex; flex-direction:column;">
+          <div style="display:flex; justify-content:center; padding-top:10px;"><span style="width:44px; height:5px; border-radius:99px; background:#D6DEE9;"></span></div>
+
+          <!-- header -->
+          <div style="display:flex; align-items:flex-start; justify-content:space-between; padding:10px 26px 14px;">
+            <div>
+              <div style="font:700 22px Montserrat,sans-serif; color:#0A2647; letter-spacing:-.01em;">New Finding</div>
+              <div style="font:600 12.5px 'JetBrains Mono',monospace; color:#C9A84C; margin-top:4px;">§ 6.1.2 — Hazard Identification</div>
+            </div>
+            <div style="width:34px; height:34px; border-radius:9px; background:#F1F4F9; display:flex; align-items:center; justify-content:center; cursor:pointer;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></div>
+          </div>
+
+          <!-- finding type selector -->
+          <div style="padding:0 26px 14px; display:flex; gap:9px;">
+            <sc-for list="{{ findingTypes }}" as="f" hint-placeholder-count="5">
+              <div style="{{ f.style }}" onClick="{{ f.onClick }}"><span style="{{ f.dotStyle }}"></span>{{ f.label }}</div>
+            </sc-for>
+          </div>
+
+          <!-- scroll content -->
+          <div style="flex:1; min-height:0; overflow-y:auto; padding:6px 26px 18px;">
+            <div style="font:600 10px Inter,sans-serif; color:#8893A4; letter-spacing:.08em; text-transform:uppercase; margin-bottom:7px;">Finding Title</div>
+            <div style="border:1.5px solid #D9E0EA; border-radius:8px; padding:13px 14px; font:600 15px Inter,sans-serif; color:#1A1D23; background:#fff;">Night-shift de-icing operation omitted from HIRA register</div>
+
+            <!-- AI draft -->
+            <div style="margin-top:16px; background:linear-gradient(180deg,#F0FAFB,#E8F5F7); border:1px solid #BFE2E8; border-radius:12px; padding:15px 16px;">
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:9px;">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1B8CA8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6z"/><path d="M19 14l.7 2 .3 .8 2 .7-2 .7-.3 .8-.7 2-.7-2-.3-.8-2-.7 2-.7 .3-.8z" opacity=".7"/></svg>
+                <span style="font:700 13px Montserrat,sans-serif; color:#125E72;">ARIA Generated Draft</span>
+                <span style="font:600 9px Inter,sans-serif; color:#1B8CA8; background:#fff; border:1px solid #BFE2E8; padding:2px 8px; border-radius:99px;">DRAFT</span>
+              </div>
+              <div style="font:400 13px/1.6 Inter,sans-serif; color:#26303F;">During the walkthrough of the Terminal&nbsp;F de-icing pad, the hazard identification register (rev.&nbsp;4) did not include the night-shift de-icing operation. Workers on this shift were not consulted in the most recent HIRA review, and no risk assessment was on file for the associated chemical-handling and slip hazards — not fully meeting <span style="font-family:'JetBrains Mono',monospace; font-weight:600; color:#125E72;">§ 6.1.2</span>.</div>
+              <div style="display:flex; align-items:center; gap:9px; margin-top:13px;">
+                <div style="display:flex; align-items:center; gap:7px; font:700 12px Inter,sans-serif; color:#fff; background:#1B8CA8; padding:8px 15px; border-radius:8px; cursor:pointer;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17.5 19.5 6.5"/></svg>Accept Draft</div>
+                <div style="display:flex; align-items:center; gap:7px; font:700 12px Inter,sans-serif; color:#1B8CA8; background:#fff; border:1.5px solid #BFE2E8; padding:8px 15px; border-radius:8px; cursor:pointer;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1B8CA8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 20 9-9-3-3-9 9zM15 8l1-1"/></svg>Edit</div>
+                <span style="margin-left:auto; font:500 10.5px Inter,sans-serif; color:#7C97A0;">Review and verify before accepting</span>
+              </div>
+            </div>
+
+            <div style="margin-top:16px; font:600 10px Inter,sans-serif; color:#8893A4; letter-spacing:.08em; text-transform:uppercase; margin-bottom:7px;">Objective Evidence</div>
+            <div style="border:1.5px solid #D9E0EA; border-radius:8px; padding:12px 14px; font:400 13px/1.55 Inter,sans-serif; color:#26303F; min-height:74px; background:#fff;">Sighted HIRA register rev.&nbsp;4 (12&nbsp;Jun&nbsp;2026); night-shift de-icing crew of 4 confirmed by shift roster. No corresponding line item or risk score. <span style="color:#A4AEBD;">What was observed? Specific, factual…</span></div>
+
+            <div style="margin-top:16px; display:flex; align-items:center; justify-content:space-between;">
+              <span style="font:600 10px Inter,sans-serif; color:#8893A4; letter-spacing:.08em; text-transform:uppercase;">Evidence Photos</span>
+              <span style="font:500 11px Inter,sans-serif; color:#6B7280;">3 captured</span>
+            </div>
+            <div style="display:flex; gap:11px; margin-top:8px;">
+              <sc-for list="{{ findingPhotos }}" as="p" hint-placeholder-count="3">
+                <div style="width:120px; height:84px; border-radius:9px; overflow:hidden; position:relative; background:{{ p.bg }};">
+                  <svg style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h3l2-2.5h8L18 8h3v11H3z"/><circle cx="12" cy="13" r="3.2"/></svg>
+                  <span style="position:absolute; top:6px; left:6px; font-family:'JetBrains Mono',monospace; font-size:8px; font-weight:600; color:#fff; background:rgba(10,38,71,.55); padding:2px 6px; border-radius:99px; border:1px solid rgba(201,168,76,.6);">§ 6.1.2</span>
+                </div>
+              </sc-for>
+              <div style="width:120px; height:84px; border-radius:9px; border:1.5px dashed #C3CEDD; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; color:#8893A4; cursor:pointer;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8893A4" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span style="font:600 10px Inter,sans-serif;">Add Photo</span></div>
+            </div>
+
+            <div style="margin-top:16px; font:600 10px Inter,sans-serif; color:#8893A4; letter-spacing:.08em; text-transform:uppercase; margin-bottom:7px;">Location</div>
+            <div style="display:flex; gap:11px; align-items:center;">
+              <div style="display:flex; align-items:center; gap:9px; border:1.5px solid #D9E0EA; border-radius:8px; padding:11px 14px; font:600 13px Inter,sans-serif; color:#1A1D23; background:#fff;">Terminal F — Airside Ops <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8893A4" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></div>
+              <div style="flex:1; border:1.5px solid #D9E0EA; border-radius:8px; padding:11px 14px; font:400 13px Inter,sans-serif; color:#26303F; background:#fff;">De-icing pad, Bay 3</div>
+              <div style="display:flex; align-items:center; gap:9px; border:1.5px solid #D9E0EA; border-radius:8px; padding:9px 13px; background:#fff;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2D9E2D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.3 7-11a7 7 0 1 0-14 0c0 4.7 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg>
+                <span style="font:600 12px Inter,sans-serif; color:#26303F;">GPS Tag</span>
+                <span style="width:34px; height:20px; border-radius:99px; background:#2D9E2D; position:relative;"><span style="position:absolute; top:2px; right:2px; width:16px; height:16px; border-radius:50%; background:#fff;"></span></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- action bar -->
+          <div style="flex:none; border-top:1px solid #E3E8F0; background:#FBFCFE; padding:13px 26px; display:flex; align-items:center; justify-content:space-between;">
+            <div style="display:flex; align-items:center; gap:8px; font:600 13px Inter,sans-serif; color:#1B4F8E; cursor:pointer;">Request Auditee Acknowledgment <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1B4F8E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+            <div style="display:flex; align-items:center; gap:9px; font:700 14px Montserrat,sans-serif; color:#fff; background:#0A2647; padding:13px 22px; border-radius:8px; cursor:pointer; box-shadow:0 4px 14px rgba(10,38,71,.25);">Save Finding <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E7C66B" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ============ FRAME 03 — Web Dashboard ============ -->
+<div style="position:absolute; left:140px; top:1330px; width:1440px;">
+  <div data-drags-parent="1" style="display:flex; align-items:center; gap:10px; margin-bottom:14px; font:600 12px Inter,sans-serif; color:#8A94A6; letter-spacing:.1em; text-transform:uppercase;">
+    <span style="font-family:'JetBrains Mono',monospace; font-weight:700; color:#0A2647; background:#E7C66B; padding:2px 8px; border-radius:6px;">03</span>
+    Web · Lead Auditor Dashboard
+  </div>
+  <div style="border-radius:14px; overflow:hidden; box-shadow:0 30px 80px rgba(10,38,71,.22); background:#fff;">
+    <!-- browser chrome -->
+    <div style="height:42px; background:#E7ECF3; display:flex; align-items:center; gap:14px; padding:0 16px; border-bottom:1px solid #D6DEE9;">
+      <div style="display:flex; gap:8px;"><span style="width:12px; height:12px; border-radius:50%; background:#F25E57;"></span><span style="width:12px; height:12px; border-radius:50%; background:#F9BD2E;"></span><span style="width:12px; height:12px; border-radius:50%; background:#3FC14A;"></span></div>
+      <div style="flex:1; max-width:440px; margin:0 auto; background:#fff; border:1px solid #D6DEE9; border-radius:8px; height:26px; display:flex; align-items:center; gap:8px; padding:0 12px; font:500 11.5px Inter,sans-serif; color:#6B7280;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9AA6B6" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>app.soteria-assurance.com/dashboard</div>
+      <div style="width:40px;"></div>
+    </div>
+    <div data-screen-label="Web — Dashboard" style="display:flex; height:1010px; background:#F4F7FB; font-family:Inter,sans-serif;">
+
+      <!-- sidebar -->
+      <div style="width:240px; flex:none; background:#0A2647; display:flex; flex-direction:column; padding:18px 0;">
+        <div style="display:flex; align-items:center; gap:11px; padding:0 18px 16px;">
+          <svg width="26" height="29" viewBox="0 0 34 38" fill="none"><path d="M17 2 31 7.4v9.8c0 8.7-5.9 15.6-14 18.4C8.9 32.8 3 25.9 3 17.2V7.4L17 2Z" fill="#0A2647" stroke="#C9A84C" stroke-width="1.8"/><path d="M10 18.6 14.8 23.4 24.4 12" stroke="#C9A84C" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <div><div style="font:700 16px Montserrat,sans-serif; color:#fff;">Soteria</div><div style="font:500 9px Inter,sans-serif; color:#7D90AE; letter-spacing:.04em;">TRAINOVATE TECHNOLOGIES</div></div>
+        </div>
+        <div style="margin:0 14px 14px; padding:13px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08); border-radius:11px; display:flex; align-items:center; gap:11px;">
+          <span style="width:38px; height:38px; border-radius:50%; background:#C9A84C; color:#0A2647; font:700 14px Montserrat,sans-serif; display:flex; align-items:center; justify-content:center;">JJ</span>
+          <div><div style="font:600 13.5px Inter,sans-serif; color:#fff;">Jamil Jones</div><div style="font:600 9px Inter,sans-serif; color:#E7C66B; letter-spacing:.05em; text-transform:uppercase; margin-top:2px;">Lead Auditor</div></div>
+        </div>
+        <div style="flex:1; padding:4px 14px; display:flex; flex-direction:column; gap:2px;">
+          <div style="display:flex; align-items:center; gap:12px; padding:10px 13px; border-radius:9px; background:rgba(255,255,255,.1); color:#fff;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#E7C66B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7M5 10v9h14v-9"/></svg><span style="font:600 13px Inter,sans-serif; flex:1;">Dashboard</span></div>
+          <div style="display:flex; align-items:center; gap:12px; padding:10px 13px; border-radius:9px; color:#A9B8CE;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3h6v1M9 10h6M9 14h4"/></svg><span style="font:500 13px Inter,sans-serif; flex:1;">Active Audits</span><span style="font:700 10px Inter,sans-serif; color:#0A2647; background:#E7C66B; padding:1px 7px; border-radius:99px;">3</span></div>
+          <div style="display:flex; align-items:center; gap:12px; padding:10px 13px; border-radius:9px; color:#A9B8CE;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5M16 5.5a3 3 0 0 1 0 5.5M18 20c0-2.3-1-4-2.5-5"/></svg><span style="font:500 13px Inter,sans-serif; flex:1;">Clients</span></div>
+          <div style="display:flex; align-items:center; gap:12px; padding:10px 13px; border-radius:9px; color:#A9B8CE;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><span style="font:500 13px Inter,sans-serif; flex:1;">Findings</span></div>
+          <div style="display:flex; align-items:center; gap:12px; padding:10px 13px; border-radius:9px; color:#A9B8CE;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4l-6 6 2 2 6-6a4 4 0 0 0 5.4-5.4l-2.3 2.3-1.7-1.7 2.3-2.3Z"/></svg><span style="font:500 13px Inter,sans-serif; flex:1;">Corrective Actions</span><span style="font:700 9px Inter,sans-serif; color:#fff; background:#C0392B; padding:2px 7px; border-radius:99px;">7 overdue</span></div>
+          <div style="display:flex; align-items:center; gap:12px; padding:10px 13px; border-radius:9px; color:#A9B8CE;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M4 19h16M8 16v-5M12 16V8M16 16v-7"/></svg><span style="font:500 13px Inter,sans-serif; flex:1;">Reports</span></div>
+          <div style="display:flex; align-items:center; gap:12px; padding:10px 13px; border-radius:9px; color:#A9B8CE;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v18H6a2 2 0 0 1-2-2zM19 17H6"/></svg><span style="font:500 13px Inter,sans-serif; flex:1;">Wiki</span></div>
+          <div style="display:flex; align-items:center; gap:12px; padding:10px 13px; border-radius:9px; color:#A9B8CE;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l1.8-1.4-1.8-3.1-2.2.9a7.6 7.6 0 0 0-2.6-1.5L14 3h-4l-.4 2.3a7.6 7.6 0 0 0-2.6 1.5l-2.2-.9-1.8 3.1L4.6 10.5a7.6 7.6 0 0 0 0 3l-1.8 1.4 1.8 3.1 2.2-.9a7.6 7.6 0 0 0 2.6 1.5L10 21h4l.4-2.3a7.6 7.6 0 0 0 2.6-1.5l2.2.9 1.8-3.1z"/></svg><span style="font:500 13px Inter,sans-serif; flex:1;">Settings</span></div>
+        </div>
+        <div style="margin:8px 14px 0; padding:11px 13px; border-top:1px solid rgba(255,255,255,.08); display:flex; align-items:center; gap:9px;"><span style="width:8px; height:8px; border-radius:50%; background:#2ECC71; box-shadow:0 0 0 3px rgba(46,204,113,.2);"></span><span style="font:500 11.5px Inter,sans-serif; color:#9DB2CE;">All synced · just now</span></div>
+      </div>
+
+      <!-- main -->
+      <div style="flex:1; min-width:0; overflow-y:auto; padding:26px 30px;">
+        <div style="display:flex; align-items:flex-end; justify-content:space-between;">
+          <div>
+            <div style="font:700 26px Montserrat,sans-serif; color:#0A2647; letter-spacing:-.01em;">Good morning, Jamil</div>
+            <div style="display:flex; align-items:center; gap:16px; margin-top:7px; font:500 13px Inter,sans-serif; color:#6B7280;">
+              <span>3 active audits</span><span style="color:#C3CEDD;">•</span><span>2 reports pending</span><span style="color:#C3CEDD;">•</span><span style="color:#C0392B; font-weight:600;">7 CAs overdue</span>
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; gap:9px; font:700 13px Inter,sans-serif; color:#fff; background:#1B4F8E; padding:11px 18px; border-radius:8px; box-shadow:0 4px 14px rgba(27,79,142,.28); cursor:pointer;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>New Audit</div>
+        </div>
+
+        <!-- metrics -->
+        <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-top:22px;">
+          <div style="background:#fff; border:1px solid #E6EBF2; border-radius:12px; padding:17px 18px; box-shadow:0 2px 8px rgba(10,38,71,.06);">
+            <div style="font:600 11px Inter,sans-serif; color:#6B7280; letter-spacing:.03em;">Active Audits</div>
+            <div style="font:700 40px Montserrat,sans-serif; color:#0A2647; line-height:1; margin:8px 0 12px;">3</div>
+            <div style="height:6px; background:#E3E8F0; border-radius:99px; overflow:hidden;"><div style="width:62%; height:100%; background:#1B4F8E; border-radius:99px;"></div></div>
+            <div style="font:500 10.5px Inter,sans-serif; color:#8893A4; margin-top:7px;">Next: Denver Intl in 2 days</div>
+          </div>
+          <div style="background:#fff; border:1px solid #E6EBF2; border-radius:12px; padding:17px 18px; box-shadow:0 2px 8px rgba(10,38,71,.06);">
+            <div style="font:600 11px Inter,sans-serif; color:#6B7280;">Open Nonconformities</div>
+            <div style="font:700 40px Montserrat,sans-serif; color:#0A2647; line-height:1; margin:8px 0 12px;">12</div>
+            <div style="display:flex; gap:7px;"><span style="display:flex; align-items:center; gap:5px; font:700 10px Inter,sans-serif; color:#C0392B; background:#FBE7E5; padding:4px 9px; border-radius:99px;"><span style="width:6px; height:6px; border-radius:50%; background:#C0392B;"></span>3 Major</span><span style="display:flex; align-items:center; gap:5px; font:700 10px Inter,sans-serif; color:#C2691C; background:#FBEBDD; padding:4px 9px; border-radius:99px;"><span style="width:6px; height:6px; border-radius:50%; background:#E67E22;"></span>9 Minor</span></div>
+          </div>
+          <div style="background:#fff; border:1px solid #F2D2CD; border-radius:12px; padding:17px 18px; box-shadow:0 2px 8px rgba(10,38,71,.06);">
+            <div style="font:600 11px Inter,sans-serif; color:#6B7280;">CAs Overdue</div>
+            <div style="font:700 40px Montserrat,sans-serif; color:#C0392B; line-height:1; margin:8px 0 12px;">7</div>
+            <div style="display:flex; align-items:center; gap:6px; font:600 10.5px Inter,sans-serif; color:#C0392B;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#C0392B" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>avg 14 days overdue</div>
+          </div>
+          <div style="background:#fff; border:1px solid #E6EBF2; border-radius:12px; padding:17px 18px; box-shadow:0 2px 8px rgba(10,38,71,.06); display:flex; align-items:center; gap:14px;">
+            <div style="position:relative; width:78px; height:78px; flex:none;">
+              <svg width="78" height="78" viewBox="0 0 78 78" style="transform:rotate(-90deg);"><circle cx="39" cy="39" r="32" fill="none" stroke="#E3E8F0" stroke-width="9"/><circle cx="39" cy="39" r="32" fill="none" stroke="#C9A84C" stroke-width="9" stroke-linecap="round" stroke-dasharray="{{ gaugeArc }}"/></svg>
+              <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font:700 19px Montserrat,sans-serif; color:#0A2647;">76%</div>
+            </div>
+            <div><div style="font:600 11px Inter,sans-serif; color:#6B7280;">Avg Certification Score</div><div style="font:600 11px Inter,sans-serif; color:#2D9E2D; margin-top:6px;">▲ 4% vs last cycle</div></div>
+          </div>
+        </div>
+
+        <!-- two column -->
+        <div style="display:flex; gap:16px; margin-top:18px;">
+          <div style="flex:6; min-width:0; background:#fff; border:1px solid #E6EBF2; border-radius:12px; box-shadow:0 2px 8px rgba(10,38,71,.06); overflow:hidden;">
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:15px 18px 12px;"><span style="font:700 15px Montserrat,sans-serif; color:#0A2647;">Active Audits</span><span style="font:600 11.5px Inter,sans-serif; color:#1B4F8E; cursor:pointer;">View all →</span></div>
+            <sc-for list="{{ auditRows }}" as="a" hint-placeholder-count="3">
+              <div style="display:flex; align-items:center; gap:13px; padding:13px 18px; border-top:1px solid #EEF1F6;">
+                <span style="width:40px; height:40px; flex:none; border-radius:9px; background:{{ a.logoBg }}; color:#fff; font:700 13px Montserrat,sans-serif; display:flex; align-items:center; justify-content:center;">{{ a.logo }}</span>
+                <div style="flex:1; min-width:0;">
+                  <div style="font:600 13px Inter,sans-serif; color:#1A1D23; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ a.org }}</div>
+                  <div style="font-family:'JetBrains Mono',monospace; font-size:10.5px; font-weight:600; color:#C9A84C; margin-top:2px;">{{ a.num }}</div>
+                </div>
+                <div style="width:120px; flex:none;"><div style="height:6px; background:#E3E8F0; border-radius:99px; overflow:hidden;"><div style="width:{{ a.pct }}; height:100%; background:linear-gradient(90deg,#1B4F8E,#1B8CA8); border-radius:99px;"></div></div><div style="font:500 9.5px Inter,sans-serif; color:#8893A4; margin-top:4px;">{{ a.pctText }}</div></div>
+                <span style="{{ a.statusStyle }}">{{ a.statusLabel }}</span>
+                <div style="display:flex; align-items:center; gap:6px; font:700 11.5px Inter,sans-serif; color:#fff; background:#0A2647; padding:8px 13px; border-radius:7px; cursor:pointer;">Continue <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#E7C66B" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="flex:4; min-width:0; display:flex; flex-direction:column; gap:16px;">
+            <div style="background:#fff; border:1px solid #E6EBF2; border-radius:12px; box-shadow:0 2px 8px rgba(10,38,71,.06); overflow:hidden;">
+              <div style="padding:14px 16px 10px; font:700 14px Montserrat,sans-serif; color:#0A2647; display:flex; align-items:center; gap:8px;"><span style="width:7px; height:7px; border-radius:50%; background:#C0392B;"></span>Overdue Corrective Actions</div>
+              <sc-for list="{{ overdueCAs }}" as="c" hint-placeholder-count="3">
+                <div style="display:flex; align-items:center; gap:11px; padding:10px 16px; border-top:1px solid #EEF1F6;">
+                  <span style="width:3px; height:30px; border-radius:99px; background:#C0392B; flex:none;"></span>
+                  <div style="flex:1; min-width:0;"><div style="font:600 12px Inter,sans-serif; color:#1A1D23;">{{ c.ca }} · <span style="font-family:'JetBrains Mono',monospace; color:#C9A84C; font-weight:600;">{{ c.clause }}</span></div><div style="font:500 10.5px Inter,sans-serif; color:#8893A4; margin-top:2px;">{{ c.client }}</div></div>
+                  <span style="font:700 10px Inter,sans-serif; color:#C0392B; background:#FBE7E5; padding:4px 9px; border-radius:99px; flex:none;">{{ c.days }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="background:#fff; border:1px solid #E6EBF2; border-radius:12px; box-shadow:0 2px 8px rgba(10,38,71,.06); padding:14px 16px;">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:11px;"><span style="font:700 14px Montserrat,sans-serif; color:#0A2647;">July 2026</span><span style="font:500 10.5px Inter,sans-serif; color:#8893A4;">Audit Calendar</span></div>
+              <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:4px; font:600 9px Inter,sans-serif; color:#A4AEBD; text-align:center; margin-bottom:5px;"><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span></div>
+              <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:4px;">
+                <sc-for list="{{ calendarDays }}" as="d" hint-placeholder-count="35"><div style="{{ d.style }}">{{ d.label }}</div></sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- heatmap -->
+        <div style="margin-top:18px; background:#fff; border:1px solid #E6EBF2; border-radius:12px; box-shadow:0 2px 8px rgba(10,38,71,.06); padding:16px 18px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:13px;">
+            <span style="font:700 15px Montserrat,sans-serif; color:#0A2647;">Clause Conformity Heat Map</span>
+            <div style="display:flex; align-items:center; gap:8px; font:500 10px Inter,sans-serif; color:#8893A4;">Nonconformity <span style="display:flex; gap:3px;"><span style="width:14px; height:10px; border-radius:2px; background:#C0392B;"></span><span style="width:14px; height:10px; border-radius:2px; background:#E67E22;"></span><span style="width:14px; height:10px; border-radius:2px; background:#E8C24A;"></span><span style="width:14px; height:10px; border-radius:2px; background:#5DB36A;"></span><span style="width:14px; height:10px; border-radius:2px; background:#1E8A45;"></span></span> Conformity</div>
+          </div>
+          <div style="display:flex; gap:3px; padding-left:148px; margin-bottom:5px;">
+            <sc-for list="{{ heatCols }}" as="h"><span style="flex:1; text-align:center; font-family:'JetBrains Mono',monospace; font-size:8.5px; font-weight:600; color:#8893A4;">{{ h }}</span></sc-for>
+          </div>
+          <sc-for list="{{ heatRows }}" as="r" hint-placeholder-count="5">
+            <div style="display:flex; align-items:center; gap:3px; margin-bottom:3px;">
+              <span style="width:145px; flex:none; font:600 11px Inter,sans-serif; color:#33404F; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding-right:8px;">{{ r.client }}</span>
+              <sc-for list="{{ r.cells }}" as="c"><span style="{{ c.style }}"></span></sc-for>
+            </div>
+          </sc-for>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ============ FRAME 04 — Opening Meeting Studio ============ -->
+<div style="position:absolute; left:3100px; top:150px; width:1360px;">
+  <div data-drags-parent="1" style="display:flex; align-items:center; gap:10px; margin-bottom:14px; font:600 12px Inter,sans-serif; color:#8A94A6; letter-spacing:.1em; text-transform:uppercase;">
+    <span style="font-family:'JetBrains Mono',monospace; font-weight:700; color:#0A2647; background:#E7C66B; padding:2px 8px; border-radius:6px;">04</span>
+    iPad · Opening Meeting Studio
+  </div>
+  <div style="background:#0a0c10; border-radius:44px; padding:20px; box-shadow:0 30px 80px rgba(10,38,71,.28); position:relative;">
+    <div style="position:absolute; top:50%; left:10px; transform:translateY(-50%); width:7px; height:7px; border-radius:50%; background:#1b2331;"></div>
+    <div data-screen-label="iPad — Meeting Studio" style="width:1320px; height:940px; background:#F4F7FB; border-radius:26px; overflow:hidden; position:relative; font-family:Inter,sans-serif; display:flex; flex-direction:column;">
+
+      <!-- header -->
+      <div style="height:62px; flex:none; background:#fff; border-bottom:1px solid #E3E8F0; display:flex; align-items:center; padding:0 20px; gap:16px;">
+        <div style="display:flex; align-items:center; gap:8px; font:600 13px Inter,sans-serif; color:#1B4F8E; cursor:pointer;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1B4F8E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Back to Audit</div>
+        <div style="flex:1; text-align:center;"><div style="font:700 16px Montserrat,sans-serif; color:#0A2647;">Opening Meeting</div><div style="font-family:'JetBrains Mono',monospace; font-size:10.5px; font-weight:600; color:#C9A84C; margin-top:1px;">AUD-2026-001</div></div>
+        <div style="display:flex; align-items:center; gap:14px;">
+          <div style="display:flex; align-items:flex-end; gap:2px; height:22px;">
+            <sc-for list="{{ waveBars }}" as="b"><span style="{{ b.style }}"></span></sc-for>
+          </div>
+          <div style="{{ recBadgeStyle }}"><span style="{{ recDotStyle }}"></span>{{ recBadgeText }} <span style="font-family:'JetBrains Mono',monospace;">00:23:47</span></div>
+        </div>
+      </div>
+
+      <div style="flex:1; min-height:0; overflow-y:auto; padding:20px 22px 14px;">
+        <!-- top row -->
+        <div style="display:flex; gap:16px;">
+          <div style="flex:1; background:#fff; border:1px solid #E6EBF2; border-radius:12px; box-shadow:0 2px 8px rgba(10,38,71,.06); padding:18px 20px; display:flex; gap:22px;">
+            <div style="flex:1;">
+              <div style="font:600 10px Inter,sans-serif; color:#8893A4; letter-spacing:.08em; text-transform:uppercase; margin-bottom:11px;">Meeting Details</div>
+              <div style="margin-bottom:11px;"><div style="font:500 10.5px Inter,sans-serif; color:#8893A4;">Client</div><div style="font:600 13.5px Inter,sans-serif; color:#1A1D23; margin-top:2px;">Hartsfield-Jackson Atlanta Int'l Airport</div></div>
+              <div style="display:flex; gap:22px;"><div><div style="font:500 10.5px Inter,sans-serif; color:#8893A4;">Date &amp; Time</div><div style="font:600 13px Inter,sans-serif; color:#1A1D23; margin-top:2px;">Jul 1, 2026 · 09:00</div></div><div><div style="font:500 10.5px Inter,sans-serif; color:#8893A4;">Location</div><div style="font:600 13px Inter,sans-serif; color:#1A1D23; margin-top:2px;">Terminal F Conf. Room</div></div></div>
+            </div>
+            <div style="width:1px; background:#E3E8F0;"></div>
+            <div style="flex:none; display:flex; flex-direction:column; align-items:center; justify-content:center; width:150px;">
+              <div style="font:600 9.5px Inter,sans-serif; color:#8893A4; letter-spacing:.08em; text-transform:uppercase;">Duration</div>
+              <div style="font:700 34px 'JetBrains Mono',monospace; color:#0A2647; margin-top:6px; letter-spacing:-.01em;">00:23:47</div>
+              <div style="display:flex; align-items:center; gap:5px; margin-top:6px; font:600 10px Inter,sans-serif; color:#2D9E2D;"><span style="width:6px; height:6px; border-radius:50%; background:#2D9E2D;"></span>On schedule</div>
+            </div>
+          </div>
+
+          <div style="flex:1; background:#fff; border:1px solid #E6EBF2; border-radius:12px; box-shadow:0 2px 8px rgba(10,38,71,.06); padding:16px 18px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:11px;"><span style="font:600 10px Inter,sans-serif; color:#8893A4; letter-spacing:.08em; text-transform:uppercase;">Attendee Roll Call</span><span style="font:600 11px Inter,sans-serif; color:#2D9E2D;">4 of 5 confirmed</span></div>
+            <sc-for list="{{ attendees }}" as="p" hint-placeholder-count="5">
+              <div style="display:flex; align-items:center; gap:10px; padding:7px 0; border-bottom:1px solid #F0F3F8;">
+                <span style="width:30px; height:30px; flex:none; border-radius:50%; background:{{ p.avBg }}; color:#fff; font:700 11px Montserrat,sans-serif; display:flex; align-items:center; justify-content:center;">{{ p.initials }}</span>
+                <div style="flex:1; min-width:0;"><div style="font:600 12.5px Inter,sans-serif; color:#1A1D23;">{{ p.name }}</div><div style="font:500 10.5px Inter,sans-serif; color:#8893A4;">{{ p.role }}</div></div>
+                <span style="{{ p.tagStyle }}">{{ p.tag }}</span>
+              </div>
+            </sc-for>
+            <div style="display:flex; align-items:center; gap:7px; margin-top:11px; font:600 12px Inter,sans-serif; color:#1B4F8E; cursor:pointer;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1B4F8E" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Add Attendee</div>
+          </div>
+        </div>
+
+        <!-- agenda -->
+        <div style="display:flex; align-items:center; gap:10px; margin:20px 0 12px;">
+          <span style="font:700 17px Montserrat,sans-serif; color:#0A2647;">Meeting Agenda</span>
+          <span style="font:600 9.5px Inter,sans-serif; color:#1B4F8E; background:#E4ECF7; padding:4px 10px; border-radius:99px; letter-spacing:.03em;">ISO 19011 GUIDED</span>
+          <span style="margin-left:auto; font:500 11.5px Inter,sans-serif; color:#8893A4;">1 of 5 complete · 45 min total</span>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:9px;">
+          <sc-for list="{{ agenda }}" as="a" hint-placeholder-count="5">
+            <div style="{{ a.cardStyle }}" onClick="{{ a.onClick }}">
+              <span style="{{ a.numStyle }}">{{ a.numInner }}</span>
+              <div style="flex:1; min-width:0;">
+                <div style="{{ a.titleStyle }}">{{ a.title }}</div>
+                <div style="{{ a.subStyle }}">{{ a.sub }}</div>
+              </div>
+              <span style="{{ a.durStyle }}">{{ a.dur }}</span>
+              <span style="{{ a.tagStyle }}">{{ a.tag }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <!-- bottom bar -->
+      <div style="flex:none; border-top:1px solid #E3E8F0; background:#fff; padding:13px 22px; display:flex; align-items:center; justify-content:space-between;">
+        <div style="display:flex; align-items:center; gap:8px; font:700 13px Inter,sans-serif; color:#1B8CA8; background:#E5F2F5; padding:11px 17px; border-radius:8px; cursor:pointer;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1B8CA8" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6z"/></svg>AI Meeting Summary</div>
+        <div onClick="{{ toggleRecord }}" style="{{ recBtnStyle }}"><sc-if value="{{ recording }}" hint-placeholder-val="{{ true }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><rect x="6" y="6" width="5" height="12" rx="1"/><rect x="13" y="6" width="5" height="12" rx="1"/></svg></sc-if><sc-if value="{{ paused }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="#fff"><path d="M7 5l12 7-12 7z"/></svg></sc-if>{{ recLabel }}</div>
+        <div style="display:flex; align-items:center; gap:8px; font:700 13px Inter,sans-serif; color:#fff; background:#0A2647; padding:11px 18px; border-radius:8px; cursor:pointer;">Collect Signatures <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#E7C66B" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+      </div>
+
+      <!-- ARIA floating prompt -->
+      <div style="position:absolute; right:20px; bottom:92px; width:300px; background:#fff; border:1px solid #BFE2E8; border-left:3px solid #1B8CA8; border-radius:12px; box-shadow:0 12px 32px rgba(10,38,71,.18); padding:13px 15px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1B8CA8" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/></svg><span style="font:700 12px Montserrat,sans-serif; color:#125E72;">ARIA</span></div>
+        <div style="font:400 12px/1.55 Inter,sans-serif; color:#26303F;">Meeting is on track. Clause <span style="font-family:'JetBrains Mono',monospace; font-weight:600; color:#125E72;">§ 8.2</span> Emergency Response is often raised in opening meetings — consider noting it under scope.</div>
+        <div style="display:flex; gap:8px; margin-top:11px;"><span style="flex:1; text-align:center; font:600 11px Inter,sans-serif; color:#6B7280; background:#F1F4F9; padding:7px; border-radius:7px; cursor:pointer;">Dismiss</span><span style="flex:1; text-align:center; font:700 11px Inter,sans-serif; color:#fff; background:#1B8CA8; padding:7px; border-radius:7px; cursor:pointer;">Apply Note</span></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+<!-- ============ FRAME 05 — Wiki Article ============ -->
+<div style="position:absolute; left:3260px; top:1330px; width:1440px;">
+  <div data-drags-parent="1" style="display:flex; align-items:center; gap:10px; margin-bottom:14px; font:600 12px Inter,sans-serif; color:#8A94A6; letter-spacing:.1em; text-transform:uppercase;">
+    <span style="font-family:'JetBrains Mono',monospace; font-weight:700; color:#0A2647; background:#E7C66B; padding:2px 8px; border-radius:6px;">05</span>
+    Web · Wiki — Clause Guide
+  </div>
+  <div style="border-radius:14px; overflow:hidden; box-shadow:0 30px 80px rgba(10,38,71,.22); background:#fff;">
+    <div style="height:42px; background:#E7ECF3; display:flex; align-items:center; gap:14px; padding:0 16px; border-bottom:1px solid #D6DEE9;">
+      <div style="display:flex; gap:8px;"><span style="width:12px; height:12px; border-radius:50%; background:#F25E57;"></span><span style="width:12px; height:12px; border-radius:50%; background:#F9BD2E;"></span><span style="width:12px; height:12px; border-radius:50%; background:#3FC14A;"></span></div>
+      <div style="flex:1; max-width:460px; margin:0 auto; background:#fff; border:1px solid #D6DEE9; border-radius:8px; height:26px; display:flex; align-items:center; gap:8px; padding:0 12px; font:500 11.5px Inter,sans-serif; color:#6B7280;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9AA6B6" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>app.soteria-assurance.com/wiki/iso-45001/6.1.2</div>
+      <div style="width:40px;"></div>
+    </div>
+    <div data-screen-label="Web — Wiki" style="height:1188px; background:#F4F7FB; font-family:Inter,sans-serif; overflow-y:auto;">
+
+      <!-- top bar -->
+      <div style="background:#fff; border-bottom:1px solid #E3E8F0; padding:13px 34px; display:flex; align-items:center; gap:12px;">
+        <span style="display:flex; align-items:center; gap:7px; font:600 12.5px Inter,sans-serif; color:#1B4F8E; cursor:pointer;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1B4F8E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Wiki</span>
+        <span style="color:#C3CEDD;">/</span>
+        <span style="font:500 12px Inter,sans-serif; color:#8893A4;">ISO 45001:2018 Guide</span><span style="color:#C3CEDD;">/</span>
+        <span style="font:500 12px Inter,sans-serif; color:#8893A4;">Clause 6: Planning</span><span style="color:#C3CEDD;">/</span>
+        <span style="font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:600; color:#C9A84C;">6.1.2</span>
+      </div>
+
+      <!-- hero -->
+      <div style="padding:30px 34px 22px; background:#fff; border-bottom:1px solid #E3E8F0;">
+        <div style="font:700 64px 'JetBrains Mono',monospace; color:#C9A84C; line-height:.9; letter-spacing:-.02em;">§ 6.1.2</div>
+        <div style="font:700 27px Montserrat,sans-serif; color:#0A2647; margin-top:12px; letter-spacing:-.01em;">Hazard Identification &amp; Assessment of OH&amp;S Risks</div>
+        <div style="display:flex; gap:8px; margin-top:14px;">
+          <span style="font:600 10.5px Inter,sans-serif; color:#1B4F8E; background:#E4ECF7; padding:5px 11px; border-radius:99px;">Clause 6</span>
+          <span style="font:600 10.5px Inter,sans-serif; color:#1B4F8E; background:#E4ECF7; padding:5px 11px; border-radius:99px;">Planning</span>
+          <span style="font:600 10.5px Inter,sans-serif; color:#1B8CA8; background:#E5F2F5; padding:5px 11px; border-radius:99px;">HIRA</span>
+          <span style="font:600 10.5px Inter,sans-serif; color:#1B8CA8; background:#E5F2F5; padding:5px 11px; border-radius:99px;">Risk Assessment</span>
+        </div>
+      </div>
+
+      <!-- two column -->
+      <div style="display:flex; gap:26px; padding:26px 34px 40px; align-items:flex-start;">
+        <!-- article -->
+        <div style="flex:7; min-width:0;">
+          <div style="font:700 18px Montserrat,sans-serif; color:#0A2647; margin-bottom:9px;">What the Standard Requires</div>
+          <p style="font:400 14.5px/1.7 Inter,sans-serif; color:#33404F; margin:0 0 14px;">Clause 6.1.2 requires the organization to establish, implement and maintain a process for hazard identification that is <strong style="font-weight:600;">ongoing and proactive</strong>. It is the engine of the OH&amp;S management system — if hazards are not reliably surfaced, every downstream control is built on incomplete information.</p>
+          <div style="background:#EAF1F9; border-left:4px solid #0A2647; border-radius:0 10px 10px 0; padding:14px 17px; margin:0 0 20px;">
+            <div style="font:700 9.5px 'JetBrains Mono',monospace; color:#C9A84C; letter-spacing:.1em; margin-bottom:6px;">ISO REQUIREMENT</div>
+            <div style="font:400 13.5px/1.6 Inter,sans-serif; color:#26303F;">The process shall take into account routine and non-routine activities; human factors; new or changed hazards; potential emergency situations; and how work is actually organized — including the people in the workplace and those affected by its activities. <span style="font-family:'JetBrains Mono',monospace; font-weight:600; color:#1B4F8E;">§ 6.1.2.1 (a–f)</span></div>
+          </div>
+
+          <div style="font:700 18px Montserrat,sans-serif; color:#0A2647; margin-bottom:9px;">What to Audit</div>
+          <ul style="margin:0 0 16px; padding-left:18px; font:400 14px/1.75 Inter,sans-serif; color:#33404F;">
+            <li>Whether the HIRA methodology is <strong style="font-weight:600;">documented, repeatable and risk-based</strong>.</li>
+            <li>Coverage of routine, non-routine and emergency scenarios across all areas in scope.</li>
+            <li>Evidence that workers were <strong style="font-weight:600;">consulted</strong> in identifying hazards (links to §5.4).</li>
+            <li>Whether recent incidents and changes have been fed back into the register.</li>
+          </ul>
+
+          <div style="background:#FBF6E9; border-left:4px solid #C9A84C; border-radius:0 10px 10px 0; padding:14px 17px; margin:0 0 20px;">
+            <div style="font:700 9.5px Inter,sans-serif; color:#A6862E; letter-spacing:.08em; text-transform:uppercase; margin-bottom:6px;">Auditor Tip</div>
+            <div style="font:400 13.5px/1.6 Inter,sans-serif; color:#5C4E22;">Sample by activity, not by document. Pick a high-risk task observed on the floor and trace it back to the register — gaps surface faster than a top-down document review.</div>
+          </div>
+
+          <div style="font:700 18px Montserrat,sans-serif; color:#0A2647; margin-bottom:9px;">Sample Interview Questions</div>
+          <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:18px;">
+            <div style="display:flex; gap:10px; background:#fff; border:1px solid #E6EBF2; border-radius:9px; padding:11px 14px;"><span style="font:700 11px 'JetBrains Mono',monospace; color:#C9A84C;">Q1</span><span style="font:400 13.5px/1.5 Inter,sans-serif; color:#33404F;">Walk me through how a new hazard gets added to the register.</span></div>
+            <div style="display:flex; gap:10px; background:#fff; border:1px solid #E6EBF2; border-radius:9px; padding:11px 14px;"><span style="font:700 11px 'JetBrains Mono',monospace; color:#C9A84C;">Q2</span><span style="font:400 13.5px/1.5 Inter,sans-serif; color:#33404F;">How are non-routine tasks — maintenance, shutdowns — assessed?</span></div>
+            <div style="display:flex; gap:10px; background:#fff; border:1px solid #E6EBF2; border-radius:9px; padding:11px 14px;"><span style="font:700 11px 'JetBrains Mono',monospace; color:#C9A84C;">Q3</span><span style="font:400 13.5px/1.5 Inter,sans-serif; color:#33404F;">When were workers last involved in a hazard identification review?</span></div>
+            <div style="display:flex; gap:10px; background:#fff; border:1px solid #E6EBF2; border-radius:9px; padding:11px 14px;"><span style="font:700 11px 'JetBrains Mono',monospace; color:#C9A84C;">Q4</span><span style="font:400 13.5px/1.5 Inter,sans-serif; color:#33404F;">Show me where the last incident changed a risk score.</span></div>
+          </div>
+
+          <div style="font:700 18px Montserrat,sans-serif; color:#0A2647; margin-bottom:9px;">Typical Documents to Review</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px 18px; margin-bottom:20px;">
+            <div style="display:flex; align-items:center; gap:9px; font:500 13px Inter,sans-serif; color:#33404F;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2D9E2D" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17.5 19.5 6.5"/></svg>HIRA register / risk assessments</div>
+            <div style="display:flex; align-items:center; gap:9px; font:500 13px Inter,sans-serif; color:#33404F;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2D9E2D" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17.5 19.5 6.5"/></svg>Documented HIRA methodology</div>
+            <div style="display:flex; align-items:center; gap:9px; font:500 13px Inter,sans-serif; color:#33404F;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2D9E2D" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17.5 19.5 6.5"/></svg>Worker consultation records</div>
+            <div style="display:flex; align-items:center; gap:9px; font:500 13px Inter,sans-serif; color:#33404F;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2D9E2D" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17.5 19.5 6.5"/></svg>Incident &amp; near-miss reports</div>
+          </div>
+
+          <div style="font:700 18px Montserrat,sans-serif; color:#0A2647; margin-bottom:9px;">Common Nonconformities</div>
+          <div style="background:#FCF1E8; border-left:4px solid #E67E22; border-radius:0 10px 10px 0; padding:14px 17px;">
+            <div style="font:700 9.5px Inter,sans-serif; color:#C2691C; letter-spacing:.08em; text-transform:uppercase; margin-bottom:8px;">Most Frequently Raised</div>
+            <div style="font:400 13.5px/1.7 Inter,sans-serif; color:#5C4326;">• Register treated as a one-time document, not an ongoing process.<br>• Non-routine and emergency tasks omitted entirely.<br>• No demonstrable worker participation in hazard identification.<br>• Methodology undocumented — scores applied inconsistently between areas.</div>
+          </div>
+
+          <div style="font:700 18px Montserrat,sans-serif; color:#0A2647; margin:24px 0 9px;">Related Clauses</div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <span style="display:flex; align-items:center; gap:6px; font:600 12px Inter,sans-serif; color:#1B4F8E; background:#fff; border:1px solid #D9E0EA; padding:7px 12px; border-radius:8px; cursor:pointer;"><span style="font-family:'JetBrains Mono',monospace; color:#C9A84C;">§ 5.4</span> Worker Participation</span>
+            <span style="display:flex; align-items:center; gap:6px; font:600 12px Inter,sans-serif; color:#1B4F8E; background:#fff; border:1px solid #D9E0EA; padding:7px 12px; border-radius:8px; cursor:pointer;"><span style="font-family:'JetBrains Mono',monospace; color:#C9A84C;">§ 6.1.1</span> Risks &amp; Opportunities</span>
+            <span style="display:flex; align-items:center; gap:6px; font:600 12px Inter,sans-serif; color:#1B4F8E; background:#fff; border:1px solid #D9E0EA; padding:7px 12px; border-radius:8px; cursor:pointer;"><span style="font-family:'JetBrains Mono',monospace; color:#C9A84C;">§ 8.1.2</span> Eliminating Hazards</span>
+          </div>
+        </div>
+
+        <!-- sticky sidebar -->
+        <div style="flex:3; min-width:0; display:flex; flex-direction:column; gap:14px;">
+          <div style="background:#fff; border:1px solid #E6EBF2; border-radius:12px; box-shadow:0 2px 8px rgba(10,38,71,.06); padding:15px 16px;">
+            <div style="font:700 13px Montserrat,sans-serif; color:#0A2647; margin-bottom:11px;">Quick Reference</div>
+            <div style="display:flex; flex-direction:column; gap:9px;">
+              <div style="display:flex; gap:9px; align-items:flex-start;"><svg width="15" height="15" style="margin-top:1px; flex:none;" viewBox="0 0 24 24" fill="none" stroke="#2D9E2D" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" stroke="#2D9E2D" stroke-width="1.6"/><path d="M8 12.5 11 15.5 16 9"/></svg><span style="font:400 12.5px/1.45 Inter,sans-serif; color:#33404F;">Process is ongoing &amp; proactive</span></div>
+              <div style="display:flex; gap:9px; align-items:flex-start;"><svg width="15" height="15" style="margin-top:1px; flex:none;" viewBox="0 0 24 24" fill="none" stroke="#2D9E2D" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" stroke="#2D9E2D" stroke-width="1.6"/><path d="M8 12.5 11 15.5 16 9"/></svg><span style="font:400 12.5px/1.45 Inter,sans-serif; color:#33404F;">Routine + non-routine covered</span></div>
+              <div style="display:flex; gap:9px; align-items:flex-start;"><svg width="15" height="15" style="margin-top:1px; flex:none;" viewBox="0 0 24 24" fill="none" stroke="#E67E22" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16v.1"/></svg><span style="font:400 12.5px/1.45 Inter,sans-serif; color:#33404F;">Worker consultation evidenced</span></div>
+              <div style="display:flex; gap:9px; align-items:flex-start;"><svg width="15" height="15" style="margin-top:1px; flex:none;" viewBox="0 0 24 24" fill="none" stroke="#2D9E2D" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" stroke="#2D9E2D" stroke-width="1.6"/><path d="M8 12.5 11 15.5 16 9"/></svg><span style="font:400 12.5px/1.45 Inter,sans-serif; color:#33404F;">Methodology documented</span></div>
+            </div>
+          </div>
+
+          <div style="background:#fff; border:1px solid #E6EBF2; border-radius:12px; box-shadow:0 2px 8px rgba(10,38,71,.06); padding:15px 16px;">
+            <div style="font:700 13px Montserrat,sans-serif; color:#0A2647; margin-bottom:11px;">Related Findings · This Audit</div>
+            <div style="border-left:4px solid #E67E22; background:#FCF1E8; border-radius:0 8px 8px 0; padding:10px 12px;">
+              <div style="display:flex; align-items:center; justify-content:space-between;"><span style="font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:600; color:#C9A84C;">NCR-2026-004</span><span style="font:700 8.5px Inter,sans-serif; color:#fff; background:#E67E22; padding:3px 8px; border-radius:99px; letter-spacing:.03em;">MINOR NC</span></div>
+              <div style="font:500 12px/1.45 Inter,sans-serif; color:#33404F; margin-top:6px;">Night-shift de-icing operation omitted from HIRA register.</div>
+            </div>
+          </div>
+
+          <div style="display:flex; align-items:center; justify-content:center; gap:9px; background:linear-gradient(135deg,#1B8CA8,#125E72); color:#fff; padding:13px; border-radius:11px; font:700 13px Montserrat,sans-serif; cursor:pointer; box-shadow:0 6px 18px rgba(27,140,168,.28);"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/></svg>Ask ARIA About This Clause</div>
+
+          <div style="background:#fff; border:1px solid #E6EBF2; border-radius:12px; box-shadow:0 2px 8px rgba(10,38,71,.06); padding:15px 16px;">
+            <div style="font:700 13px Montserrat,sans-serif; color:#0A2647; margin-bottom:11px;">Related Articles</div>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+              <div style="display:flex; gap:9px; align-items:center; cursor:pointer;"><span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; font-weight:600; color:#C9A84C; flex:none;">§ 6.1.3</span><span style="font:500 12.5px Inter,sans-serif; color:#1B4F8E;">Legal &amp; Other Requirements</span></div>
+              <div style="display:flex; gap:9px; align-items:center; cursor:pointer;"><span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; font-weight:600; color:#C9A84C; flex:none;">§ 8.1.2</span><span style="font:500 12.5px Inter,sans-serif; color:#1B4F8E;">Hierarchy of Controls</span></div>
+              <div style="display:flex; gap:9px; align-items:center; cursor:pointer;"><span style="font:500 12.5px Inter,sans-serif; color:#1B4F8E;">Writing a defensible NCR statement</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ============ FRAME 06 — Corrective Action Tracker ============ -->
+<div style="position:absolute; left:1700px; top:1330px; width:1440px;">
+  <div data-drags-parent="1" style="display:flex; align-items:center; gap:10px; margin-bottom:14px; font:600 12px Inter,sans-serif; color:#8A94A6; letter-spacing:.1em; text-transform:uppercase;">
+    <span style="font-family:'JetBrains Mono',monospace; font-weight:700; color:#0A2647; background:#E7C66B; padding:2px 8px; border-radius:6px;">06</span>
+    Web · Corrective Action Tracker
+  </div>
+  <div style="border-radius:14px; overflow:hidden; box-shadow:0 30px 80px rgba(10,38,71,.22); background:#fff;">
+    <div style="height:42px; background:#E7ECF3; display:flex; align-items:center; gap:14px; padding:0 16px; border-bottom:1px solid #D6DEE9;">
+      <div style="display:flex; gap:8px;"><span style="width:12px; height:12px; border-radius:50%; background:#F25E57;"></span><span style="width:12px; height:12px; border-radius:50%; background:#F9BD2E;"></span><span style="width:12px; height:12px; border-radius:50%; background:#3FC14A;"></span></div>
+      <div style="flex:1; max-width:460px; margin:0 auto; background:#fff; border:1px solid #D6DEE9; border-radius:8px; height:26px; display:flex; align-items:center; gap:8px; padding:0 12px; font:500 11.5px Inter,sans-serif; color:#6B7280;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9AA6B6" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>app.soteria-assurance.com/corrective-actions/CA-2026-007</div>
+      <div style="width:40px;"></div>
+    </div>
+    <div data-screen-label="Web — Corrective Action" style="height:1240px; background:#F4F7FB; font-family:Inter,sans-serif; overflow-y:auto; padding:24px 30px; display:flex; gap:20px;">
+
+      <!-- LEFT -->
+      <div style="flex:6; min-width:0; display:flex; flex-direction:column; gap:16px;">
+        <!-- header card -->
+        <div style="background:#fff; border:1px solid #E6EBF2; border-left:4px solid #E67E22; border-radius:12px; box-shadow:0 2px 8px rgba(10,38,71,.06); padding:20px 22px;">
+          <div style="display:flex; align-items:flex-start; justify-content:space-between;">
+            <div>
+              <div style="font:700 30px 'JetBrains Mono',monospace; color:#0A2647; line-height:1; letter-spacing:-.01em;">CA-2026-007</div>
+              <div style="display:flex; align-items:center; gap:7px; margin-top:9px; font:500 12px Inter,sans-serif; color:#6B7280;">From <span style="font-family:'JetBrains Mono',monospace; font-weight:600; color:#1B4F8E; cursor:pointer;">NCR-2026-004</span> · <span style="font-family:'JetBrains Mono',monospace; font-weight:600; color:#1B4F8E; cursor:pointer;">AUD-2026-001</span></div>
+            </div>
+            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
+              <span style="display:flex; align-items:center; gap:6px; font:700 10px Inter,sans-serif; color:#A6862E; background:#FBF1DA; padding:6px 12px; border-radius:99px; letter-spacing:.03em; text-transform:uppercase;"><span style="width:7px; height:7px; border-radius:50%; background:#E0A82E;"></span>CA Under Review</span>
+              <span style="font:700 9.5px Inter,sans-serif; color:#fff; background:#E67E22; padding:4px 10px; border-radius:99px; letter-spacing:.03em;">MINOR NC</span>
+            </div>
+          </div>
+          <!-- stepper -->
+          <div style="display:flex; align-items:center; margin-top:22px;">
+            <sc-for list="{{ caSteps }}" as="s">
+              <div style="display:flex; align-items:center; flex:1;">
+                <div style="display:flex; flex-direction:column; align-items:center; gap:6px; flex:none;">
+                  <span style="{{ s.dotStyle }}">{{ s.inner }}</span>
+                  <span style="{{ s.labelStyle }}">{{ s.label }}</span>
+                </div>
+                <div style="{{ s.lineStyle }}"></div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <!-- finding summary -->
+        <div style="background:#fff; border:1px solid #E6EBF2; border-radius:12px; box-shadow:0 2px 8px rgba(10,38,71,.06); padding:16px 18px;">
+          <div style="font:600 9.5px Inter,sans-serif; color:#8893A4; letter-spacing:.08em; text-transform:uppercase; margin-bottom:10px;">Finding Summary · Read Only</div>
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:9px;"><span style="font:700 15px 'JetBrains Mono',monospace; color:#C9A84C;">§ 7.2</span><span style="font:700 15px Montserrat,sans-serif; color:#0A2647;">Competence</span></div>
+          <p style="font:400 13.5px/1.6 Inter,sans-serif; color:#33404F; margin:0 0 10px;">Three forklift operators in the airside cargo team had no current certification or training records on file. The organization could not demonstrate that personnel performing safety-critical tasks are competent on the basis of appropriate education, training or experience.</p>
+          <div style="display:flex; gap:24px; font:500 12px Inter,sans-serif; color:#6B7280;"><span>Raised <strong style="color:#1A1D23; font-weight:600;">Jul 1, 2026</strong></span><span>Lead Auditor <strong style="color:#1A1D23; font-weight:600;">Jamil Jones</strong></span></div>
+        </div>
+
+        <!-- root cause -->
+        <div style="background:#fff; border:1px solid #E6EBF2; border-radius:12px; box-shadow:0 2px 8px rgba(10,38,71,.06); padding:16px 18px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;"><span style="font:700 15px Montserrat,sans-serif; color:#0A2647;">Root Cause Analysis</span><span style="font:600 10.5px Inter,sans-serif; color:#1B4F8E; background:#E4ECF7; padding:5px 11px; border-radius:99px;">5 Why Method</span></div>
+          <div style="display:flex; flex-direction:column; gap:0;">
+            <div style="display:flex; gap:12px; align-items:center;"><span style="width:42px; flex:none; font:700 10px 'JetBrains Mono',monospace; color:#C9A84C; text-align:right;">WHY 1</span><div style="flex:1; background:#F7F9FC; border:1px solid #E6EBF2; border-radius:8px; padding:10px 13px; font:500 12.5px Inter,sans-serif; color:#33404F;">No training records for 3 forklift operators.</div></div>
+            <div style="margin-left:21px; height:14px; width:2px; background:#D1D9E6;"></div>
+            <div style="display:flex; gap:12px; align-items:center;"><span style="width:42px; flex:none; font:700 10px 'JetBrains Mono',monospace; color:#C9A84C; text-align:right;">WHY 2</span><div style="flex:1; background:#F7F9FC; border:1px solid #E6EBF2; border-radius:8px; padding:10px 13px; font:500 12.5px Inter,sans-serif; color:#33404F;">Training completion was not tracked systematically.</div></div>
+            <div style="margin-left:21px; height:14px; width:2px; background:#D1D9E6;"></div>
+            <div style="display:flex; gap:12px; align-items:center;"><span style="width:42px; flex:none; font:700 10px 'JetBrains Mono',monospace; color:#C9A84C; text-align:right;">WHY 3</span><div style="flex:1; background:#F7F9FC; border:1px solid #E6EBF2; border-radius:8px; padding:10px 13px; font:500 12.5px Inter,sans-serif; color:#33404F;">No Training Matrix exists for safety-critical roles.</div></div>
+            <div style="margin-left:21px; height:14px; width:2px; background:#D1D9E6;"></div>
+            <div style="display:flex; gap:12px; align-items:center;"><span style="width:42px; flex:none; font:700 10px 'JetBrains Mono',monospace; color:#2D9E2D; text-align:right;">ROOT</span><div style="flex:1; background:#EAF6EA; border:1px solid #BEE3BE; border-radius:8px; padding:11px 13px; font:600 12.5px Inter,sans-serif; color:#236B23;">Absence of a competence / training management system for OH&amp;S-critical roles.</div></div>
+          </div>
+        </div>
+
+        <!-- corrective actions -->
+        <div style="background:#fff; border:1px solid #E6EBF2; border-radius:12px; box-shadow:0 2px 8px rgba(10,38,71,.06); padding:16px 18px;">
+          <div style="font:700 15px Montserrat,sans-serif; color:#0A2647; margin-bottom:13px;">Action Plan</div>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <div style="display:flex; gap:12px; border:1px solid #F2D2CD; background:#FDF6F5; border-radius:10px; padding:12px 14px;"><span style="width:34px; height:34px; flex:none; border-radius:8px; background:#FBE7E5; display:flex; align-items:center; justify-content:center;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#C0392B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17v.1M10.3 3.9 2.6 17.5A2 2 0 0 0 4.3 20.5h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg></span><div style="flex:1;"><div style="font:700 12.5px Inter,sans-serif; color:#0A2647;">Immediate Action</div><div style="font:400 12.5px/1.5 Inter,sans-serif; color:#33404F; margin-top:3px;">Suspend forklift operations until operator certification is verified.</div></div><span style="flex:none; font:600 10px Inter,sans-serif; color:#2D9E2D; background:#E7F5E8; padding:4px 9px; border-radius:99px; align-self:flex-start;">Done</span></div>
+            <div style="display:flex; gap:12px; border:1px solid #D9E0EA; border-radius:10px; padding:12px 14px;"><span style="width:34px; height:34px; flex:none; border-radius:8px; background:#E4ECF7; display:flex; align-items:center; justify-content:center;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1B4F8E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4l-6 6 2 2 6-6a4 4 0 0 0 5.4-5.4l-2.3 2.3-1.7-1.7 2.3-2.3Z"/></svg></span><div style="flex:1;"><div style="font:700 12.5px Inter,sans-serif; color:#0A2647;">Corrective Action</div><div style="font:400 12.5px/1.5 Inter,sans-serif; color:#33404F; margin-top:3px;">Implement a Training Matrix for all safety-critical roles by Aug 1, 2026.</div></div><span style="flex:none; font:600 10px Inter,sans-serif; color:#A6862E; background:#FBF1DA; padding:4px 9px; border-radius:99px; align-self:flex-start;">In&nbsp;Progress</span></div>
+            <div style="display:flex; gap:12px; border:1px solid #D9E0EA; border-radius:10px; padding:12px 14px;"><span style="width:34px; height:34px; flex:none; border-radius:8px; background:#E7F5E8; display:flex; align-items:center; justify-content:center;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#2D9E2D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4.5 3 8 7 9 4-1 7-4.5 7-9V6l-7-3Z"/></svg></span><div style="flex:1;"><div style="font:700 12.5px Inter,sans-serif; color:#0A2647;">Preventive Action</div><div style="font:400 12.5px/1.5 Inter,sans-serif; color:#33404F; margin-top:3px;">Add quarterly training-record audits to the internal audit program.</div></div><span style="flex:none; font:600 10px Inter,sans-serif; color:#7A8699; background:#EDF1F7; padding:4px 9px; border-radius:99px; align-self:flex-start;">Planned</span></div>
+          </div>
+        </div>
+
+        <!-- effectiveness + target + actions -->
+        <div style="display:flex; gap:14px;">
+          <div style="flex:1; background:#fff; border:1px solid #E6EBF2; border-radius:12px; box-shadow:0 2px 8px rgba(10,38,71,.06); padding:15px 17px;">
+            <div style="font:600 9.5px Inter,sans-serif; color:#8893A4; letter-spacing:.08em; text-transform:uppercase; margin-bottom:8px;">Effectiveness Check</div>
+            <div style="font:600 13px Inter,sans-serif; color:#1A1D23;">Scheduled Oct 1, 2026</div>
+            <div style="font:400 12px/1.5 Inter,sans-serif; color:#6B7280; margin-top:5px;">Review updated training records &amp; verify 100% compliance.</div>
+          </div>
+          <div style="flex:none; width:200px; background:#FDF6F5; border:1px solid #F2D2CD; border-radius:12px; padding:15px 17px; display:flex; flex-direction:column; justify-content:center;">
+            <div style="font:600 9.5px Inter,sans-serif; color:#C0392B; letter-spacing:.08em; text-transform:uppercase;">Target Date</div>
+            <div style="font:700 22px Montserrat,sans-serif; color:#C0392B; margin-top:5px;">Due in 23 days</div>
+            <div style="font:500 11px Inter,sans-serif; color:#9A5048; margin-top:3px;">Aug 1, 2026</div>
+          </div>
+        </div>
+        <div style="display:flex; gap:12px;">
+          <div style="flex:none; font:700 13px Inter,sans-serif; color:#C0392B; background:#fff; border:1.5px solid #E7B7B0; padding:12px 20px; border-radius:8px; cursor:pointer;">Reject CA</div>
+          <div style="flex:1; display:flex; align-items:center; justify-content:center; gap:9px; font:700 14px Montserrat,sans-serif; color:#fff; background:#0A2647; padding:12px; border-radius:8px; cursor:pointer; box-shadow:0 4px 14px rgba(10,38,71,.22);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E7C66B" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17.5 19.5 6.5"/></svg>Accept &amp; Close CA</div>
+        </div>
+      </div>
+
+      <!-- RIGHT timeline -->
+      <div style="flex:4; min-width:0;">
+        <div style="background:#fff; border:1px solid #E6EBF2; border-radius:12px; box-shadow:0 2px 8px rgba(10,38,71,.06); padding:18px 20px; height:100%; display:flex; flex-direction:column;">
+          <div style="font:700 15px Montserrat,sans-serif; color:#0A2647; margin-bottom:16px;">Activity Timeline</div>
+          <div style="flex:1; position:relative; padding-left:6px;">
+            <sc-for list="{{ timeline }}" as="t" hint-placeholder-count="6">
+              <div style="display:flex; gap:13px; padding-bottom:18px; position:relative;">
+                <div style="display:flex; flex-direction:column; align-items:center; flex:none;">
+                  <span style="{{ t.dotStyle }}">{{ t.icon }}</span>
+                  <span style="{{ t.lineStyle }}"></span>
+                </div>
+                <div style="flex:1; min-width:0; padding-top:1px;">
+                  <div style="font:600 12.5px/1.4 Inter,sans-serif; color:#1A1D23;">{{ t.text }}</div>
+                  <div style="font:500 10.5px Inter,sans-serif; color:#8893A4; margin-top:3px;">{{ t.meta }}</div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="border-top:1px solid #E3E8F0; padding-top:12px; display:flex; align-items:center; gap:9px;">
+            <div style="flex:1; background:#F1F4F9; border:1px solid #E0E6EF; border-radius:9px; padding:9px 12px; font:400 12px Inter,sans-serif; color:#A4AEBD;">Add a comment…</div>
+            <span style="width:34px; height:34px; flex:none; border-radius:8px; background:#0A2647; display:flex; align-items:center; justify-content:center;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#E7C66B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7Z"/></svg></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ============ FRAME 07 — iPhone Sync / Offline ============ -->
+<div style="position:absolute; left:140px; top:2760px; width:1320px;">
+  <div data-drags-parent="1" style="display:flex; align-items:center; gap:10px; margin-bottom:18px; font:600 12px Inter,sans-serif; color:#8A94A6; letter-spacing:.1em; text-transform:uppercase;">
+    <span style="font-family:'JetBrains Mono',monospace; font-weight:700; color:#0A2647; background:#E7C66B; padding:2px 8px; border-radius:6px;">07</span>
+    iPhone · Sync &amp; Offline States
+  </div>
+  <div style="display:flex; gap:26px;">
+
+    <!-- PHONE A — Offline -->
+    <div>
+      <div style="width:300px; background:#0a0c10; border-radius:46px; padding:11px; box-shadow:0 24px 60px rgba(10,38,71,.26);">
+        <div data-screen-label="iPhone — Offline" style="width:278px; height:600px; background:#F4F7FB; border-radius:38px; overflow:hidden; position:relative; font-family:Inter,sans-serif;">
+          <div style="position:absolute; top:9px; left:50%; transform:translateX(-50%); width:86px; height:24px; background:#0a0c10; border-radius:99px; z-index:10;"></div>
+          <div style="height:46px; background:#0A2647; display:flex; align-items:flex-end; justify-content:space-between; padding:0 22px 6px;"><span style="font:600 13px Inter,sans-serif; color:#fff;">9:41</span><span style="display:flex; align-items:center; gap:5px;"><svg width="16" height="11" viewBox="0 0 18 12" fill="#fff"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="5" y="4" width="3" height="8" rx="1"/><rect x="10" y="1.5" width="3" height="10.5" rx="1" opacity=".4"/><rect x="15" y="0" width="3" height="12" rx="1" opacity=".4"/></svg><svg width="15" height="13" viewBox="0 0 18 14" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"><path d="M2 5.5a11 11 0 0 1 14 0M4.5 8.5a7 7 0 0 1 9 0M9 11.5h.01"/><path d="M2 2 16 12.5" stroke="#E67E22" stroke-width="1.8"/></svg><svg width="22" height="11" viewBox="0 0 26 13" fill="none"><rect x="1" y="1" width="21" height="11" rx="3" stroke="#fff" stroke-opacity=".5"/><rect x="3" y="3" width="14" height="7" rx="1.5" fill="#fff"/><rect x="23" y="4" width="2" height="5" rx="1" fill="#fff"/></svg></span></div>
+          <div style="height:48px; background:#0A2647; display:flex; align-items:center; padding:0 16px; gap:10px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9DB2CE" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg><div style="flex:1;"><div style="font:700 13px Montserrat,sans-serif; color:#fff;">Field Audit</div><div style="font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:600; color:#E7C66B;">AUD-2026-001</div></div><span style="width:26px; height:26px; border-radius:50%; background:#C9A84C; color:#0A2647; font:700 10px Montserrat,sans-serif; display:flex; align-items:center; justify-content:center;">JJ</span></div>
+          <!-- offline banner -->
+          <div style="background:#E6A817; display:flex; align-items:center; gap:9px; padding:10px 15px;">
+            <svg width="17" height="15" viewBox="0 0 18 14" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round"><path d="M2 5.5a11 11 0 0 1 14 0M4.5 8.5a7 7 0 0 1 9 0M9 11.5h.01M2 2 16 12.5"/></svg>
+            <div style="flex:1;"><div style="font:700 11.5px Inter,sans-serif; color:#fff;">Offline Mode</div><div style="font:500 9.5px Inter,sans-serif; color:rgba(255,255,255,.9);">Changes saved locally</div></div>
+            <span style="font:700 10px Inter,sans-serif; color:#8A5A00; background:#fff; padding:4px 9px; border-radius:99px;">12 pending</span>
+          </div>
+          <div style="padding:14px;">
+            <div style="font:700 16px 'JetBrains Mono',monospace; color:#C9A84C;">§ 6.1.2</div>
+            <div style="font:600 12.5px Inter,sans-serif; color:#0A2647; margin-top:3px;">Hazard Identification</div>
+            <div style="margin-top:13px; background:#fff; border:1px solid #E6EBF2; border-left:4px solid #E67E22; border-radius:0 9px 9px 0; padding:11px 13px; box-shadow:0 1px 3px rgba(10,38,71,.05);">
+              <div style="display:flex; justify-content:space-between; align-items:center;"><span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; font-weight:600; color:#C9A84C;">NCR-2026-004</span><span style="font:700 8px Inter,sans-serif; color:#fff; background:#E67E22; padding:3px 7px; border-radius:99px;">MINOR NC</span></div>
+              <div style="font:500 11px/1.4 Inter,sans-serif; color:#33404F; margin-top:6px;">Night-shift de-icing operation omitted from HIRA register.</div>
+            </div>
+            <div style="font:600 9px Inter,sans-serif; color:#8893A4; letter-spacing:.06em; text-transform:uppercase; margin:14px 0 7px;">Evidence · captured offline</div>
+            <div style="display:flex; gap:8px;">
+              <div style="flex:1; height:62px; border-radius:8px; background:linear-gradient(135deg,#33536f,#1d3a52); position:relative;"><span style="position:absolute; bottom:5px; right:5px; width:11px; height:11px; border-radius:50%; background:#E6A817; border:2px solid #fff;"></span></div>
+              <div style="flex:1; height:62px; border-radius:8px; background:linear-gradient(135deg,#3a4a63,#222f44); position:relative;"><span style="position:absolute; bottom:5px; right:5px; width:11px; height:11px; border-radius:50%; background:#E6A817; border:2px solid #fff;"></span></div>
+              <div style="flex:1; height:62px; border-radius:8px; background:linear-gradient(135deg,#2f5a63,#1b3b45); position:relative;"><span style="position:absolute; bottom:5px; right:5px; width:11px; height:11px; border-radius:50%; background:#E6A817; border:2px solid #fff;"></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="text-align:center; margin-top:13px; font:600 12px Inter,sans-serif; color:#33404F;">Offline — saved locally</div>
+    </div>
+
+    <!-- PHONE B — Syncing -->
+    <div>
+      <div style="width:300px; background:#0a0c10; border-radius:46px; padding:11px; box-shadow:0 24px 60px rgba(10,38,71,.26);">
+        <div data-screen-label="iPhone — Syncing" style="width:278px; height:600px; background:#F4F7FB; border-radius:38px; overflow:hidden; position:relative; font-family:Inter,sans-serif;">
+          <div style="position:absolute; top:9px; left:50%; transform:translateX(-50%); width:86px; height:24px; background:#0a0c10; border-radius:99px; z-index:10;"></div>
+          <div style="height:46px; background:#0A2647; display:flex; align-items:flex-end; justify-content:space-between; padding:0 22px 6px;"><span style="font:600 13px Inter,sans-serif; color:#fff;">9:42</span><span style="display:flex; align-items:center; gap:5px;"><svg width="16" height="11" viewBox="0 0 18 12" fill="#fff"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="5" y="4" width="3" height="8" rx="1"/><rect x="10" y="1.5" width="3" height="10.5" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg><svg width="15" height="13" viewBox="0 0 18 14" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"><path d="M2 5.5a11 11 0 0 1 14 0M4.5 8.5a7 7 0 0 1 9 0M9 11.5h.01"/></svg><svg width="22" height="11" viewBox="0 0 26 13" fill="none"><rect x="1" y="1" width="21" height="11" rx="3" stroke="#fff" stroke-opacity=".5"/><rect x="3" y="3" width="14" height="7" rx="1.5" fill="#fff"/><rect x="23" y="4" width="2" height="5" rx="1" fill="#fff"/></svg></span></div>
+          <div style="height:48px; background:#0A2647; display:flex; align-items:center; padding:0 16px; gap:10px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9DB2CE" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg><div style="flex:1;"><div style="font:700 13px Montserrat,sans-serif; color:#fff;">Field Audit</div><div style="font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:600; color:#E7C66B;">AUD-2026-001</div></div><span style="width:26px; height:26px; border-radius:50%; background:#C9A84C; color:#0A2647; font:700 10px Montserrat,sans-serif; display:flex; align-items:center; justify-content:center;">JJ</span></div>
+          <!-- syncing banner -->
+          <div style="background:#0A2647; padding:10px 15px;">
+            <div style="display:flex; align-items:center; gap:9px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#E7C66B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7M21 4v4h-4"/></svg><span style="flex:1; font:700 11.5px Inter,sans-serif; color:#fff;">Syncing 12 items…</span><span style="font:600 10px 'JetBrains Mono',monospace; color:#E7C66B;">4 / 12</span></div>
+            <div style="height:5px; background:rgba(255,255,255,.16); border-radius:99px; overflow:hidden; margin-top:8px; position:relative;"><div style="position:absolute; inset:0; width:40%; background:linear-gradient(90deg,transparent,#E7C66B,transparent); animation:somaSweep 1.4s ease-in-out infinite;"></div><div style="width:33%; height:100%; background:#C9A84C; border-radius:99px;"></div></div>
+          </div>
+          <div style="padding:14px;">
+            <div style="font:600 9px Inter,sans-serif; color:#8893A4; letter-spacing:.06em; text-transform:uppercase; margin-bottom:9px;">Uploading</div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <div style="display:flex; align-items:center; gap:10px; background:#fff; border:1px solid #E6EBF2; border-radius:9px; padding:10px 12px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2D9E2D" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17.5 19.5 6.5"/></svg><span style="flex:1; font:500 11.5px Inter,sans-serif; color:#33404F;">3 clause assessments</span><span style="font:600 9px Inter,sans-serif; color:#2D9E2D;">Done</span></div>
+              <div style="display:flex; align-items:center; gap:10px; background:#fff; border:1px solid #BFE2E8; border-radius:9px; padding:10px 12px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1B8CA8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/></svg><span style="flex:1; font:500 11.5px Inter,sans-serif; color:#33404F;">2 evidence photos</span><span style="font:600 9px Inter,sans-serif; color:#1B8CA8;">68%</span></div>
+              <div style="display:flex; align-items:center; gap:10px; background:#fff; border:1px solid #E6EBF2; border-radius:9px; padding:10px 12px; opacity:.6;"><span style="width:16px; height:16px; border-radius:50%; border:2px solid #C3CEDD; flex:none;"></span><span style="flex:1; font:500 11.5px Inter,sans-serif; color:#33404F;">1 finding</span><span style="font:600 9px Inter,sans-serif; color:#8893A4;">Queued</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="text-align:center; margin-top:13px; font:600 12px Inter,sans-serif; color:#33404F;">Syncing — back online</div>
+    </div>
+
+    <!-- PHONE C — Synced -->
+    <div>
+      <div style="width:300px; background:#0a0c10; border-radius:46px; padding:11px; box-shadow:0 24px 60px rgba(10,38,71,.26);">
+        <div data-screen-label="iPhone — Synced" style="width:278px; height:600px; background:#F4F7FB; border-radius:38px; overflow:hidden; position:relative; font-family:Inter,sans-serif;">
+          <div style="position:absolute; top:9px; left:50%; transform:translateX(-50%); width:86px; height:24px; background:#0a0c10; border-radius:99px; z-index:10;"></div>
+          <div style="height:46px; background:#0A2647; display:flex; align-items:flex-end; justify-content:space-between; padding:0 22px 6px;"><span style="font:600 13px Inter,sans-serif; color:#fff;">9:42</span><span style="display:flex; align-items:center; gap:5px;"><svg width="16" height="11" viewBox="0 0 18 12" fill="#fff"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="5" y="4" width="3" height="8" rx="1"/><rect x="10" y="1.5" width="3" height="10.5" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg><svg width="15" height="13" viewBox="0 0 18 14" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"><path d="M2 5.5a11 11 0 0 1 14 0M4.5 8.5a7 7 0 0 1 9 0M9 11.5h.01"/></svg><svg width="22" height="11" viewBox="0 0 26 13" fill="none"><rect x="1" y="1" width="21" height="11" rx="3" stroke="#fff" stroke-opacity=".5"/><rect x="3" y="3" width="16" height="7" rx="1.5" fill="#fff"/><rect x="23" y="4" width="2" height="5" rx="1" fill="#fff"/></svg></span></div>
+          <div style="height:48px; background:#0A2647; display:flex; align-items:center; padding:0 16px; gap:10px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9DB2CE" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg><div style="flex:1;"><div style="font:700 13px Montserrat,sans-serif; color:#fff;">Field Audit</div><div style="font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:600; color:#E7C66B;">AUD-2026-001</div></div><span style="width:26px; height:26px; border-radius:50%; background:#C9A84C; color:#0A2647; font:700 10px Montserrat,sans-serif; display:flex; align-items:center; justify-content:center;">JJ</span></div>
+          <!-- synced banner -->
+          <div style="background:#2D9E2D; display:flex; align-items:center; justify-content:center; gap:9px; padding:11px 15px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17.5 19.5 6.5"/></svg><span style="font:700 12px Inter,sans-serif; color:#fff;">All changes synced</span></div>
+          <div style="padding:14px;">
+            <div style="font:700 16px 'JetBrains Mono',monospace; color:#C9A84C;">§ 6.1.2</div>
+            <div style="font:600 12.5px Inter,sans-serif; color:#0A2647; margin-top:3px;">Hazard Identification</div>
+            <div style="margin-top:13px; background:#fff; border:1px solid #E6EBF2; border-left:4px solid #E67E22; border-radius:0 9px 9px 0; padding:11px 13px; box-shadow:0 1px 3px rgba(10,38,71,.05);">
+              <div style="display:flex; justify-content:space-between; align-items:center;"><span style="font-family:'JetBrains Mono',monospace; font-size:9.5px; font-weight:600; color:#C9A84C;">NCR-2026-004</span><span style="display:flex; align-items:center; gap:4px; font:600 8.5px Inter,sans-serif; color:#2D9E2D;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#2D9E2D" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17.5 19.5 6.5"/></svg>Synced</span></div>
+              <div style="font:500 11px/1.4 Inter,sans-serif; color:#33404F; margin-top:6px;">Night-shift de-icing operation omitted from HIRA register.</div>
+            </div>
+            <div style="font:600 9px Inter,sans-serif; color:#8893A4; letter-spacing:.06em; text-transform:uppercase; margin:14px 0 7px;">Evidence · synced</div>
+            <div style="display:flex; gap:8px;">
+              <div style="flex:1; height:62px; border-radius:8px; background:linear-gradient(135deg,#33536f,#1d3a52); position:relative;"><span style="position:absolute; bottom:5px; right:5px; width:13px; height:13px; border-radius:50%; background:#2D9E2D; border:2px solid #fff; display:flex; align-items:center; justify-content:center;"><svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17.5 19.5 6.5"/></svg></span></div>
+              <div style="flex:1; height:62px; border-radius:8px; background:linear-gradient(135deg,#3a4a63,#222f44); position:relative;"><span style="position:absolute; bottom:5px; right:5px; width:13px; height:13px; border-radius:50%; background:#2D9E2D; border:2px solid #fff; display:flex; align-items:center; justify-content:center;"><svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17.5 19.5 6.5"/></svg></span></div>
+              <div style="flex:1; height:62px; border-radius:8px; background:linear-gradient(135deg,#2f5a63,#1b3b45); position:relative;"><span style="position:absolute; bottom:5px; right:5px; width:13px; height:13px; border-radius:50%; background:#2D9E2D; border:2px solid #fff; display:flex; align-items:center; justify-content:center;"><svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17.5 19.5 6.5"/></svg></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="text-align:center; margin-top:13px; font:600 12px Inter,sans-serif; color:#33404F;">Synced confirmation</div>
+    </div>
+
+    <!-- PHONE D — Sync Settings -->
+    <div>
+      <div style="width:300px; background:#0a0c10; border-radius:46px; padding:11px; box-shadow:0 24px 60px rgba(10,38,71,.26);">
+        <div data-screen-label="iPhone — Sync Settings" style="width:278px; height:600px; background:#F4F7FB; border-radius:38px; overflow:hidden; position:relative; font-family:Inter,sans-serif;">
+          <div style="position:absolute; top:9px; left:50%; transform:translateX(-50%); width:86px; height:24px; background:#0a0c10; border-radius:99px; z-index:10;"></div>
+          <div style="height:46px; background:#0A2647; display:flex; align-items:flex-end; justify-content:space-between; padding:0 22px 6px;"><span style="font:600 13px Inter,sans-serif; color:#fff;">9:43</span><span style="display:flex; align-items:center; gap:5px;"><svg width="16" height="11" viewBox="0 0 18 12" fill="#fff"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="5" y="4" width="3" height="8" rx="1"/><rect x="10" y="1.5" width="3" height="10.5" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg><svg width="15" height="13" viewBox="0 0 18 14" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"><path d="M2 5.5a11 11 0 0 1 14 0M4.5 8.5a7 7 0 0 1 9 0M9 11.5h.01"/></svg><svg width="22" height="11" viewBox="0 0 26 13" fill="none"><rect x="1" y="1" width="21" height="11" rx="3" stroke="#fff" stroke-opacity=".5"/><rect x="3" y="3" width="16" height="7" rx="1.5" fill="#fff"/><rect x="23" y="4" width="2" height="5" rx="1" fill="#fff"/></svg></span></div>
+          <div style="height:48px; background:#0A2647; display:flex; align-items:center; padding:0 16px; gap:10px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9DB2CE" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg><div style="flex:1; font:700 14px Montserrat,sans-serif; color:#fff;">Sync</div></div>
+          <div style="padding:14px;">
+            <div style="display:flex; align-items:center; gap:9px; background:#FBF1DA; border:1px solid #F0DFB0; border-radius:10px; padding:11px 13px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A6862E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span style="flex:1; font:600 11.5px Inter,sans-serif; color:#5C4E22;">6 changes waiting to sync</span></div>
+            <div style="font:600 9px Inter,sans-serif; color:#8893A4; letter-spacing:.06em; text-transform:uppercase; margin:15px 0 8px;">Pending Changes</div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <div style="display:flex; align-items:center; gap:11px; background:#fff; border:1px solid #E6EBF2; border-radius:9px; padding:11px 13px;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1B4F8E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 9h6M9 13h4"/></svg><div style="flex:1;"><div style="font:600 12px Inter,sans-serif; color:#1A1D23;">3 clause assessments</div><div style="font:500 9.5px Inter,sans-serif; color:#8893A4;">Captured 2:14 PM</div></div><span style="font:600 10px 'JetBrains Mono',monospace; color:#8893A4;">48 KB</span></div>
+              <div style="display:flex; align-items:center; gap:11px; background:#fff; border:1px solid #E6EBF2; border-radius:9px; padding:11px 13px;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1B8CA8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h3l2-2.5h8L18 8h3v11H3z"/><circle cx="12" cy="13" r="3.2"/></svg><div style="flex:1;"><div style="font:600 12px Inter,sans-serif; color:#1A1D23;">2 evidence photos</div><div style="font:500 9.5px Inter,sans-serif; color:#8893A4;">Captured 2:09 PM</div></div><span style="font:600 10px 'JetBrains Mono',monospace; color:#8893A4;">4.2 MB</span></div>
+              <div style="display:flex; align-items:center; gap:11px; background:#fff; border:1px solid #E6EBF2; border-radius:9px; padding:11px 13px;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#E67E22" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z"/></svg><div style="flex:1;"><div style="font:600 12px Inter,sans-serif; color:#1A1D23;">1 finding</div><div style="font:500 9.5px Inter,sans-serif; color:#8893A4;">Captured 2:02 PM</div></div><span style="font:600 10px 'JetBrains Mono',monospace; color:#8893A4;">12 KB</span></div>
+            </div>
+            <div style="display:flex; align-items:center; justify-content:space-between; background:#fff; border:1px solid #E6EBF2; border-radius:9px; padding:12px 13px; margin-top:13px;"><div><div style="font:600 12px Inter,sans-serif; color:#1A1D23;">Sync over cellular</div><div style="font:500 9.5px Inter,sans-serif; color:#8893A4;">Off — saves mobile data</div></div><span style="width:38px; height:22px; border-radius:99px; background:#D1D9E6; position:relative;"><span style="position:absolute; top:2px; left:2px; width:18px; height:18px; border-radius:50%; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,.2);"></span></span></div>
+            <div style="display:flex; align-items:center; justify-content:center; gap:9px; background:#0A2647; color:#fff; padding:13px; border-radius:10px; font:700 13px Montserrat,sans-serif; margin-top:13px; box-shadow:0 4px 14px rgba(10,38,71,.22);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E7C66B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7M21 4v4h-4"/></svg>Sync Now</div>
+          </div>
+        </div>
+      </div>
+      <div style="text-align:center; margin-top:13px; font:600 12px Inter,sans-serif; color:#33404F;">Sync settings</div>
+    </div>
+
+  </div>
+</div>
+<!-- ============ FRAME 08 — Asset Sheet ============ -->
+<div style="position:absolute; left:1620px; top:2760px; width:1420px;">
+  <div data-drags-parent="1" style="display:flex; align-items:center; gap:10px; margin-bottom:18px; font:600 12px Inter,sans-serif; color:#8A94A6; letter-spacing:.1em; text-transform:uppercase;">
+    <span style="font-family:'JetBrains Mono',monospace; font-weight:700; color:#0A2647; background:#E7C66B; padding:2px 8px; border-radius:6px;">08</span>
+    Brand &amp; Asset Library
+  </div>
+  <div data-screen-label="Asset Sheet" style="background:#fff; border-radius:16px; box-shadow:0 30px 80px rgba(10,38,71,.18); padding:34px 36px; font-family:Inter,sans-serif;">
+
+    <!-- LOGO + APP ICONS -->
+    <div style="display:flex; gap:26px;">
+      <div style="flex:1.4;">
+        <div style="font:700 12px Inter,sans-serif; color:#8893A4; letter-spacing:.1em; text-transform:uppercase; margin-bottom:16px;">Logo &amp; Lockup</div>
+        <div style="display:flex; gap:18px;">
+          <div style="flex:1; border:1px solid #E6EBF2; border-radius:12px; padding:24px; display:flex; align-items:center; gap:14px;">
+            <svg width="46" height="51" viewBox="0 0 34 38" fill="none"><path d="M17 2 31 7.4v9.8c0 8.7-5.9 15.6-14 18.4C8.9 32.8 3 25.9 3 17.2V7.4L17 2Z" fill="#0A2647" stroke="#C9A84C" stroke-width="1.5"/><path d="M10 18.6 14.8 23.4 24.4 12" stroke="#C9A84C" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 13.2 12.8 16" stroke="#C9A84C" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" opacity=".55"/></svg>
+            <div><div style="font:800 23px Montserrat,sans-serif; color:#0A2647; letter-spacing:-.01em;">Soteria</div><div style="font:600 10px Inter,sans-serif; color:#C9A84C; letter-spacing:.12em; text-transform:uppercase;">Assurance</div></div>
+          </div>
+          <div style="flex:1; border:1px solid #0A2647; border-radius:12px; padding:24px; display:flex; align-items:center; gap:14px; background:#0A2647;">
+            <svg width="46" height="51" viewBox="0 0 34 38" fill="none"><path d="M17 2 31 7.4v9.8c0 8.7-5.9 15.6-14 18.4C8.9 32.8 3 25.9 3 17.2V7.4L17 2Z" fill="#0A2647" stroke="#C9A84C" stroke-width="1.5"/><path d="M10 18.6 14.8 23.4 24.4 12" stroke="#C9A84C" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 13.2 12.8 16" stroke="#C9A84C" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" opacity=".55"/></svg>
+            <div><div style="font:800 23px Montserrat,sans-serif; color:#fff; letter-spacing:-.01em;">Soteria</div><div style="font:600 10px Inter,sans-serif; color:#E7C66B; letter-spacing:.12em; text-transform:uppercase;">Assurance</div></div>
+          </div>
+        </div>
+        <div style="font:500 12px/1.6 Inter,sans-serif; color:#6B7280; margin-top:14px;">A shield carries the gold audit checkmark — protection &amp; verification in one mark. Clear space ≥ the height of the shield; never recolor the checkmark.</div>
+      </div>
+      <div style="flex:1;">
+        <div style="font:700 12px Inter,sans-serif; color:#8893A4; letter-spacing:.1em; text-transform:uppercase; margin-bottom:16px;">App Icons</div>
+        <div style="display:flex; gap:16px; align-items:flex-end;">
+          <div style="text-align:center;"><div style="width:84px; height:84px; border-radius:19px; background:#0A2647; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 18px rgba(10,38,71,.25);"><svg width="42" height="47" viewBox="0 0 34 38" fill="none"><path d="M17 2 31 7.4v9.8c0 8.7-5.9 15.6-14 18.4C8.9 32.8 3 25.9 3 17.2V7.4L17 2Z" stroke="#C9A84C" stroke-width="1.6"/><path d="M10 18.6 14.8 23.4 24.4 12" stroke="#C9A84C" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div style="font:500 10px Inter,sans-serif; color:#8893A4; margin-top:8px;">iOS</div></div>
+          <div style="text-align:center;"><div style="width:68px; height:68px; border-radius:50%; background:#0A2647; display:flex; align-items:center; justify-content:center;"><svg width="34" height="38" viewBox="0 0 34 38" fill="none"><path d="M17 2 31 7.4v9.8c0 8.7-5.9 15.6-14 18.4C8.9 32.8 3 25.9 3 17.2V7.4L17 2Z" stroke="#C9A84C" stroke-width="1.8"/><path d="M10 18.6 14.8 23.4 24.4 12" stroke="#C9A84C" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div style="font:500 10px Inter,sans-serif; color:#8893A4; margin-top:8px;">Android</div></div>
+          <div style="text-align:center;"><div style="width:48px; height:48px; border-radius:11px; background:#0A2647; display:flex; align-items:center; justify-content:center;"><span style="font:800 22px Montserrat,sans-serif; color:#C9A84C;">S</span></div><div style="font:500 10px Inter,sans-serif; color:#8893A4; margin-top:8px;">Favicon</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="height:1px; background:#EEF1F6; margin:30px 0;"></div>
+
+    <!-- COLOR PALETTE -->
+    <div style="font:700 12px Inter,sans-serif; color:#8893A4; letter-spacing:.1em; text-transform:uppercase; margin-bottom:16px;">Color Palette</div>
+    <div style="display:grid; grid-template-columns:repeat(6,1fr); gap:14px;">
+      <sc-for list="{{ palette }}" as="c" hint-placeholder-count="12">
+        <div><div style="{{ c.swatchStyle }}"></div><div style="font:600 11.5px Inter,sans-serif; color:#1A1D23; margin-top:8px;">{{ c.name }}</div><div style="font:500 10.5px 'JetBrains Mono',monospace; color:#8893A4; margin-top:1px;">{{ c.hex }}</div></div>
+      </sc-for>
+    </div>
+
+    <div style="height:1px; background:#EEF1F6; margin:30px 0;"></div>
+
+    <!-- TYPE + SIGNATURE -->
+    <div style="display:flex; gap:26px;">
+      <div style="flex:1.3;">
+        <div style="font:700 12px Inter,sans-serif; color:#8893A4; letter-spacing:.1em; text-transform:uppercase; margin-bottom:16px;">Typography</div>
+        <div style="display:flex; flex-direction:column; gap:16px;">
+          <div style="display:flex; align-items:center; gap:18px;"><span style="font:700 46px Montserrat,sans-serif; color:#0A2647; line-height:1;">Aa</span><div><div style="font:700 14px Inter,sans-serif; color:#1A1D23;">Montserrat</div><div style="font:500 11.5px Inter,sans-serif; color:#6B7280;">Display / Headlines · 700 · numerics 600</div></div></div>
+          <div style="display:flex; align-items:center; gap:18px;"><span style="font:400 46px Inter,sans-serif; color:#0A2647; line-height:1;">Aa</span><div><div style="font:700 14px Inter,sans-serif; color:#1A1D23;">Inter</div><div style="font:500 11.5px Inter,sans-serif; color:#6B7280;">Body text · 400 / 500 / 600</div></div></div>
+          <div style="display:flex; align-items:center; gap:18px;"><span style="font:600 38px 'JetBrains Mono',monospace; color:#C9A84C; line-height:1;">§6.1</span><div><div style="font:700 14px Inter,sans-serif; color:#1A1D23;">JetBrains Mono</div><div style="font:500 11.5px Inter,sans-serif; color:#6B7280;">Clause codes — always in Certification Gold</div></div></div>
+        </div>
+      </div>
+      <div style="flex:1;">
+        <div style="font:700 12px Inter,sans-serif; color:#8893A4; letter-spacing:.1em; text-transform:uppercase; margin-bottom:16px;">Signature · Clause Indicator</div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <sc-for list="{{ clauseStrips }}" as="s" hint-placeholder-count="5">
+            <div style="{{ s.cardStyle }}"><span style="{{ s.dotStyle }}"></span><span style="font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:600; color:#C9A84C;">§ 6.1.2</span><span style="font:500 12px Inter,sans-serif; color:#33404F;">{{ s.label }}</span></div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <div style="height:1px; background:#EEF1F6; margin:30px 0;"></div>
+
+    <!-- BADGES -->
+    <div style="font:700 12px Inter,sans-serif; color:#8893A4; letter-spacing:.1em; text-transform:uppercase; margin-bottom:16px;">Finding &amp; Status Badges</div>
+    <div style="display:flex; gap:11px; flex-wrap:wrap;">
+      <sc-for list="{{ severityBadges }}" as="b" hint-placeholder-count="6">
+        <span style="{{ b.style }}"><span style="{{ b.dotStyle }}"></span>{{ b.label }}</span>
+      </sc-for>
+    </div>
+
+    <div style="height:1px; background:#EEF1F6; margin:30px 0;"></div>
+
+    <!-- EMPTY STATES -->
+    <div style="font:700 12px Inter,sans-serif; color:#8893A4; letter-spacing:.1em; text-transform:uppercase; margin-bottom:16px;">Empty States</div>
+    <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:14px;">
+      <div style="border:1px solid #E6EBF2; border-radius:12px; padding:18px 12px; text-align:center;"><svg width="46" height="46" viewBox="0 0 48 48" fill="none" stroke="#0A2647" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="16" width="32" height="22" rx="3"/><path d="M18 16v-3a3 3 0 0 1 3-3h6a3 3 0 0 1 3 3v3"/><circle cx="24" cy="27" r="5" stroke="#C9A84C"/><path d="M24 24.5v5M21.5 27h5" stroke="#C9A84C"/></svg><div style="font:600 11px Inter,sans-serif; color:#1A1D23; margin-top:11px;">No active audits</div></div>
+      <div style="border:1px solid #E6EBF2; border-radius:12px; padding:18px 12px; text-align:center;"><svg width="46" height="46" viewBox="0 0 48 48" fill="none" stroke="#0A2647" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="11" y="10" width="26" height="30" rx="3"/><path d="M18 10v-2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2"/><path d="M17 25 21 29 31 19" stroke="#C9A84C" stroke-width="2.2"/></svg><div style="font:600 11px Inter,sans-serif; color:#1A1D23; margin-top:11px;">No findings yet</div></div>
+      <div style="border:1px solid #E6EBF2; border-radius:12px; padding:18px 12px; text-align:center;"><svg width="46" height="46" viewBox="0 0 48 48" fill="none" stroke="#0A2647" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="15" width="34" height="24" rx="3" stroke-dasharray="3 3"/><path d="M16 15l3-4h10l3 4"/><circle cx="24" cy="27" r="6" stroke="#C9A84C"/></svg><div style="font:600 11px Inter,sans-serif; color:#1A1D23; margin-top:11px;">No evidence</div></div>
+      <div style="border:1px solid #E6EBF2; border-radius:12px; padding:18px 12px; text-align:center;"><svg width="46" height="46" viewBox="0 0 48 48" fill="none" stroke="#0A2647" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M24 7 11 12v9c0 8 5.5 14 13 16 7.5-2 13-8 13-16v-9L24 7Z"/><path d="M24 19v9M19.5 23.5h9" stroke="#C9A84C" stroke-width="2.2"/></svg><div style="font:600 11px Inter,sans-serif; color:#1A1D23; margin-top:11px;">No actions</div></div>
+      <div style="border:1px solid #E6EBF2; border-radius:12px; padding:18px 12px; text-align:center;"><svg width="46" height="46" viewBox="0 0 48 48" fill="none" stroke="#0A2647" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 32a7 7 0 0 1 1-13.9 9 9 0 0 1 17 2A6 6 0 0 1 33 32H14Z"/><path d="M9 9 39 36" stroke="#C9A84C" stroke-width="2"/></svg><div style="font:600 11px Inter,sans-serif; color:#1A1D23; margin-top:11px;">No connection</div></div>
+    </div>
+
+    <div style="height:1px; background:#EEF1F6; margin:30px 0;"></div>
+
+    <!-- ICON LIBRARY -->
+    <div style="font:700 12px Inter,sans-serif; color:#8893A4; letter-spacing:.1em; text-transform:uppercase; margin-bottom:16px;">Icon Library · 2px outline</div>
+    <div style="display:grid; grid-template-columns:repeat(6,1fr); gap:14px;">
+      <div style="border:1px solid #E6EBF2; border-radius:11px; padding:16px; display:flex; flex-direction:column; align-items:center; gap:9px;"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0A2647" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="3" width="12" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/></svg><span style="font:500 10.5px Inter,sans-serif; color:#33404F;">ISO Clause</span></div>
+      <div style="border:1px solid #E6EBF2; border-radius:11px; padding:16px; display:flex; flex-direction:column; align-items:center; gap:9px;"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0A2647" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z"/></svg><span style="font:500 10.5px Inter,sans-serif; color:#33404F;">Finding</span></div>
+      <div style="border:1px solid #E6EBF2; border-radius:11px; padding:16px; display:flex; flex-direction:column; align-items:center; gap:9px;"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0A2647" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17v.1M10.3 3.9 2.6 17.5A2 2 0 0 0 4.3 20.5h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg><span style="font:500 10.5px Inter,sans-serif; color:#33404F;">NCR</span></div>
+      <div style="border:1px solid #E6EBF2; border-radius:11px; padding:16px; display:flex; flex-direction:column; align-items:center; gap:9px;"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0A2647" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21h6M10 21v-3M14 21v-3"/><path d="M12 3a6 6 0 0 0-4 10.5c.6.6 1 1.4 1 2.2h6c0-.8.4-1.6 1-2.2A6 6 0 0 0 12 3Z"/></svg><span style="font:500 10.5px Inter,sans-serif; color:#33404F;">OFI</span></div>
+      <div style="border:1px solid #E6EBF2; border-radius:11px; padding:16px; display:flex; flex-direction:column; align-items:center; gap:9px;"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0A2647" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h3l2-2.5h8L18 8h3v11H3z"/><circle cx="12" cy="13" r="3.2"/></svg><span style="font:500 10.5px Inter,sans-serif; color:#33404F;">Evidence</span></div>
+      <div style="border:1px solid #E6EBF2; border-radius:11px; padding:16px; display:flex; flex-direction:column; align-items:center; gap:9px;"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1B8CA8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M6 6l1.4 1.4M16.6 16.6 18 18M18 6l-1.4 1.4M7.4 16.6 6 18"/></svg><span style="font:500 10.5px Inter,sans-serif; color:#33404F;">AI Co-pilot</span></div>
+      <div style="border:1px solid #E6EBF2; border-radius:11px; padding:16px; display:flex; flex-direction:column; align-items:center; gap:9px;"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0A2647" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20v-1a5 5 0 0 1 5-5h0M19 21l2-2-2-2M21 19h-5"/><circle cx="9" cy="8" r="3.5"/></svg><span style="font:500 10.5px Inter,sans-serif; color:#33404F;">Opening Mtg</span></div>
+      <div style="border:1px solid #E6EBF2; border-radius:11px; padding:16px; display:flex; flex-direction:column; align-items:center; gap:9px;"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0A2647" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M4 20v-1a5 5 0 0 1 5-5h0M15 13l2.5 2.5L22 11"/></svg><span style="font:500 10.5px Inter,sans-serif; color:#33404F;">Closing Mtg</span></div>
+      <div style="border:1px solid #E6EBF2; border-radius:11px; padding:16px; display:flex; flex-direction:column; align-items:center; gap:9px;"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0A2647" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h7"/><path d="M16 16l2 2 4-4" stroke="#2D9E2D"/></svg><span style="font:500 10.5px Inter,sans-serif; color:#33404F;">Witness Stmt</span></div>
+      <div style="border:1px solid #E6EBF2; border-radius:11px; padding:16px; display:flex; flex-direction:column; align-items:center; gap:9px;"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0A2647" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 2.6 17.5A2 2 0 0 0 4.3 20.5h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17v.1"/></svg><span style="font:500 10.5px Inter,sans-serif; color:#33404F;">Hazard</span></div>
+      <div style="border:1px solid #E6EBF2; border-radius:11px; padding:16px; display:flex; flex-direction:column; align-items:center; gap:9px;"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0A2647" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 9h16M4 14h16M9 4v16M14 4v16"/></svg><span style="font:500 10.5px Inter,sans-serif; color:#33404F;">Risk Matrix</span></div>
+      <div style="border:1px solid #E6EBF2; border-radius:11px; padding:16px; display:flex; flex-direction:column; align-items:center; gap:9px;"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0A2647" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 19c3-5 5-1 8-4s2-7 5-9M3 19h0M20 5l1 3-3 0"/></svg><span style="font:500 10.5px Inter,sans-serif; color:#33404F;">Signature</span></div>
+    </div>
+
+  </div>
+</div></x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;aiCopilotOpen&quot;: { &quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Field Audit&quot;, &quot;label&quot;: &quot;ARIA co-pilot drawer open&quot; },
+  &quot;findingSeverity&quot;: { &quot;editor&quot;: &quot;enum&quot;, &quot;default&quot;: &quot;minor&quot;, &quot;options&quot;: [&quot;major&quot;, &quot;minor&quot;, &quot;ofi&quot;, &quot;strong&quot;, &quot;observation&quot;], &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Finding Modal&quot;, &quot;label&quot;: &quot;Selected finding type&quot; },
+  &quot;recordingActive&quot;: { &quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Meeting Studio&quot;, &quot;label&quot;: &quot;Meeting recording active&quot; }
+}">
+class Component extends DCLogic {
+  state = {
+    activeTab: 'questions',
+    aiOpen: null,
+    verdicts: { q1:'yes', q2:'yes', q3:'partial', q4:'no', q5:'' },
+    clauseVerdict: 'minor',
+    activeClause: '6.1.2',
+    findingType: null,
+    recording: null,
+    agendaActive: 1,
+  };
+
+  AGENDA = [
+    { title:'Introduction of the Audit Team', dur:'5 min' },
+    { title:'Confirmation of Scope & Objectives', dur:'10 min' },
+    { title:'Audit Plan Walkthrough', dur:'15 min' },
+    { title:'Confidentiality & Independence Statement', dur:'5 min' },
+    { title:'Questions & Answers', dur:'10 min' },
+  ];
+
+  ATTENDEES = [
+    { name:'Earl Crouchley', role:'Safety Director', initials:'EC', avBg:'#1B4F8E', present:true },
+    { name:'Ingrid Halvorsen', role:'Management Representative', initials:'IH', avBg:'#1B8CA8', present:true },
+    { name:'Marcus Bell', role:'Operations Manager', initials:'MB', avBg:'#8E44AD', present:true },
+    { name:'Priya Nair', role:'HSE Coordinator', initials:'PN', avBg:'#2D9E2D', present:true },
+    { name:'Tom Reyes', role:'Worker Representative', initials:'TR', avBg:'#7A8699', present:false },
+  ];
+
+  FINDING_TYPES = [
+    { k:'major', label:'Major NC', c:'#C0392B' },
+    { k:'minor', label:'Minor NC', c:'#E67E22' },
+    { k:'ofi', label:'OFI', c:'#2980B9' },
+    { k:'strong', label:'Strong Point', c:'#8E44AD' },
+    { k:'observation', label:'Observation', c:'#7A8699' },
+  ];
+
+  STATUS = {
+    conforming: { label:'Conforming', fg:'#2D9E2D', bg:'#E7F5E8' },
+    minor:      { label:'Minor NC',   fg:'#C2691C', bg:'#FBEBDD' },
+    major:      { label:'Major NC',   fg:'#C0392B', bg:'#FBE7E5' },
+    ofi:        { label:'OFI',         fg:'#2470A8', bg:'#E7F1FA' },
+    strong:     { label:'Strong',      fg:'#8E44AD', bg:'#F2E8F8' },
+    notaudited: { label:'Not Audited', fg:'#7A8699', bg:'#EDF1F7' },
+    inprogress: { label:'In Progress', fg:'#1B4F8E', bg:'#E4ECF7' },
+  };
+
+  CLAUSE_DATA = [
+    { num:'4', title:'Context of the Organization', clauses:[
+      { n:'4.1', t:'Understanding the organization and its context', status:'conforming' },
+      { n:'4.2', t:'Needs & expectations of workers and interested parties', status:'conforming' },
+      { n:'4.3', t:'Determining the scope of the OH&S management system', status:'minor' },
+      { n:'4.4', t:'OH&S management system', status:'conforming' },
+    ]},
+    { num:'5', title:'Leadership & Worker Participation', clauses:[
+      { n:'5.1', t:'Leadership and commitment', status:'conforming' },
+      { n:'5.2', t:'OH&S policy', status:'conforming' },
+      { n:'5.3', t:'Organizational roles, responsibilities and authorities', status:'notaudited' },
+      { n:'5.4', t:'Consultation and participation of workers', status:'inprogress' },
+    ]},
+    { num:'6', title:'Planning', clauses:[
+      { n:'6.1.1', t:'Actions to address risks & opportunities — General', status:'conforming' },
+      { n:'6.1.2', t:'Hazard identification & assessment of OH&S risks', status:'inprogress' },
+      { n:'6.1.3', t:'Determination of legal and other requirements', status:'notaudited' },
+      { n:'6.2', t:'OH&S objectives and planning to achieve them', status:'notaudited' },
+    ]},
+    { num:'7', title:'Support', clauses:[
+      { n:'7.1', t:'Resources', status:'notaudited' },
+      { n:'7.2', t:'Competence', status:'minor' },
+      { n:'7.3', t:'Awareness', status:'notaudited' },
+      { n:'7.4', t:'Communication', status:'notaudited' },
+      { n:'7.5', t:'Documented information', status:'notaudited' },
+    ]},
+    { num:'8', title:'Operation', clauses:[
+      { n:'8.1', t:'Operational planning and control', status:'notaudited' },
+      { n:'8.2', t:'Emergency preparedness and response', status:'notaudited' },
+    ]},
+    { num:'9', title:'Performance Evaluation', clauses:[
+      { n:'9.1', t:'Monitoring, measurement, analysis & evaluation', status:'notaudited' },
+      { n:'9.2', t:'Internal audit', status:'notaudited' },
+      { n:'9.3', t:'Management review', status:'notaudited' },
+    ]},
+    { num:'10', title:'Improvement', clauses:[
+      { n:'10.1', t:'General', status:'notaudited' },
+      { n:'10.2', t:'Incident, nonconformity and corrective action', status:'notaudited' },
+      { n:'10.3', t:'Continual improvement', status:'notaudited' },
+    ]},
+  ];
+
+  QUESTIONS = [
+    { id:'q1', text:'Is the hazard identification process ongoing and proactive rather than reactive?' },
+    { id:'q2', text:'Does it account for routine and non-routine activities and all people with workplace access?' },
+    { id:'q3', text:'Are emergency situations and reasonably foreseeable incidents considered?' },
+    { id:'q4', text:'Is there documented evidence of worker consultation in identifying hazards?' },
+    { id:'q5', text:'Are OH&S risks evaluated using a defined, repeatable methodology?' },
+  ];
+
+  VERDICT_OPTS = [
+    { k:'yes', label:'Yes', sym:'✓', fg:'#2D9E2D' },
+    { k:'no', label:'No', sym:'✕', fg:'#C0392B' },
+    { k:'partial', label:'Partial', sym:'≈', fg:'#C2691C' },
+    { k:'na', label:'N/A', sym:'—', fg:'#7A8699' },
+  ];
+
+  CV = [
+    { k:'conforming', label:'Conforming', sym:'✓', c:'#2D9E2D' },
+    { k:'minor', label:'Minor NC', sym:'◆', c:'#E67E22' },
+    { k:'major', label:'Major NC', sym:'■', c:'#C0392B' },
+    { k:'na', label:'N/A', sym:'—', c:'#7A8699' },
+  ];
+
+  tabStyle(k){
+    const a = this.state.activeTab === k;
+    return `padding:9px 2px; margin-right:26px; font:600 13px Inter,sans-serif; cursor:pointer; color:${a?'#0A2647':'#8893A4'}; border-bottom:2.5px solid ${a?'#C9A84C':'transparent'}; margin-bottom:-1px;`;
+  }
+
+  renderVals() {
+    const aiOpen = this.state.aiOpen ?? (this.props.aiCopilotOpen ?? true);
+    const recording = this.state.recording ?? (this.props.recordingActive ?? true);
+    const findingType = this.state.findingType ?? (this.props.findingSeverity ?? 'minor');
+
+    const groups = this.CLAUSE_DATA.map(g => ({
+      num: g.num,
+      title: g.title,
+      clauses: g.clauses.map(c => {
+        const meta = this.STATUS[c.status] || this.STATUS.notaudited;
+        const active = c.n === this.state.activeClause;
+        return {
+          n: c.n, t: c.t,
+          rowStyle: `display:flex; align-items:center; gap:9px; padding:8px 12px 8px 16px; margin:1px 8px; border-radius:8px; cursor:pointer; ${active ? 'background:#0E335F;' : ''}`,
+          numStyle: `font-family:'JetBrains Mono',monospace; font-weight:600; font-size:11px; width:44px; flex:none; color:${active ? '#E7C66B' : '#C9A84C'};`,
+          titleStyle: `flex:1; min-width:0; font:500 12px/1.3 Inter,sans-serif; color:${active ? '#fff' : '#33404F'}; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;`,
+          dotStyle: `width:6px; height:6px; border-radius:50%; flex:none; background:${meta.fg}; ${c.status==='inprogress' ? 'animation:somaPulse 1.6s ease-in-out infinite;' : ''}`,
+          pillStyle: `flex:none; font:600 9px Inter,sans-serif; letter-spacing:.03em; text-transform:uppercase; padding:3px 8px; border-radius:99px; color:${active ? '#CFE0F5' : meta.fg}; background:${active ? 'rgba(255,255,255,.14)' : meta.bg};`,
+          pillLabel: meta.label,
+          onClick: () => this.setState({ activeClause: c.n }),
+        };
+      }),
+    }));
+
+    const questions = this.QUESTIONS.map((q, i) => ({
+      idx: String(i+1).padStart(2,'0'),
+      text: q.text,
+      opts: this.VERDICT_OPTS.map(o => {
+        const active = this.state.verdicts[q.id] === o.k;
+        return {
+          label: o.label, sym: o.sym,
+          style: `display:flex; align-items:center; gap:5px; font:600 11px Inter,sans-serif; padding:6px 12px; border-radius:99px; cursor:pointer; border:1.5px solid ${active ? o.fg : '#DCE3EC'}; color:${active ? '#fff' : '#7A8699'}; background:${active ? o.fg : '#fff'};`,
+          onClick: () => this.setState(s => ({ verdicts: { ...s.verdicts, [q.id]: o.k } })),
+        };
+      }),
+    }));
+
+    const clauseVerdicts = this.CV.map(v => {
+      const active = this.state.clauseVerdict === v.k;
+      return {
+        label: v.label, sym: v.sym,
+        style: `flex:1; display:flex; align-items:center; justify-content:center; gap:8px; font:700 12.5px Montserrat,sans-serif; padding:12px 8px; border-radius:9px; cursor:pointer; border:1.5px solid ${active ? v.c : '#DCE3EC'}; color:${active ? '#fff' : v.c}; background:${active ? v.c : '#fff'}; box-shadow:${active ? '0 4px 12px '+v.c+'44' : 'none'};`,
+        onClick: () => this.setState({ clauseVerdict: v.k }),
+      };
+    });
+
+    const evidence = [
+      { label:'De-icing pad — guarding', bg:'linear-gradient(135deg,#33536f,#1d3a52)' },
+      { label:'HIRA register (rev. 4)', bg:'linear-gradient(135deg,#3a4a63,#222f44)' },
+      { label:'Toolbox talk sign-in', bg:'linear-gradient(135deg,#2f5a63,#1b3b45)' },
+    ];
+
+    const findingTypes = this.FINDING_TYPES.map(f => {
+      const active = findingType === f.k;
+      return {
+        label: f.label,
+        dotStyle: `width:8px; height:8px; border-radius:50%; flex:none; background:${active ? '#fff' : f.c};`,
+        style: `display:flex; align-items:center; gap:8px; font:700 12.5px Montserrat,sans-serif; padding:11px 16px; border-radius:99px; cursor:pointer; border:1.5px solid ${active ? f.c : '#DCE3EC'}; color:${active ? '#fff' : f.c}; background:${active ? f.c : '#fff'}; box-shadow:${active ? '0 4px 14px '+f.c+'40' : 'none'};`,
+        onClick: () => this.setState({ findingType: f.k }),
+      };
+    });
+    const fmeta = this.FINDING_TYPES.find(f => f.k === findingType) || this.FINDING_TYPES[1];
+    const findingPhotos = [
+      { bg:'linear-gradient(135deg,#33536f,#1d3a52)' },
+      { bg:'linear-gradient(135deg,#3a4a63,#222f44)' },
+      { bg:'linear-gradient(135deg,#2f5a63,#1b3b45)' },
+    ];
+
+    // ---- dashboard ----
+    const C = 2 * Math.PI * 32;
+    const gaugeArc = `${(C * 0.76).toFixed(1)} ${C.toFixed(1)}`;
+
+    const statusPill = (label, color, bg, pulse) => `display:flex; align-items:center; gap:6px; flex:none; font:700 10px Inter,sans-serif; letter-spacing:.02em; text-transform:uppercase; color:${color}; background:${bg}; padding:5px 10px; border-radius:99px; width:104px; justify-content:center;`;
+    const auditRows = [
+      { logo:'HJ', logoBg:'#1B4F8E', org:"Hartsfield-Jackson ATL Int'l", num:'AUD-2026-001', pct:'23%', pctText:'7 / 31 clauses', statusLabel:'In Progress', sc:'#1B4F8E', sbg:'#E4ECF7' },
+      { logo:'DE', logoBg:'#1B8CA8', org:'Denver International (DEN)', num:'AUD-2026-002', pct:'0%', pctText:'Starts in 2 days', statusLabel:'Scheduled', sc:'#7A8699', sbg:'#EDF1F7' },
+      { logo:'SE', logoBg:'#8E44AD', org:'SeaTac International (SEA)', num:'AUD-2026-003', pct:'68%', pctText:'21 / 31 clauses', statusLabel:'In Progress', sc:'#1B4F8E', sbg:'#E4ECF7' },
+    ].map(a => ({ ...a, statusStyle: statusPill(a.statusLabel, a.sc, a.sbg) }));
+
+    const overdueCAs = [
+      { ca:'CA-2026-007', clause:'§ 7.2', client:'Hartsfield-Jackson ATL', days:'23d' },
+      { ca:'CA-2026-004', clause:'§ 8.2', client:'Logan International (BOS)', days:'18d' },
+      { ca:'CA-2026-002', clause:'§ 5.4', client:'Midway International (MDW)', days:'11d' },
+    ];
+
+    const marked = { 1:'#1B4F8E', 2:'#1B4F8E', 9:'#1B8CA8', 10:'#1B8CA8', 22:'#8E44AD', 23:'#8E44AD' };
+    const firstDow = 3; // July 1 2026 is a Wednesday
+    const calendarDays = [];
+    for (let i = 0; i < 35; i++) {
+      const day = i - firstDow + 1;
+      if (day < 1 || day > 31) { calendarDays.push({ label:'', style:'height:24px;' }); continue; }
+      const m = marked[day];
+      const today = day === 1;
+      calendarDays.push({
+        label: String(day),
+        style: `height:24px; display:flex; align-items:center; justify-content:center; font:600 10px Inter,sans-serif; border-radius:6px; ${today ? 'background:#0A2647; color:#fff;' : m ? `background:${m}; color:#fff;` : 'color:#5A6678;'}`,
+      });
+    }
+
+    const heatColor = (v) => v >= 88 ? '#1E8A45' : v >= 72 ? '#5DB36A' : v >= 55 ? '#E8C24A' : v >= 40 ? '#E67E22' : '#C0392B';
+    const heatCols = ['4.1','4.3','5.1','5.4','6.1.2','6.2','7.2','7.5','8.1','8.2','9.2','10.2'];
+    const heatData = [
+      { client:"Hartsfield-Jackson ATL", v:[95,68,92,58,72,80,52,88,90,84,78,70] },
+      { client:'Denver International', v:[90,85,88,76,82,86,70,84,88,80,82,74] },
+      { client:'SeaTac International', v:[88,60,82,48,66,72,44,78,84,70,68,58] },
+      { client:'Logan International', v:[92,80,90,72,78,84,64,86,82,42,76,80] },
+      { client:'Midway International', v:[84,72,78,52,70,76,58,80,86,74,72,66] },
+    ];
+    const heatRows = heatData.map(r => ({
+      client: r.client,
+      cells: r.v.map(v => ({ style: `flex:1; height:26px; border-radius:3px; background:${heatColor(v)};` })),
+    }));
+
+    // ---- meeting studio ----
+    const waveH = [5,9,14,20,12,7,16,22,11,6,13,18,9,15,21,10,6,12,17,8,14,19,7,11];
+    const waveBars = waveH.map((h, i) => ({
+      style: `width:3px; height:${h}px; border-radius:99px; background:#0A2647; opacity:.55; transform-origin:bottom; animation:somaWave ${ (0.8 + (i%5)*0.18).toFixed(2) }s ease-in-out infinite; animation-delay:${ (i*0.06).toFixed(2) }s;`,
+    }));
+
+    const attendees = this.ATTENDEES.map(p => ({
+      name: p.name, role: p.role, initials: p.initials, avBg: p.avBg,
+      tag: p.present ? 'Present' : 'Awaiting',
+      tagStyle: p.present
+        ? 'flex:none; display:flex; align-items:center; gap:5px; font:700 9.5px Inter,sans-serif; color:#2D9E2D; background:#E7F5E8; padding:4px 9px; border-radius:99px;'
+        : 'flex:none; font:700 9.5px Inter,sans-serif; color:#7A8699; background:#EDF1F7; padding:4px 9px; border-radius:99px;',
+    }));
+
+    const aIdx = this.state.agendaActive;
+    const agenda = this.AGENDA.map((it, i) => {
+      const st = i < aIdx ? 'complete' : i === aIdx ? 'active' : 'pending';
+      const active = st === 'active', done = st === 'complete';
+      return {
+        title: it.title,
+        sub: active ? '4:32 remaining' : done ? 'Completed' : 'Up next',
+        dur: it.dur,
+        numInner: done ? '✓' : String(i+1),
+        cardStyle: `display:flex; align-items:center; gap:14px; padding:14px 16px; border-radius:11px; cursor:pointer; border:1.5px solid ${active ? '#1B4F8E' : '#E6EBF2'}; background:${active ? '#EAF1FB' : '#fff'}; box-shadow:${active ? '0 4px 16px rgba(27,79,142,.16)' : '0 1px 3px rgba(10,38,71,.04)'};`,
+        numStyle: `width:32px; height:32px; flex:none; border-radius:50%; display:flex; align-items:center; justify-content:center; font:700 13px Montserrat,sans-serif; color:#fff; background:${done ? '#2D9E2D' : active ? '#1B4F8E' : '#C3CEDD'}; ${active ? 'box-shadow:0 0 0 4px rgba(27,79,142,.18); animation:somaPulse 1.8s ease-in-out infinite;' : ''}`,
+        titleStyle: `font:600 14px Inter,sans-serif; color:${done ? '#8893A4' : '#1A1D23'}; ${done ? 'text-decoration:line-through;' : ''}`,
+        subStyle: `font:500 11px Inter,sans-serif; margin-top:2px; color:${active ? '#1B4F8E' : '#9AA6B6'};`,
+        durStyle: `flex:none; font:600 11.5px 'JetBrains Mono',monospace; color:${active ? '#1B4F8E' : '#8893A4'};`,
+        tag: active ? 'In Progress' : done ? 'Done' : 'Pending',
+        tagStyle: `flex:none; width:78px; text-align:center; font:700 9px Inter,sans-serif; letter-spacing:.03em; text-transform:uppercase; padding:5px 0; border-radius:99px; color:${active ? '#fff' : done ? '#2D9E2D' : '#9AA6B6'}; background:${active ? '#1B4F8E' : done ? '#E7F5E8' : '#EDF1F7'};`,
+        onClick: () => this.setState({ agendaActive: i }),
+      };
+    });
+
+    // ---- corrective action ----
+    const stepDefs = [
+      { label:'Raised', st:'done' },
+      { label:'Acknowledged', st:'done' },
+      { label:'CA Submitted', st:'done' },
+      { label:'Under Review', st:'active' },
+      { label:'Closed', st:'todo' },
+    ];
+    const caSteps = stepDefs.map((s, i) => {
+      const done = s.st === 'done', active = s.st === 'active';
+      return {
+        label: s.label,
+        inner: done ? '✓' : '',
+        dotStyle: `width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font:700 12px Inter,sans-serif; color:#fff; background:${done ? '#2D9E2D' : active ? '#1B4F8E' : '#C3CEDD'}; ${active ? 'box-shadow:0 0 0 4px rgba(27,79,142,.18);' : ''}`,
+        labelStyle: `font:600 10px Inter,sans-serif; white-space:nowrap; color:${done ? '#2D9E2D' : active ? '#1B4F8E' : '#9AA6B6'};`,
+        lineStyle: i === stepDefs.length - 1 ? 'display:none;' : `flex:1; height:2px; margin:0 6px -18px; background:${done ? '#2D9E2D' : '#D1D9E6'};`,
+      };
+    });
+
+    const tlDefs = [
+      { text:'NCR raised by Jamil Jones', meta:'Jul 1, 2026 · 09:47 AM', c:'#E67E22', icon:'!' },
+      { text:'NCR acknowledged by Earl Crouchley', meta:'Jul 1, 2026 · 02:15 PM', c:'#1B4F8E', icon:'✓' },
+      { text:'Root cause analysis added', meta:'Earl Crouchley · Jul 6, 2026', c:'#1B4F8E', icon:'✓' },
+      { text:'Evidence uploaded — Training_Matrix_v1.pdf', meta:'Jul 8, 2026 · 11:02 AM', c:'#1B8CA8', icon:'↑' },
+      { text:'CA submitted for review', meta:'Earl Crouchley · Jul 8, 2026', c:'#1B4F8E', icon:'✓' },
+      { text:'Under review by Jamil Jones', meta:'In progress · now', c:'#C9A84C', icon:'•' },
+    ];
+    const timeline = tlDefs.map((t, i) => ({
+      text: t.text, meta: t.meta, icon: t.icon,
+      dotStyle: `width:24px; height:24px; flex:none; border-radius:50%; display:flex; align-items:center; justify-content:center; font:700 11px Inter,sans-serif; color:#fff; background:${t.c}; ${i === tlDefs.length - 1 ? 'box-shadow:0 0 0 4px rgba(201,168,76,.2);' : ''}`,
+      lineStyle: i === tlDefs.length - 1 ? 'display:none;' : 'width:2px; flex:1; min-height:14px; background:#E3E8F0; margin-top:3px;',
+    }));
+
+    // ---- asset sheet ----
+    const palette = [
+      { name:'Deep Navy', hex:'#0A2647', dark:true },
+      { name:'Brand Blue', hex:'#1B4F8E', dark:true },
+      { name:'Ocean Teal', hex:'#1B8CA8', dark:true },
+      { name:'Certification Gold', hex:'#C9A84C', dark:false },
+      { name:'Conforming Green', hex:'#2D9E2D', dark:false },
+      { name:'Minor NC Orange', hex:'#E67E22', dark:false },
+      { name:'Major NC Red', hex:'#C0392B', dark:true },
+      { name:'OFI Blue', hex:'#2980B9', dark:true },
+      { name:'Strong Point Purple', hex:'#8E44AD', dark:true },
+      { name:'Background', hex:'#F4F7FB', dark:false },
+      { name:'Border', hex:'#D1D9E6', dark:false },
+      { name:'Text Primary', hex:'#1A1D23', dark:true },
+    ].map(c => ({
+      name: c.name, hex: c.hex,
+      swatchStyle: `height:58px; border-radius:10px; background:${c.hex}; border:1px solid rgba(10,38,71,.08);`,
+    }));
+
+    const severityBadges = [
+      { label:'MAJOR NC', fg:'#fff', bg:'#C0392B', dot:'#fff' },
+      { label:'MINOR NC', fg:'#fff', bg:'#E67E22', dot:'#fff' },
+      { label:'OFI', fg:'#fff', bg:'#2980B9', dot:'' },
+      { label:'STRONG POINT', fg:'#fff', bg:'#8E44AD', dot:'' },
+      { label:'CONFORMING', fg:'#fff', bg:'#2D9E2D', dot:'' },
+      { label:'NOT AUDITED', fg:'#4A5568', bg:'#D9DFE8', dot:'' },
+    ].map(b => ({
+      label: b.label,
+      style: `display:inline-flex; align-items:center; gap:7px; font:700 11px Inter,sans-serif; letter-spacing:.04em; color:${b.fg}; background:${b.bg}; padding:7px 14px; border-radius:99px;`,
+      dotStyle: b.dot ? `width:7px; height:7px; border-radius:50%; background:${b.dot};` : 'display:none;',
+    }));
+
+    const clauseStrips = [
+      { c:'#2D9E2D', label:'Conforming' },
+      { c:'#E67E22', label:'Minor NC' },
+      { c:'#C0392B', label:'Major NC' },
+      { c:'#2980B9', label:'OFI' },
+      { c:'#8E44AD', label:'Strong Point' },
+    ].map(s => ({
+      label: s.label,
+      cardStyle: `display:flex; align-items:center; gap:9px; background:#fff; border:1px solid #E6EBF2; border-left:4px solid ${s.c}; border-radius:0 9px 9px 0; padding:10px 13px; box-shadow:0 1px 3px rgba(10,38,71,.05);`,
+      dotStyle: `width:8px; height:8px; border-radius:50%; background:${s.c};`,
+    }));
+
+    return {
+      groups, questions, clauseVerdicts, evidence,
+      findingTypes, findingPhotos, findingStrip: fmeta.c,
+      gaugeArc, auditRows, overdueCAs, calendarDays, heatCols, heatRows,
+      waveBars, attendees, agenda, caSteps, timeline,
+      palette, severityBadges, clauseStrips,
+      recording, paused: !recording,
+      recLabel: recording ? 'Pause Recording' : 'Resume Recording',
+      recBtnStyle: `display:flex; align-items:center; gap:9px; font:700 14px Montserrat,sans-serif; color:#fff; padding:13px 26px; border-radius:99px; cursor:pointer; background:${recording ? '#C0392B' : '#2D9E2D'}; box-shadow:0 6px 18px ${recording ? 'rgba(192,57,43,.3)' : 'rgba(45,158,45,.3)'};`,
+      recBadgeText: recording ? 'Recording' : 'Paused',
+      recBadgeStyle: `display:flex; align-items:center; gap:7px; font:700 12px Inter,sans-serif; border-radius:99px; padding:7px 13px; color:${recording ? '#C0392B' : '#7A8699'}; background:${recording ? '#FBE7E5' : '#EDF1F7'};`,
+      recDotStyle: `width:8px; height:8px; border-radius:50%; background:${recording ? '#C0392B' : '#7A8699'}; ${recording ? 'animation:somaBlink 1.2s ease-in-out infinite;' : ''}`,
+      toggleRecord: () => this.setState({ recording: !recording }),
+      progressText: '7 of 31 clauses assessed',
+      progressPct: '23%',
+      drawerW: aiOpen ? '322px' : '0px',
+      toolbarRight: aiOpen ? '322px' : '0px',
+      toggleAi: () => this.setState({ aiOpen: !aiOpen }),
+      tabQuestions: this.tabStyle('questions'),
+      tabNotes: this.tabStyle('notes'),
+      tabEvidence: this.tabStyle('evidence'),
+      setTabQuestions: () => this.setState({ activeTab:'questions' }),
+      setTabNotes: () => this.setState({ activeTab:'notes' }),
+      setTabEvidence: () => this.setState({ activeTab:'evidence' }),
+      showQuestions: this.state.activeTab === 'questions',
+      showNotes: this.state.activeTab === 'notes',
+      showEvidence: this.state.activeTab === 'evidence',
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -5,8 +5,10 @@ node_modules/
 dist/
 build/
 .next/
+out/
 web-build/
 .expo/
+lib/
 
 # Turborepo
 .turbo/
@@ -32,3 +34,9 @@ firebase-debug.log
 # OS / editor
 .DS_Store
 *.local
+
+# Safety net: TypeScript build output must never live in source trees
+packages/*/src/**/*.js
+packages/*/src/**/*.js.map
+packages/*/src/**/*.d.ts
+packages/*/src/**/*.d.ts.map

@@ -1,0 +1,29 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "noEmit": true,
+    "types": ["jest", "node"],
+    "baseUrl": ".",
+    // Test-only: resolve @soteria/core from source and map the external SDK
+    // modules to in-repo test doubles so the suite compiles and runs without a
+    // prior `pnpm install` of the Functions dependencies. These overrides apply
+    // ONLY to the test compilation; the build (tsconfig.json) uses the real
+    // packages from node_modules.
+    "paths": {
+      "@soteria/core": ["../packages/core/dist/index.d.ts"],
+      "@soteria/core/*": ["../packages/core/dist/*"],
+      "firebase-functions/v2/https": ["src/__tests__/mocks/ff-https.ts"],
+      "firebase-functions/v2/firestore": ["src/__tests__/mocks/ff-firestore.ts"],
+      "firebase-functions/v2/scheduler": ["src/__tests__/mocks/ff-scheduler.ts"],
+      "firebase-functions/params": ["src/__tests__/mocks/ff-params.ts"],
+      "firebase-admin/app": ["src/__tests__/mocks/admin-app.ts"],
+      "firebase-admin/auth": ["src/__tests__/mocks/admin-auth.ts"],
+      "firebase-admin/firestore": ["src/__tests__/mocks/admin-firestore.ts"],
+      "@anthropic-ai/sdk": ["src/__tests__/mocks/anthropic.ts"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["lib"]
+}

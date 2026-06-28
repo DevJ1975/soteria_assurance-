@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "soteria-assurance"
+  },
+  "targets": {
+    "soteria-assurance": {
+      "hosting": {
+        "web": [
+          "soteria-assurance"
+        ]
+      }
+    }
+  }
+}
