@@ -8,7 +8,9 @@ build/
 out/
 web-build/
 .expo/
-lib/
+# Functions' compiled output only — must NOT be a blanket `lib/`, which would
+# also ignore source dirs like apps/web/lib/ (also covered by functions/.gitignore).
+/functions/lib/
 
 # Turborepo
 .turbo/

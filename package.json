@@ -21,10 +21,11 @@
     "test:functions": "turbo run test --filter=soteria-functions",
     "build:web": "turbo run build --filter=@soteria/web",
     "build:mobile": "turbo run build --filter=@soteria/mobile",
-    "deploy:functions": "echo '[soteria] deploy:functions not yet implemented — run from functions/ via firebase deploy --only functions once backend-agent lands'",
-    "deploy:rules": "echo '[soteria] deploy:rules not yet implemented — firebase deploy --only firestore:rules,storage once rules land'",
-    "deploy:web": "echo '[soteria] deploy:web not yet implemented — wire to Next.js hosting target once web app lands'",
-    "emulators": "echo '[soteria] emulators not yet implemented — firebase emulators:start once firebase.json lands'"
+    "deploy": "scripts/deploy.sh",
+    "deploy:functions": "scripts/deploy.sh --only functions",
+    "deploy:rules": "scripts/deploy.sh --only rules",
+    "deploy:web": "scripts/deploy.sh --only hosting",
+    "emulators": "firebase emulators:start"
   },
   "devDependencies": {
     "@eslint/js": "^9.13.0",
@@ -38,5 +39,11 @@
     "turbo": "^2.3.0",
     "typescript": "^5.6.0",
     "typescript-eslint": "^8.10.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "@types/react": "19.2.17",
+      "@types/react-dom": "19.2.3"
+    }
   }
 }
