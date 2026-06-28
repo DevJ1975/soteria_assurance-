@@ -1,0 +1,32 @@
+specVersion: "v1"
+
+# Firebase Data Connect service for Soteria Assurance.
+#
+# Data Connect provisions a managed Cloud SQL for PostgreSQL instance and exposes
+# a typed GraphQL API over it. This is an OPTIONAL, ADDITIVE relational layer that
+# sits alongside the primary Cloud Firestore store (which still backs the
+# offline-first mobile sync and the existing security rules). Use it for the
+# relational / reporting / analytics workloads that are awkward in Firestore
+# (cross-tenant aggregates, joins across audits → findings → corrective actions).
+#
+# Provisioning (requires GCP billing on the `soteria-assurance` project):
+#   firebase init dataconnect          # links/creates the Cloud SQL instance
+#   firebase deploy --only dataconnect # applies schema + connectors
+#
+# Until a real instance exists, `instanceId` / `database` below are placeholders.
+serviceId: "soteria-assurance"
+location: "us-central1"
+
+schema:
+  source: "./schema"
+  datasource:
+    postgresql:
+      database: "soteria"
+      cloudSql:
+        # Replace with the Cloud SQL instance id created by `firebase init dataconnect`.
+        instanceId: "soteria-assurance-dc"
+      # On first deploy, let Data Connect reconcile the SQL schema from the GQL schema.
+      schemaValidation: "COMPATIBLE"
+
+connectorDirs:
+  - "./connector"

@@ -1,0 +1,164 @@
+"""
+Soteria Assurance — Firebase Data Connect relational schema.
+
+Mirrors the core domain from DESIGN_DOC §8 (Database Schema) as PostgreSQL tables.
+Every business table carries a `tenantId` for multi-tenant isolation (RULE 2);
+tenant scoping is enforced in the connector operations via `auth.token.tenantId`.
+
+This is an additive relational projection of the Firestore model — not a
+replacement. Keep field names and enum members in lock-step with
+`@soteria/core` types so the two layers stay reconcilable.
+"""
+
+# ---------------------------------------------------------------------------
+# Enums (mirror the string unions in @soteria/core)
+# ---------------------------------------------------------------------------
+
+enum TenantType { certification_body consultancy enterprise }
+
+enum UserRole { super_admin tenant_admin lead_auditor auditor auditee viewer }
+
+enum AuditType { initial_certification surveillance recertification internal special }
+
+enum AuditStatus {
+  planned
+  in_progress
+  findings_review
+  report_pending
+  report_issued
+  closed
+  canceled
+}
+
+enum FindingType { major_nc minor_nc ofi strong_point observation }
+
+enum FindingStatus { open acknowledged ca_submitted ca_review closed overdue }
+
+enum CAStatus { pending in_progress submitted accepted rejected closed }
+
+# ---------------------------------------------------------------------------
+# Tenant
+# ---------------------------------------------------------------------------
+
+type Tenant @table(name: "tenants", key: "id") {
+  id: String!
+  name: String!
+  type: TenantType!
+  subscriptionTier: String!
+  subscriptionStatus: String!
+  maxAuditors: Int!
+  maxAuditsPerMonth: Int!
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
+}
+
+# ---------------------------------------------------------------------------
+# User (named AppUser to avoid clashing with Data Connect's reserved User)
+# ---------------------------------------------------------------------------
+
+type AppUser @table(name: "users", key: "id") {
+  id: String!
+  tenant: Tenant!
+  email: String! @col(name: "email")
+  displayName: String!
+  role: UserRole!
+  isActive: Boolean! @default(value: true)
+  lastLoginAt: Timestamp
+  createdAt: Timestamp! @default(expr: "request.time")
+}
+
+# ---------------------------------------------------------------------------
+# Client (organization being audited)
+# ---------------------------------------------------------------------------
+
+type Client @table(name: "clients", key: "id") {
+  id: String!
+  tenant: Tenant!
+  organizationName: String!
+  industry: String!
+  contactName: String!
+  contactEmail: String!
+  contactPhone: String
+  numberOfEmployees: Int! @default(value: 0)
+  numberOfSites: Int! @default(value: 0)
+  certificationStatus: String! @default(value: "not_certified")
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
+}
+
+# ---------------------------------------------------------------------------
+# Audit
+# ---------------------------------------------------------------------------
+
+type Audit @table(name: "audits", key: "id") {
+  id: String!
+  tenant: Tenant!
+  client: Client!
+  auditNumber: String!
+  auditType: AuditType!
+  standard: String! @default(value: "ISO 45001:2018")
+  scope: String!
+  status: AuditStatus! @default(value: "planned")
+  leadAuditor: AppUser
+  plannedStartDate: Date
+  plannedEndDate: Date
+  actualStartDate: Date
+  actualEndDate: Date
+  auditDays: Int! @default(value: 1)
+  aiCertificationReadinessScore: Int
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
+  completedAt: Timestamp
+}
+
+# ---------------------------------------------------------------------------
+# Finding (NCR / OFI / Strong Point)
+# ---------------------------------------------------------------------------
+
+type Finding @table(name: "findings", key: "id") {
+  id: String!
+  tenant: Tenant!
+  audit: Audit!
+  client: Client!
+  findingNumber: String!
+  type: FindingType!
+  clauseNumber: String!
+  clauseTitle: String!
+  requirement: String!
+  title: String!
+  objectiveEvidence: String!
+  nonconformityStatement: String
+  aiDraftStatement: String
+  raisedByAuditor: AppUser
+  status: FindingStatus! @default(value: "open")
+  targetClosureDate: Date
+  actualClosureDate: Date
+  raisedAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
+}
+
+# ---------------------------------------------------------------------------
+# Corrective Action
+# ---------------------------------------------------------------------------
+
+type CorrectiveAction @table(name: "corrective_actions", key: "id") {
+  id: String!
+  tenant: Tenant!
+  client: Client!
+  audit: Audit!
+  finding: Finding!
+  caNumber: String!
+  title: String!
+  rootCauseMethod: String! @default(value: "five_why")
+  rootCauseAnalysis: String
+  immediateAction: String
+  correctiveAction: String
+  preventiveAction: String
+  responsiblePersonName: String!
+  responsiblePersonEmail: String!
+  targetDate: Date!
+  closedDate: Date
+  status: CAStatus! @default(value: "pending")
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
+}

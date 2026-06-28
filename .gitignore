@@ -30,6 +30,10 @@ firebase-debug.log
 # Firebase
 .firebase/
 
+# Firebase Data Connect — generated SDKs (produced by dataconnect:sdk:generate)
+packages/dataconnect-generated/
+dataconnect/.dataconnect/
+
 # TypeScript incremental
 *.tsbuildinfo
 
