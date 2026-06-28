@@ -14,6 +14,8 @@ import { httpsCallable } from 'firebase/functions';
 import {
   AI_DISCLAIMER,
   type InterviewQuestionsPromptParams,
+  type MeetingSummaryRequest,
+  type MeetingSummaryResponse,
   type NCRDraftRequest,
   type NCRDraftResponse,
 } from '@soteria/core';
@@ -67,6 +69,35 @@ export async function suggestQuestions(
   const callable = httpsCallable<SuggestQuestionsPayload, SuggestQuestionsResult>(
     getFunctionsInstance(),
     'suggestQuestions',
+  );
+  const response = await callable(payload);
+  return response.data;
+}
+
+/** `summarizeMeeting` callable payload. */
+export interface SummarizeMeetingPayload extends MeetingSummaryRequest {
+  tenantId: string;
+}
+
+/** `summarizeMeeting` callable result. */
+export interface SummarizeMeetingResult {
+  summary: MeetingSummaryResponse;
+  raw: string;
+  disclaimer: typeof AI_DISCLAIMER;
+  model: string;
+}
+
+/**
+ * Summarise a recorded opening/closing meeting transcription into a structured
+ * record (summary, key decisions, action items). The auditor must review the
+ * AI draft before saving it onto the meeting.
+ */
+export async function summarizeMeeting(
+  payload: SummarizeMeetingPayload,
+): Promise<SummarizeMeetingResult> {
+  const callable = httpsCallable<SummarizeMeetingPayload, SummarizeMeetingResult>(
+    getFunctionsInstance(),
+    'summarizeMeeting',
   );
   const response = await callable(payload);
   return response.data;

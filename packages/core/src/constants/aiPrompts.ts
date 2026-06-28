@@ -1,4 +1,4 @@
-import type { NCRDraftRequest } from '../types/ai';
+import type { MeetingSummaryRequest, NCRDraftRequest } from '../types/ai';
 import { AI_DISCLAIMER } from './strings';
 
 /**
@@ -112,6 +112,34 @@ Requirements:
 - Phrase questions as open-ended (avoid yes/no) to elicit evidence.
 
 Return a numbered list of ${count} questions.
+
+Note: ${AI_DISCLAIMER}.`;
+}
+
+/**
+ * Builds the user-turn prompt for AI meeting summarisation (DESIGN_DOC §9.2 /
+ * §9.6). Produces three clearly-labelled sections that
+ * {@link parseMeetingSummaryText} (in the backend) can parse deterministically.
+ *
+ * Pure and deterministic — performs no API calls.
+ */
+export function buildMeetingSummaryPrompt(request: MeetingSummaryRequest): string {
+  const meeting = request.meetingType === 'opening' ? 'opening' : 'closing';
+  const contextBlock = request.auditContext
+    ? `AUDIT CONTEXT: ${request.auditContext}\n`
+    : '';
+
+  return `Summarise the following ISO 45001:2018 audit ${meeting} meeting from its transcription.
+
+${contextBlock}TRANSCRIPTION:
+${request.transcription}
+
+Produce exactly these three labelled sections:
+1. SUMMARY (a concise professional summary of what was discussed and agreed)
+2. KEY DECISIONS (the decisions reached — one per line; "None" if there were none)
+3. ACTION ITEMS (one per line as "description — owner"; use "Unassigned" when no owner was named; "None" if there were none)
+
+Base everything strictly on the transcription. Do not invent attendees, decisions, or actions that were not stated.
 
 Note: ${AI_DISCLAIMER}.`;
 }
