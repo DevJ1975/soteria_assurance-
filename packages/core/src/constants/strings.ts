@@ -52,6 +52,9 @@ export const SoteriaStrings = {
     completeAudit: 'Complete audit',
     certificationReadiness: 'Certification readiness',
     noAudits: 'No audits yet. Create your first audit to get started.',
+    downloadPdf: 'Download PDF',
+    generatingPdf: 'Generating report…',
+    reportFailed: 'Could not generate the report. Please try again.',
   },
   clauses: {
     navigatorTitle: 'Clause navigator',
@@ -96,6 +99,9 @@ export const SoteriaStrings = {
     endMeeting: 'End meeting',
     captureSignature: 'Capture signature',
     actionItemsLabel: 'Action items',
+    summarize: 'Summarize meeting',
+    summaryLabel: 'AI summary',
+    keyDecisionsLabel: 'Key decisions',
   },
   correctiveActions: {
     listTitle: 'Corrective actions',
@@ -131,6 +137,10 @@ export const SoteriaStrings = {
     validation: 'Please correct the highlighted fields and try again.',
     tenantMismatch: 'This record belongs to a different organization.',
     aiTimeout: 'The AI request took too long. Please try again.',
+    configErrorTitle: 'This app is not configured correctly.',
+    configError:
+      'The app could not start because its connection settings are missing. ' +
+      'If you are the administrator, set the required environment variables for this deployment and redeploy.',
   },
 } as const;
 

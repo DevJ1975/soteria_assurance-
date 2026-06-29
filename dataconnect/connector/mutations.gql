@@ -1,0 +1,81 @@
+# Tenant-scoped write operations.
+#
+# `tenantId` is never accepted from the client — it is bound server-side from the
+# caller's `auth.token.tenantId` claim via `*_expr`, so a caller can only write
+# rows inside their own tenant (RULE 2). Ids default to UUIDv4 server-side.
+
+# Upsert a client organization into the tenant.
+mutation UpsertClient(
+  $id: String!
+  $organizationName: String!
+  $industry: String!
+  $contactName: String!
+  $contactEmail: String!
+) @auth(level: USER) {
+  client_upsert(
+    data: {
+      id: $id
+      tenantId_expr: "auth.token.tenantId"
+      organizationName: $organizationName
+      industry: $industry
+      contactName: $contactName
+      contactEmail: $contactEmail
+    }
+  )
+}
+
+# Create an audit shell for a client.
+mutation CreateAudit(
+  $clientId: String!
+  $auditNumber: String!
+  $auditType: AuditType!
+  $scope: String!
+) @auth(level: USER) {
+  audit_insert(
+    data: {
+      id_expr: "uuidV4()"
+      tenantId_expr: "auth.token.tenantId"
+      clientId: $clientId
+      auditNumber: $auditNumber
+      auditType: $auditType
+      scope: $scope
+      status: planned
+    }
+  )
+}
+
+# Raise a finding against an audit.
+mutation CreateFinding(
+  $auditId: String!
+  $clientId: String!
+  $findingNumber: String!
+  $type: FindingType!
+  $clauseNumber: String!
+  $clauseTitle: String!
+  $requirement: String!
+  $title: String!
+  $objectiveEvidence: String!
+) @auth(level: USER) {
+  finding_insert(
+    data: {
+      id_expr: "uuidV4()"
+      tenantId_expr: "auth.token.tenantId"
+      auditId: $auditId
+      clientId: $clientId
+      findingNumber: $findingNumber
+      type: $type
+      clauseNumber: $clauseNumber
+      clauseTitle: $clauseTitle
+      requirement: $requirement
+      title: $title
+      objectiveEvidence: $objectiveEvidence
+      status: open
+    }
+  )
+}
+
+# Advance a finding's lifecycle status (e.g. open → acknowledged → closed).
+mutation UpdateFindingStatus($findingId: String!, $status: FindingStatus!)
+  @auth(level: USER) {
+  finding_update(key: { id: $findingId }, data: { status: $status })
+}

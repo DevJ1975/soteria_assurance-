@@ -15,6 +15,7 @@
  */
 
 import { onCall, HttpsError, type CallableRequest } from 'firebase-functions/v2/https';
+import type { Firestore } from 'firebase-admin/firestore';
 import {
   SoteriaStrings,
   type Audit,
@@ -159,16 +160,19 @@ function assertPayload(data: unknown): GenerateReportPayload {
   return { tenantId: d['tenantId'] as string, auditId: d['auditId'] as string };
 }
 
-/** Core handler, exported for unit testing. */
-export async function handleGenerateReport(
-  request: CallableRequest<unknown>,
-): Promise<GenerateReportResult> {
-  const payload = assertPayload(request.data);
-  const auth = requireTenantMatch(request, payload.tenantId);
-  requirePermission(auth, 'export_reports');
-
-  const db = getDb();
-  const auditRef = db.doc(`tenants/${payload.tenantId}/audits/${payload.auditId}`);
+/**
+ * Reads an audit, its client, and its findings (all tenant-scoped — RULE 2) and
+ * assembles the render-ready {@link AuditReportData} model.
+ *
+ * Shared by the HTML (`generateReport`) and PDF (`generateReportPdf`) callables.
+ * Throws `not-found` if the audit does not exist.
+ */
+export async function assembleReportData(
+  db: Firestore,
+  tenantId: string,
+  auditId: string,
+): Promise<AuditReportData> {
+  const auditRef = db.doc(`tenants/${tenantId}/audits/${auditId}`);
   const auditSnap = await auditRef.get();
   if (!auditSnap.exists) {
     throw new HttpsError('not-found', 'Audit not found.');
@@ -177,22 +181,25 @@ export async function handleGenerateReport(
 
   let client: Client | null = null;
   if (audit.clientId) {
-    const clientSnap = await db
-      .doc(`tenants/${payload.tenantId}/clients/${audit.clientId}`)
-      .get();
+    const clientSnap = await db.doc(`tenants/${tenantId}/clients/${audit.clientId}`).get();
     client = clientSnap.exists ? (clientSnap.data() as Client) : null;
   }
 
   const findingsSnap = await auditRef.collection('findings').get();
   const findings = findingsSnap.docs.map((doc) => doc.data() as Finding);
 
-  const data: AuditReportData = {
-    audit,
-    client,
-    findings,
-    generatedAt: new Date().toISOString(),
-  };
+  return { audit, client, findings, generatedAt: new Date().toISOString() };
+}
 
+/** Core handler, exported for unit testing. */
+export async function handleGenerateReport(
+  request: CallableRequest<unknown>,
+): Promise<GenerateReportResult> {
+  const payload = assertPayload(request.data);
+  const auth = requireTenantMatch(request, payload.tenantId);
+  requirePermission(auth, 'export_reports');
+
+  const data = await assembleReportData(getDb(), payload.tenantId, payload.auditId);
   return { data, html: renderReportHtml(data) };
 }
 

@@ -1,6 +1,60 @@
 // @ts-check
 
 /**
+ * Build-time guard for the public Firebase config.
+ *
+ * A static-export build SUCCEEDS without the `NEXT_PUBLIC_FIREBASE_*` values (they
+ * inline as `undefined` and the runtime `ErrorBoundary` shows a readable
+ * "not configured" message). That is correct for local dev, CI typecheck builds,
+ * and Firebase-Hosting CI (which validates the vars separately). But a real
+ * Vercel deploy that forgets these would only fail at *runtime*, in the browser.
+ *
+ * So: on a Vercel production/preview deploy we fail the build fast with the exact
+ * missing keys; everywhere else we warn and continue (preserving the offline /
+ * config-less build path). Set `SOTERIA_SKIP_ENV_CHECK=1` to bypass entirely.
+ */
+const REQUIRED_FIREBASE_ENV = [
+  'NEXT_PUBLIC_FIREBASE_API_KEY',
+  'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN',
+  'NEXT_PUBLIC_FIREBASE_PROJECT_ID',
+  'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET',
+  'NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID',
+  'NEXT_PUBLIC_FIREBASE_APP_ID',
+];
+
+function assertFirebaseEnv() {
+  if (process.env.SOTERIA_SKIP_ENV_CHECK === '1') {
+    return;
+  }
+
+  const missing = REQUIRED_FIREBASE_ENV.filter((key) => {
+    const value = process.env[key];
+    return value === undefined || value.trim() === '';
+  });
+  if (missing.length === 0) {
+    return;
+  }
+
+  // Vercel sets VERCEL=1 and VERCEL_ENV to production | preview | development.
+  const isVercelDeploy =
+    process.env.VERCEL === '1' &&
+    (process.env.VERCEL_ENV === 'production' || process.env.VERCEL_ENV === 'preview');
+
+  const detail =
+    `Missing required public Firebase config: ${missing.join(', ')}. ` +
+    'Set these in the Vercel project (Settings → Environment Variables) or in ' +
+    'apps/web/.env.local — they are public client keys (see docs/DEPLOYMENT.md).';
+
+  if (isVercelDeploy) {
+    throw new Error(`[Soteria] ${detail}`);
+  }
+  // eslint-disable-next-line no-console
+  console.warn(`\n[Soteria] WARNING: ${detail}\n`);
+}
+
+assertFirebaseEnv();
+
+/**
  * Next.js config for the Soteria Assurance web app.
  *
  * MUST be deployable to Firebase Hosting as a fully static export:

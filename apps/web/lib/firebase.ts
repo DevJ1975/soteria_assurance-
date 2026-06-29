@@ -38,6 +38,36 @@ export interface SuggestQuestionsResult {
   questions: string[];
 }
 
+/** Request payload for the `generateReportPdf` callable. */
+export interface GenerateReportPdfRequest {
+  tenantId: string;
+  auditId: string;
+}
+
+/** Result of the `generateReportPdf` callable — where the PDF was stored. */
+export interface GenerateReportPdfResult {
+  storagePath: string;
+  reportId: string;
+  size: number;
+  generatedAt: string;
+}
+
+/**
+ * Renders the audit report to PDF server-side, stores it under
+ * `tenants/{tenantId}/reports/`, and returns the storage path. The caller
+ * resolves a download URL for that path via `getDownloadUrlForPath`.
+ */
+export async function callGenerateReportPdf(
+  request: GenerateReportPdfRequest,
+): Promise<GenerateReportPdfResult> {
+  const callable = httpsCallable<GenerateReportPdfRequest, GenerateReportPdfResult>(
+    getFunctions(getFirebaseApp()),
+    'generateReportPdf',
+  );
+  const { data } = await callable(request);
+  return data;
+}
+
 /** Drafts a non-conformity report from the auditor's raw notes via Claude. */
 export async function callDraftNCR(request: DraftNCRRequest): Promise<DraftNCRResult> {
   const callable = httpsCallable<DraftNCRRequest, DraftNCRResult>(

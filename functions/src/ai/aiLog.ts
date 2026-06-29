@@ -17,7 +17,8 @@ export type AIFeature =
   | 'draft_ncr'
   | 'suggest_questions'
   | 'analyze_evidence'
-  | 'generate_report_section';
+  | 'generate_report_section'
+  | 'summarize_meeting';
 
 /** Outcome of an AI call, for observability and degradation tracking. */
 export type AILogStatus = 'success' | 'error';

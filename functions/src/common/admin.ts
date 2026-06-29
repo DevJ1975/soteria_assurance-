@@ -13,6 +13,7 @@
 import { getApps, initializeApp, type App } from 'firebase-admin/app';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 import { getAuth, type Auth } from 'firebase-admin/auth';
+import { getStorage } from 'firebase-admin/storage';
 
 /**
  * Returns the singleton Admin {@link App}, initialising it on first use.
@@ -37,4 +38,12 @@ export function getDb(): Firestore {
 /** Returns the Admin {@link Auth} instance for the singleton app. */
 export function getAdminAuth(): Auth {
   return getAuth(getAdminApp());
+}
+
+/**
+ * Returns the default Storage bucket for the singleton app (used to persist
+ * generated report PDFs under `tenants/{tenantId}/reports/`).
+ */
+export function getBucket(): ReturnType<ReturnType<typeof getStorage>['bucket']> {
+  return getStorage(getAdminApp()).bucket();
 }

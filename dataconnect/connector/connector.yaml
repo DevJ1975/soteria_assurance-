@@ -1,0 +1,14 @@
+connectorId: "default"
+
+# Generated, typed SDKs for the clients that consume Data Connect. Web/mobile can
+# import the React/JS SDK; the generated code is git-ignored and produced by
+# `firebase dataconnect:sdk:generate`.
+generate:
+  javascriptSdk:
+    outputDir: "../../packages/dataconnect-generated/js"
+    package: "@soteria/dataconnect"
+    packageJsonDir: "../../packages/dataconnect-generated"
+  # Uncomment once the web app adopts the relational layer:
+  # reactSdk:
+  #   outputDir: "../../packages/dataconnect-generated/react"
+  #   package: "@soteria/dataconnect-react"

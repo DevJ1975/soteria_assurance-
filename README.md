@@ -170,12 +170,12 @@ Mirrors DESIGN_DOC §17 (Phase 1 — Core Audit Workflow):
 - [x] Clause-by-clause assessment (all 10 clauses, all sub-clauses) — canonical ISO 45001 dataset + clause navigator (web & mobile)
 - [x] Finding creation (MNC, NC, OFI, SP) — finding forms + `FINDING_TYPE_META`, AI-draft button
 - [x] Photo evidence capture and upload — mobile capture+compress+geotag service; tenant-scoped storage helpers
-- [~] Opening and closing meeting recording — data model + screens scaffolded (audio capture/transcription is a follow-up)
-- [~] Basic audit report generation (PDF) — `generateReport` assembles report data + HTML; PDF rendering (Puppeteer) is a follow-up
+- [x] Opening and closing meeting recording — audio capture + `summarizeMeeting` AI callable (summary / key decisions / action items) wired into the mobile meetings screen. (Automatic speech-to-text is the one remaining follow-up; the transcription is entered/pasted for now.)
+- [x] Basic audit report generation (PDF) — `generateReportPdf` renders the report model to PDF (pdf-lib), stores it under `tenants/{tenantId}/reports/`, and records a report document; `generateReport` still emits the HTML preview from the same model
 - [x] Offline mode (WatermelonDB sync) — mobile schema + models + background `syncManager`
 - [x] AI Co-Pilot (NCR drafting, clause questions) — `draftNCR`/`suggestQuestions` Cloud Functions + web panel + mobile service
 
-**Verification:** 325 unit/integration tests green (`@soteria/core` 160, `@soteria/ui` 38, `@soteria/firebase` 55, `functions` 72); `apps/web` `next build` produces the static Hosting bundle; `apps/mobile` passes `tsc --noEmit`. Legend: `[x]` implemented · `[~]` partial / follow-up.
+**Verification:** 345 unit/integration tests green (`@soteria/core` 160, `@soteria/ui` 38, `@soteria/firebase` 55, `functions` 92); `apps/web` `next build` produces the static Hosting/Vercel bundle; `apps/mobile` passes `tsc --noEmit` in a fully-provisioned Expo toolchain. Legend: `[x]` implemented · `[~]` partial / follow-up.
 
 **Not yet done (needs privileged access / native toolchain):** live Hosting deploy + provider enablement on `soteria-assurance` (org policy blocks service-account keys — use `firebase login:ci` or `bash scripts/deploy.sh`); native iOS/Android EAS build; E2E suites (Detox/Playwright).
 

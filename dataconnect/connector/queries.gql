@@ -1,0 +1,87 @@
+# Tenant-scoped read operations.
+#
+# Every query is restricted to USER auth and filtered to the caller's tenant via
+# `auth.token.tenantId` (the custom claim set by the `setTenantClaims` function),
+# enforcing RULE 2 (tenant isolation) at the data layer.
+
+# All audits for the caller's tenant, optionally filtered by status.
+query ListAudits($status: AuditStatus) @auth(level: USER) {
+  audits(
+    where: {
+      tenantId: { eq_expr: "auth.token.tenantId" }
+      status: { eq: $status }
+    }
+    orderBy: { createdAt: DESC }
+  ) {
+    id
+    auditNumber
+    auditType
+    status
+    scope
+    plannedStartDate
+    plannedEndDate
+    client { id organizationName industry }
+    leadAuditor { id displayName }
+  }
+}
+
+# A single audit with its findings (join Firestore struggles with).
+query GetAuditWithFindings($auditId: String!) @auth(level: USER) {
+  audit(key: { id: $auditId }) {
+    id
+    auditNumber
+    status
+    scope
+    aiCertificationReadinessScore
+    client { id organizationName }
+    findings_on_audit(orderBy: { raisedAt: DESC }) {
+      id
+      findingNumber
+      type
+      status
+      clauseNumber
+      title
+      targetClosureDate
+    }
+  }
+}
+
+# Open / overdue findings across the tenant — drives the dashboard (§9.9).
+query ListOpenFindings @auth(level: USER) {
+  findings(
+    where: {
+      tenantId: { eq_expr: "auth.token.tenantId" }
+      status: { in: [open, acknowledged, overdue] }
+    }
+    orderBy: { targetClosureDate: ASC }
+  ) {
+    id
+    findingNumber
+    type
+    status
+    clauseNumber
+    title
+    targetClosureDate
+    audit { id auditNumber }
+    client { id organizationName }
+  }
+}
+
+# Corrective actions still requiring attention for the tenant (CAR module §9.8).
+query ListOpenCorrectiveActions @auth(level: USER) {
+  correctiveActions(
+    where: {
+      tenantId: { eq_expr: "auth.token.tenantId" }
+      status: { in: [pending, in_progress, submitted] }
+    }
+    orderBy: { targetDate: ASC }
+  ) {
+    id
+    caNumber
+    title
+    status
+    targetDate
+    responsiblePersonName
+    finding { id findingNumber }
+  }
+}

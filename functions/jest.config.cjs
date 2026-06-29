@@ -28,6 +28,7 @@ module.exports = {
     '^firebase-admin/app$': '<rootDir>/src/__tests__/mocks/admin-app.ts',
     '^firebase-admin/auth$': '<rootDir>/src/__tests__/mocks/admin-auth.ts',
     '^firebase-admin/firestore$': '<rootDir>/src/__tests__/mocks/admin-firestore.ts',
+    '^firebase-admin/storage$': '<rootDir>/src/__tests__/mocks/admin-storage.ts',
     '^@anthropic-ai/sdk$': '<rootDir>/src/__tests__/mocks/anthropic.ts',
   },
   collectCoverageFrom: [

@@ -13,6 +13,7 @@ export { draftNCR } from './ai/draftNCR';
 export { suggestQuestions } from './ai/suggestQuestions';
 export { analyzeEvidence } from './ai/analyzeEvidence';
 export { generateReportSection } from './ai/generateReportSection';
+export { summarizeMeeting } from './ai/summarizeMeeting';
 
 // Auth / tenant claims
 export { setTenantClaims } from './auth/setTenantClaims';
@@ -20,6 +21,7 @@ export { setTenantClaims } from './auth/setTenantClaims';
 // Audit lifecycle
 export { onAuditComplete } from './audit/onAuditComplete';
 export { generateReport } from './audit/generateReport';
+export { generateReportPdf } from './audit/generateReportPdf';
 
 // Notifications
 export { caReminders } from './notifications/caReminders';
