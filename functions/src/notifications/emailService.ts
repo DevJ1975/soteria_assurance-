@@ -55,7 +55,6 @@ function readSendgridKey(): string | undefined {
 export async function sendEmail(message: EmailMessage): Promise<EmailResult> {
   const apiKey = readSendgridKey();
   if (apiKey === undefined) {
-    // eslint-disable-next-line no-console -- operational warning, not debug noise
     console.warn('SENDGRID_API_KEY is not configured; skipping email send.');
     return { status: 'skipped', reason: 'SENDGRID_API_KEY not configured' };
   }

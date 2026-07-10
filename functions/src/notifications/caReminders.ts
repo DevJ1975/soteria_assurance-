@@ -26,9 +26,23 @@ export const REMINDER_FROM_ADDRESS = 'no-reply@soteria-assurance.example';
 
 /** A finding that is due for a reminder, with the matched offset. */
 export interface DueReminder {
-  finding: Pick<Finding, 'id' | 'tenantId' | 'findingNumber' | 'title' | 'targetClosureDate'>;
+  finding: Pick<
+    Finding,
+    'id' | 'tenantId' | 'findingNumber' | 'title' | 'targetClosureDate' | 'raisedByAuditorId'
+  >;
   /** How many days before the due date this reminder fires (30 / 14 / 7). */
   offsetDays: number;
+}
+
+/**
+ * Deterministic idempotency-marker id for one (finding, offset, day) reminder.
+ * Written to the server-only `/tenants/{tenantId}/reminders` collection (no
+ * client rule grants access) so a retried or double-scheduled run cannot email
+ * the same reminder twice. Pure + exported for testing.
+ */
+export function reminderMarkerId(findingId: string, offsetDays: number, now: Date): string {
+  const day = now.toISOString().slice(0, 10); // YYYY-MM-DD
+  return `${findingId}_${offsetDays}_${day}`;
 }
 
 /**
@@ -55,7 +69,16 @@ export function reminderOffsetDueToday(
  */
 export function selectDueReminders(
   findings: ReadonlyArray<
-    Pick<Finding, 'id' | 'tenantId' | 'findingNumber' | 'title' | 'targetClosureDate' | 'status'>
+    Pick<
+      Finding,
+      | 'id'
+      | 'tenantId'
+      | 'findingNumber'
+      | 'title'
+      | 'targetClosureDate'
+      | 'status'
+      | 'raisedByAuditorId'
+    >
   >,
   now: Date,
 ): DueReminder[] {
@@ -76,6 +99,7 @@ export function selectDueReminders(
           findingNumber: finding.findingNumber,
           title: finding.title,
           targetClosureDate: finding.targetClosureDate,
+          raisedByAuditorId: finding.raisedByAuditorId,
         },
         offsetDays,
       });
@@ -104,10 +128,16 @@ export const caReminders = onSchedule(
     const now = new Date();
 
     // collectionGroup spans tenants; each finding keeps its own tenantId, so no
-    // cross-tenant mixing occurs when we email per-record.
+    // cross-tenant mixing occurs when we email per-record. The orderBy makes
+    // the query eligible for the composite COLLECTION_GROUP index on
+    // (status, targetClosureDate) in firestore.indexes.json — without it the
+    // filter has no supporting collection-group index and the whole job throws
+    // FAILED_PRECONDITION. Findings without a targetClosureDate are dropped by
+    // the orderBy, which matches selectDueReminders' own skip.
     const snapshot = await db
       .collectionGroup('findings')
       .where('status', 'in', ['open', 'acknowledged', 'ca_submitted', 'ca_review', 'overdue'])
+      .orderBy('targetClosureDate')
       .get();
 
     const candidates = snapshot.docs.map((doc) => {
@@ -118,6 +148,7 @@ export const caReminders = onSchedule(
         findingNumber: data.findingNumber,
         title: data.title,
         status: data.status,
+        raisedByAuditorId: data.raisedByAuditorId,
         ...(data.targetClosureDate !== undefined
           ? { targetClosureDate: data.targetClosureDate }
           : {}),
@@ -128,16 +159,45 @@ export const caReminders = onSchedule(
 
     await Promise.all(
       dueReminders.map(async (reminder) => {
-        // The responsible auditor's address is resolved from the tenant's user
-        // record; for the scheduled job we send to a per-tenant reminders alias
-        // derived from the record, keeping tenant isolation intact.
+        const { tenantId, id: findingId, raisedByAuditorId } = reminder.finding;
+
+        // Idempotency: atomically claim this (finding, offset, day) reminder.
+        // `create()` fails with ALREADY_EXISTS when a previous/concurrent run
+        // sent it, so retried schedules never double-email.
+        const marker = db.doc(
+          `tenants/${tenantId}/reminders/${reminderMarkerId(findingId, reminder.offsetDays, now)}`,
+        );
+        try {
+          await marker.create({
+            findingId,
+            offsetDays: reminder.offsetDays,
+            createdAt: now.toISOString(),
+          });
+        } catch {
+          return; // Already sent for this finding/offset/day.
+        }
+
+        // Resolve the responsible auditor's real address from the tenant's
+        // user directory. Without a resolvable address the reminder is skipped
+        // (and the marker released) rather than emailed to a synthetic alias.
+        const userSnap = await db.doc(`tenants/${tenantId}/users/${raisedByAuditorId}`).get();
+        const email = userSnap.get('email') as unknown;
+        if (typeof email !== 'string' || email.length === 0) {
+          console.warn(
+            `[caReminders] No email for auditor ${raisedByAuditorId} (tenant ${tenantId}); skipping ${findingId}.`,
+          );
+          await marker.delete().catch(() => undefined);
+          return;
+        }
+
         const { subject, text } = buildReminderEmail(reminder);
-        await sendEmail({
-          to: `reminders+${reminder.finding.tenantId}@soteria-assurance.example`,
-          from: REMINDER_FROM_ADDRESS,
-          subject,
-          text,
-        });
+        try {
+          await sendEmail({ to: email, from: REMINDER_FROM_ADDRESS, subject, text });
+        } catch (error) {
+          // Release the claim so the next run can retry this reminder.
+          await marker.delete().catch(() => undefined);
+          throw error;
+        }
       }),
     );
   },

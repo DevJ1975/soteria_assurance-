@@ -1,5 +1,6 @@
 import {
   buildReminderEmail,
+  reminderMarkerId,
   reminderOffsetDueToday,
   selectDueReminders,
 } from '../notifications/caReminders';
@@ -31,6 +32,7 @@ describe('selectDueReminders', () => {
           id: 'f1',
           tenantId: 't1',
           findingNumber: 'NCR-2026-001',
+          raisedByAuditorId: 'aud-1',
           title: 'A',
           status: 'open',
           targetClosureDate: '2026-07-04',
@@ -39,6 +41,7 @@ describe('selectDueReminders', () => {
           id: 'f2',
           tenantId: 't1',
           findingNumber: 'NCR-2026-002',
+          raisedByAuditorId: 'aud-1',
           title: 'B',
           status: 'closed',
           targetClosureDate: '2026-07-04',
@@ -47,6 +50,7 @@ describe('selectDueReminders', () => {
           id: 'f3',
           tenantId: 't1',
           findingNumber: 'NCR-2026-003',
+          raisedByAuditorId: 'aud-1',
           title: 'C',
           status: 'open',
           targetClosureDate: '2026-07-10',
@@ -55,6 +59,7 @@ describe('selectDueReminders', () => {
           id: 'f4',
           tenantId: 't1',
           findingNumber: 'NCR-2026-004',
+          raisedByAuditorId: 'aud-1',
           title: 'D',
           status: 'open',
         },
@@ -65,6 +70,23 @@ describe('selectDueReminders', () => {
     expect(due).toHaveLength(1);
     expect(due[0]?.finding.id).toBe('f1');
     expect(due[0]?.offsetDays).toBe(7);
+    expect(due[0]?.finding.raisedByAuditorId).toBe('aud-1');
+  });
+});
+
+describe('reminderMarkerId', () => {
+  it('is deterministic per finding/offset/day', () => {
+    expect(reminderMarkerId('f1', 7, NOW)).toBe('f1_7_2026-06-27');
+    expect(reminderMarkerId('f1', 7, new Date('2026-06-27T23:59:00.000Z'))).toBe(
+      'f1_7_2026-06-27',
+    );
+  });
+
+  it('differs across offsets and days', () => {
+    expect(reminderMarkerId('f1', 14, NOW)).toBe('f1_14_2026-06-27');
+    expect(reminderMarkerId('f1', 7, new Date('2026-06-28T00:01:00.000Z'))).toBe(
+      'f1_7_2026-06-28',
+    );
   });
 });
 
@@ -77,6 +99,7 @@ describe('buildReminderEmail', () => {
         findingNumber: 'NCR-2026-001',
         title: 'Hazard gap',
         targetClosureDate: '2026-07-04',
+        raisedByAuditorId: 'aud-1',
       },
       offsetDays: 7,
     });

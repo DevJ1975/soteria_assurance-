@@ -55,7 +55,7 @@ describe('handleSuggestQuestions', () => {
     const result = await handleSuggestQuestions(req(payload, token));
     expect(result.questions).toHaveLength(2);
     expect(result.disclaimer).toBe(AI_DISCLAIMER);
-    expect(__getState().added[0]?.data).toMatchObject({
+    expect(__getState().setDocs.at(-1)?.data).toMatchObject({
       feature: 'suggest_questions',
       status: 'success',
     });
@@ -68,7 +68,7 @@ describe('handleSuggestQuestions', () => {
     await expect(handleSuggestQuestions(req(payload, token))).rejects.toMatchObject({
       code: 'unavailable',
     });
-    expect(__getState().added[0]?.data).toMatchObject({ status: 'error' });
+    expect(__getState().setDocs.at(-1)?.data).toMatchObject({ status: 'error' });
   });
 });
 
@@ -93,7 +93,7 @@ describe('handleAnalyzeEvidence', () => {
     expect(result.aiAnalysis.hazardsDetected).toEqual(['fall']);
     expect(result.aiAnalysis.suggestedFinding).toBe('');
     expect(result.disclaimer).toBe(AI_DISCLAIMER);
-    expect(__getState().added[0]?.data).toMatchObject({ feature: 'analyze_evidence' });
+    expect(__getState().setDocs.at(-1)?.data).toMatchObject({ feature: 'analyze_evidence' });
   });
 
   it('passes auditor context into the prompt path without throwing', async () => {
@@ -124,7 +124,7 @@ describe('handleGenerateReportSection', () => {
     expect(result.aiDraftSection).toMatch(/conformity/i);
     expect(result.sectionType).toBe('executive_summary');
     expect(result.disclaimer).toBe(AI_DISCLAIMER);
-    expect(__getState().added[0]?.data).toMatchObject({
+    expect(__getState().setDocs.at(-1)?.data).toMatchObject({
       feature: 'generate_report_section',
       status: 'success',
     });

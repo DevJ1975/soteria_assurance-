@@ -1,10 +1,10 @@
 import {
   AI_RATE_LIMIT_PER_HOUR,
   aiLogsPath,
-  enforceRateLimit,
   getRateLimitStatus,
+  reserveRateLimitSlot,
 } from '../ai/rateLimiter';
-import { __resetFirestore, getFirestore } from './mocks/admin-firestore';
+import { __getState, __resetFirestore, getFirestore } from './mocks/admin-firestore';
 import { __resetApps } from './mocks/admin-app';
 import { HttpsError } from './mocks/ff-https';
 
@@ -15,6 +15,8 @@ const dbFor = (count: number) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- test double boundary
   return getFirestore({ name: '[DEFAULT]' }) as any;
 };
+
+const RESERVATION = { feature: 'draft_ncr', uid: 'user-1', model: 'claude-test' };
 
 beforeEach(() => {
   __resetApps();
@@ -41,19 +43,31 @@ describe('getRateLimitStatus', () => {
   });
 });
 
-describe('enforceRateLimit', () => {
-  it('passes through when under the cap', async () => {
-    await expect(enforceRateLimit(dbFor(99), 'tenant-x')).resolves.toMatchObject({
-      allowed: true,
+describe('reserveRateLimitSlot', () => {
+  it('admits under the cap and creates the pending aiLogs entry in the same transaction', async () => {
+    const logId = await reserveRateLimitSlot(dbFor(99), 'tenant-x', RESERVATION);
+    expect(typeof logId).toBe('string');
+    expect(logId.length).toBeGreaterThan(0);
+
+    const written = __getState().setDocs;
+    expect(written).toHaveLength(1);
+    expect(written[0]!.path).toContain('tenants/tenant-x/aiLogs/');
+    expect(written[0]!.data).toMatchObject({
+      feature: 'draft_ncr',
+      uid: 'user-1',
+      model: 'claude-test',
+      status: 'pending',
     });
   });
 
-  it('throws resource-exhausted at the cap', async () => {
-    await expect(enforceRateLimit(dbFor(AI_RATE_LIMIT_PER_HOUR), 'tenant-x')).rejects.toThrow(
-      HttpsError,
-    );
+  it('throws resource-exhausted at the cap and writes nothing', async () => {
+    await expect(
+      reserveRateLimitSlot(dbFor(AI_RATE_LIMIT_PER_HOUR), 'tenant-x', RESERVATION),
+    ).rejects.toThrow(HttpsError);
+    expect(__getState().setDocs).toHaveLength(0);
+
     try {
-      await enforceRateLimit(dbFor(AI_RATE_LIMIT_PER_HOUR + 5), 'tenant-x');
+      await reserveRateLimitSlot(dbFor(AI_RATE_LIMIT_PER_HOUR + 5), 'tenant-x', RESERVATION);
       fail('expected throw');
     } catch (err) {
       expect((err as HttpsError).code).toBe('resource-exhausted');

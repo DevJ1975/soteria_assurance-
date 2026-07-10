@@ -83,11 +83,15 @@ describe('handleDraftNCR — success', () => {
     expect(result.aiDraft.suggestedSeverity).toBe('major');
     expect(result.aiDraft.relatedClauses).toContain('8.1.2');
 
-    // Logged to the tenant-scoped aiLogs collection.
+    // Logged to the tenant-scoped aiLogs collection: the rate-limit
+    // reservation ('pending') is finalised in place with the success entry.
     const state = __getState();
-    expect(state.added).toHaveLength(1);
-    expect(state.added[0]?.path).toBe('tenants/tenant-1/aiLogs');
-    expect(state.added[0]?.data).toMatchObject({ feature: 'draft_ncr', status: 'success' });
+    expect(state.setDocs).toHaveLength(2);
+    expect(state.setDocs[0]?.path).toContain('tenants/tenant-1/aiLogs/');
+    expect(state.setDocs[0]?.data).toMatchObject({ feature: 'draft_ncr', status: 'pending' });
+    expect(state.setDocs[1]?.path).toBe(state.setDocs[0]?.path);
+    expect(state.setDocs[1]?.merge).toBe(true);
+    expect(state.setDocs[1]?.data).toMatchObject({ feature: 'draft_ncr', status: 'success' });
   });
 
   it('enforces the rate limit before calling the model', async () => {
@@ -105,7 +109,8 @@ describe('handleDraftNCR — success', () => {
       code: 'unavailable',
     });
     const state = __getState();
-    expect(state.added[0]?.data).toMatchObject({ feature: 'draft_ncr', status: 'error' });
+    expect(state.setDocs.at(-1)?.merge).toBe(true);
+    expect(state.setDocs.at(-1)?.data).toMatchObject({ feature: 'draft_ncr', status: 'error' });
   });
 });
 

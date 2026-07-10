@@ -8,6 +8,14 @@
  * @packageDocumentation
  */
 
+import { setGlobalOptions } from 'firebase-functions/v2';
+import { FIREBASE_FUNCTIONS_REGION } from '@soteria/core';
+
+// Every function deploys to the single region clients are wired to call
+// (getFunctions(app, FIREBASE_FUNCTIONS_REGION) in @soteria/firebase) — the
+// shared constant keeps runtime and clients in lockstep.
+setGlobalOptions({ region: FIREBASE_FUNCTIONS_REGION });
+
 // AI co-pilot
 export { draftNCR } from './ai/draftNCR';
 export { suggestQuestions } from './ai/suggestQuestions';

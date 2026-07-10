@@ -12,7 +12,9 @@
       "codebase": "default",
       "runtime": "nodejs20",
       "predeploy": [
-        "npm --prefix \"$RESOURCE_DIR\" run build"
+        "pnpm install --frozen-lockfile",
+        "pnpm --filter @soteria/core build",
+        "pnpm --filter soteria-functions build"
       ],
       "ignore": [
         "node_modules",
@@ -20,7 +22,12 @@
         "firebase-debug.log",
         "firebase-debug.*.log",
         "*.local",
-        "src/__tests__",
+        "src",
+        "coverage",
+        "tsconfig*.json",
+        "eslint.config.mjs",
+        "jest.config.cjs",
+        "esbuild.config.mjs",
         "**/*.test.ts"
       ]
     }
@@ -56,15 +63,6 @@
       },
       {
         "source": "/index.html",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "no-cache, no-store, must-revalidate"
-          }
-        ]
-      },
-      {
-        "source": "/sw.js",
         "headers": [
           {
             "key": "Cache-Control",

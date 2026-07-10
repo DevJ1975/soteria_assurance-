@@ -2,7 +2,7 @@ import { handleSetTenantClaims, type SetTenantClaimsPayload } from '../auth/setT
 import { ROLE_PERMISSIONS } from '@soteria/core';
 import { type CallableRequest } from './mocks/ff-https';
 import { __resetApps } from './mocks/admin-app';
-import { __setSetCustomUserClaims } from './mocks/admin-auth';
+import { __resetAuth, __setGetUser, __setSetCustomUserClaims } from './mocks/admin-auth';
 
 const PAYLOAD: SetTenantClaimsPayload = {
   targetUid: 'target-1',
@@ -22,6 +22,7 @@ let lastSet: { uid: string; claims: Record<string, unknown> } | null;
 
 beforeEach(() => {
   __resetApps();
+  __resetAuth();
   lastSet = null;
   __setSetCustomUserClaims(async (uid, claims) => {
     lastSet = { uid, claims };
@@ -55,6 +56,48 @@ describe('handleSetTenantClaims — authorization', () => {
     await expect(handleSetTenantClaims(request(payload, token))).rejects.toMatchObject({
       code: 'permission-denied',
     });
+  });
+
+  it('forbids a tenant_admin from rehoming a user who belongs to another tenant', async () => {
+    __setGetUser(async (uid) => ({
+      uid,
+      customClaims: { tenantId: 'tenant-OTHER', role: 'auditor' },
+    }));
+    const token = { tenantId: 'tenant-1', role: 'tenant_admin', permissions: [] };
+    await expect(handleSetTenantClaims(request(PAYLOAD, token))).rejects.toMatchObject({
+      code: 'permission-denied',
+    });
+    expect(lastSet).toBeNull();
+  });
+
+  it('lets a tenant_admin re-provision an existing member of their own tenant', async () => {
+    __setGetUser(async (uid) => ({
+      uid,
+      customClaims: { tenantId: 'tenant-1', role: 'viewer' },
+    }));
+    const token = { tenantId: 'tenant-1', role: 'tenant_admin', permissions: [] };
+    const result = await handleSetTenantClaims(request(PAYLOAD, token));
+    expect(result.targetUid).toBe('target-1');
+    expect(lastSet?.uid).toBe('target-1');
+  });
+
+  it('rejects a tenant_admin targeting a non-existent user', async () => {
+    __setGetUser(async () => {
+      throw new Error('auth/user-not-found');
+    });
+    const token = { tenantId: 'tenant-1', role: 'tenant_admin', permissions: [] };
+    await expect(handleSetTenantClaims(request(PAYLOAD, token))).rejects.toMatchObject({
+      code: 'not-found',
+    });
+  });
+
+  it('does not gate super_admin callers on the target\'s current tenant', async () => {
+    __setGetUser(async () => {
+      throw new Error('should not be called for super_admin path');
+    });
+    const token = { tenantId: 'tenant-HQ', role: 'super_admin', permissions: [] };
+    const result = await handleSetTenantClaims(request(PAYLOAD, token));
+    expect(result.claims.tenantId).toBe('tenant-1');
   });
 });
 

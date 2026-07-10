@@ -17,9 +17,16 @@ import {
   type InterviewQuestionsPromptParams,
 } from '@soteria/core';
 import { ANTHROPIC_API_KEY } from '../common/secrets';
-import { requireTenantMatch, requirePermission } from '../common/guards';
+import {
+  MAX_SHORT_FIELD_LENGTH,
+  MAX_TEXT_FIELD_LENGTH,
+  optionalString,
+  requirePermission,
+  requireString,
+  requireTenantMatch,
+} from '../common/guards';
 import { getDb } from '../common/admin';
-import { enforceRateLimit } from './rateLimiter';
+import { reserveRateLimitSlot } from './rateLimiter';
 import { writeAiLog } from './aiLog';
 import { callClaude, CLAUDE_MODEL } from './anthropicClient';
 
@@ -48,33 +55,54 @@ export function parseQuestions(raw: string): string[] {
     .filter((line) => line.length > 0);
 }
 
+/** Bounds for the requested number of questions. */
+const MIN_QUESTION_COUNT = 1;
+const MAX_QUESTION_COUNT = 20;
+
 function assertPayload(data: unknown): SuggestQuestionsPayload {
   if (typeof data !== 'object' || data === null) {
     throw new HttpsError('invalid-argument', 'Request body is required.');
   }
   const d = data as Record<string, unknown>;
-  const required: Array<keyof SuggestQuestionsPayload> = [
-    'tenantId',
-    'clauseNumber',
-    'clauseTitle',
-    'intervieweeRole',
-    'industry',
-  ];
-  for (const key of required) {
-    if (typeof d[key] !== 'string' || (d[key] as string).length === 0) {
-      throw new HttpsError('invalid-argument', `Missing or invalid field: ${key}.`);
+
+  // Industry/organisation context: the mobile client sends `industry`
+  // (InterviewQuestionsPromptParams), the web client sends the equivalent
+  // `organizationContext`. Accept either; at least one is required.
+  const industry =
+    optionalString(d, 'industry', MAX_TEXT_FIELD_LENGTH) ??
+    optionalString(d, 'organizationContext', MAX_TEXT_FIELD_LENGTH);
+  if (industry === undefined || industry.length === 0) {
+    throw new HttpsError(
+      'invalid-argument',
+      'Missing or invalid field: industry (or organizationContext).',
+    );
+  }
+
+  const rawCount = d['questionCount'];
+  if (rawCount !== undefined) {
+    if (
+      typeof rawCount !== 'number' ||
+      !Number.isInteger(rawCount) ||
+      rawCount < MIN_QUESTION_COUNT ||
+      rawCount > MAX_QUESTION_COUNT
+    ) {
+      throw new HttpsError(
+        'invalid-argument',
+        `Invalid field: questionCount (integer ${MIN_QUESTION_COUNT}-${MAX_QUESTION_COUNT}).`,
+      );
     }
   }
+
+  const previousResponses = optionalString(d, 'previousResponses', MAX_TEXT_FIELD_LENGTH);
+
   return {
-    tenantId: d['tenantId'] as string,
-    clauseNumber: d['clauseNumber'] as string,
-    clauseTitle: d['clauseTitle'] as string,
-    intervieweeRole: d['intervieweeRole'] as string,
-    industry: d['industry'] as string,
-    ...(typeof d['questionCount'] === 'number' ? { questionCount: d['questionCount'] } : {}),
-    ...(typeof d['previousResponses'] === 'string'
-      ? { previousResponses: d['previousResponses'] }
-      : {}),
+    tenantId: requireString(d, 'tenantId', MAX_SHORT_FIELD_LENGTH),
+    clauseNumber: requireString(d, 'clauseNumber', MAX_SHORT_FIELD_LENGTH),
+    clauseTitle: requireString(d, 'clauseTitle', MAX_SHORT_FIELD_LENGTH),
+    intervieweeRole: requireString(d, 'intervieweeRole', MAX_SHORT_FIELD_LENGTH),
+    industry,
+    ...(rawCount !== undefined ? { questionCount: rawCount as number } : {}),
+    ...(previousResponses !== undefined ? { previousResponses } : {}),
   };
 }
 
@@ -87,30 +115,44 @@ export async function handleSuggestQuestions(
   requirePermission(auth, 'ai_copilot');
 
   const db = getDb();
-  await enforceRateLimit(db, payload.tenantId);
+  const logId = await reserveRateLimitSlot(db, payload.tenantId, {
+    feature: 'suggest_questions',
+    uid: auth.uid,
+    model: CLAUDE_MODEL,
+  });
 
   const prompt = buildInterviewQuestionsPrompt(payload);
   const result = await callClaude(ISO_AUDITOR_SYSTEM_PROMPT, prompt);
 
   if (!result.ok) {
-    await writeAiLog(db, payload.tenantId, {
-      feature: 'suggest_questions',
-      uid: auth.uid,
-      model: CLAUDE_MODEL,
-      status: 'error',
-      errorMessage: result.error,
-    });
+    await writeAiLog(
+      db,
+      payload.tenantId,
+      {
+        feature: 'suggest_questions',
+        uid: auth.uid,
+        model: CLAUDE_MODEL,
+        status: 'error',
+        errorMessage: result.error,
+      },
+      logId,
+    );
     throw new HttpsError('unavailable', 'The AI service is temporarily unavailable.');
   }
 
-  await writeAiLog(db, payload.tenantId, {
-    feature: 'suggest_questions',
-    uid: auth.uid,
-    model: result.model,
-    status: 'success',
-    inputTokens: result.inputTokens,
-    outputTokens: result.outputTokens,
-  });
+  await writeAiLog(
+    db,
+    payload.tenantId,
+    {
+      feature: 'suggest_questions',
+      uid: auth.uid,
+      model: result.model,
+      status: 'success',
+      inputTokens: result.inputTokens,
+      outputTokens: result.outputTokens,
+    },
+    logId,
+  );
 
   return {
     questions: parseQuestions(result.text),

@@ -108,3 +108,60 @@ export function requirePermission(auth: VerifiedAuth, permission: string): void 
     throw new HttpsError('permission-denied', `Missing permission: ${permission}.`);
   }
 }
+
+// ---------------------------------------------------------------------------
+// Payload field validation — every callable bounds its inputs so a client can
+// never ship unbounded strings (or oversized base64 blobs) into a prompt.
+// ---------------------------------------------------------------------------
+
+/** Cap for short identifier-ish fields (clause numbers, titles, roles). */
+export const MAX_SHORT_FIELD_LENGTH = 256;
+
+/** Cap for freeform text fields (notes, summaries, org context). */
+export const MAX_TEXT_FIELD_LENGTH = 16_384;
+
+/**
+ * Reads a required string field, enforcing non-emptiness and a length cap.
+ *
+ * @throws {HttpsError} `invalid-argument` when missing, wrong-typed, empty or
+ *   longer than `maxLength`.
+ */
+export function requireString(
+  data: Record<string, unknown>,
+  key: string,
+  maxLength: number,
+): string {
+  const value = data[key];
+  if (typeof value !== 'string' || value.length === 0) {
+    throw new HttpsError('invalid-argument', `Missing or invalid field: ${key}.`);
+  }
+  if (value.length > maxLength) {
+    throw new HttpsError(
+      'invalid-argument',
+      `Field too long: ${key} (max ${maxLength} characters).`,
+    );
+  }
+  return value;
+}
+
+/**
+ * Reads an optional string field, enforcing the length cap when present.
+ * Returns `undefined` when the field is absent or not a string.
+ */
+export function optionalString(
+  data: Record<string, unknown>,
+  key: string,
+  maxLength: number,
+): string | undefined {
+  const value = data[key];
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+  if (value.length > maxLength) {
+    throw new HttpsError(
+      'invalid-argument',
+      `Field too long: ${key} (max ${maxLength} characters).`,
+    );
+  }
+  return value;
+}

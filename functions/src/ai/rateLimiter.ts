@@ -68,22 +68,54 @@ export async function getRateLimitStatus(
   };
 }
 
+/** Identifying fields stamped onto a rate-limit reservation (aiLogs doc). */
+export interface RateLimitReservationInput {
+  feature: string;
+  uid: string;
+  model: string;
+}
+
 /**
- * Throws if the tenant has exhausted its hourly AI quota.
+ * Atomically reserves a slot in the tenant's hourly AI window.
  *
- * @throws {HttpsError} `resource-exhausted` when over the cap.
+ * The count-then-act runs inside a Firestore transaction that also CREATES the
+ * aiLogs entry (status 'pending') in the same commit, so concurrent bursts
+ * cannot slip past the cap: each in-flight request already counts against the
+ * window the moment it is admitted. The handler later finalises the same
+ * document via {@link ../ai/aiLog#writeAiLog} with the returned log id.
+ *
+ * @returns the reserved aiLogs document id.
+ * @throws {HttpsError} `resource-exhausted` when the window is full.
  */
-export async function enforceRateLimit(
+export async function reserveRateLimitSlot(
   db: Firestore,
   tenantId: string,
+  entry: RateLimitReservationInput,
   now: Date = new Date(),
-): Promise<RateLimitResult> {
-  const status = await getRateLimitStatus(db, tenantId, now);
-  if (!status.allowed) {
-    throw new HttpsError(
-      'resource-exhausted',
-      `AI rate limit reached (${AI_RATE_LIMIT_PER_HOUR} requests/hour). Please try again later.`,
+): Promise<string> {
+  const windowStart = Timestamp.fromMillis(now.getTime() - AI_RATE_LIMIT_WINDOW_MS);
+  const logs = db.collection(aiLogsPath(tenantId));
+
+  return db.runTransaction(async (txn) => {
+    const countSnapshot = await txn.get(
+      logs.where('createdAt', '>=', windowStart).count(),
     );
-  }
-  return status;
+    const used = countSnapshot.data().count;
+    if (used >= AI_RATE_LIMIT_PER_HOUR) {
+      throw new HttpsError(
+        'resource-exhausted',
+        `AI rate limit reached (${AI_RATE_LIMIT_PER_HOUR} requests/hour). Please try again later.`,
+      );
+    }
+
+    const ref = logs.doc();
+    txn.set(ref, {
+      feature: entry.feature,
+      uid: entry.uid,
+      model: entry.model,
+      status: 'pending',
+      createdAt: Timestamp.fromDate(now),
+    });
+    return ref.id;
+  });
 }

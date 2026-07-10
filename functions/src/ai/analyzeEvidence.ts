@@ -15,12 +15,26 @@
 import { onCall, HttpsError, type CallableRequest } from 'firebase-functions/v2/https';
 import { AI_DISCLAIMER, ISO_AUDITOR_SYSTEM_PROMPT } from '@soteria/core';
 import { ANTHROPIC_API_KEY } from '../common/secrets';
-import { requireTenantMatch, requirePermission } from '../common/guards';
+import {
+  MAX_SHORT_FIELD_LENGTH,
+  MAX_TEXT_FIELD_LENGTH,
+  optionalString,
+  requirePermission,
+  requireString,
+  requireTenantMatch,
+} from '../common/guards';
 import { getDb } from '../common/admin';
-import { enforceRateLimit } from './rateLimiter';
+import { reserveRateLimitSlot } from './rateLimiter';
 import { writeAiLog } from './aiLog';
 import { callClaude, CLAUDE_MODEL, type ClaudeContentBlock } from './anthropicClient';
 import { extractClauseReferences } from './parseNCR';
+
+/**
+ * Hard cap on the base64 image payload (~7.5 MB decoded). The Claude vision
+ * API rejects larger images anyway; bounding it here stops oversized blobs
+ * from ever reaching the prompt builder.
+ */
+export const MAX_IMAGE_BASE64_LENGTH = 10_000_000;
 
 /** Media types accepted by the multimodal endpoint. */
 export type SupportedImageMediaType =
@@ -117,12 +131,8 @@ function assertPayload(data: unknown): AnalyzeEvidencePayload {
     throw new HttpsError('invalid-argument', 'Request body is required.');
   }
   const d = data as Record<string, unknown>;
-  if (typeof d['tenantId'] !== 'string' || (d['tenantId'] as string).length === 0) {
-    throw new HttpsError('invalid-argument', 'Missing or invalid field: tenantId.');
-  }
-  if (typeof d['imageBase64'] !== 'string' || (d['imageBase64'] as string).length === 0) {
-    throw new HttpsError('invalid-argument', 'Missing or invalid field: imageBase64.');
-  }
+  const tenantId = requireString(d, 'tenantId', MAX_SHORT_FIELD_LENGTH);
+  const imageBase64 = requireString(d, 'imageBase64', MAX_IMAGE_BASE64_LENGTH);
   const mediaType = d['mediaType'];
   if (
     typeof mediaType !== 'string' ||
@@ -130,13 +140,12 @@ function assertPayload(data: unknown): AnalyzeEvidencePayload {
   ) {
     throw new HttpsError('invalid-argument', 'Unsupported or missing mediaType.');
   }
+  const contextDescription = optionalString(d, 'contextDescription', MAX_TEXT_FIELD_LENGTH);
   return {
-    tenantId: d['tenantId'] as string,
-    imageBase64: d['imageBase64'] as string,
+    tenantId,
+    imageBase64,
     mediaType: mediaType as SupportedImageMediaType,
-    ...(typeof d['contextDescription'] === 'string'
-      ? { contextDescription: d['contextDescription'] }
-      : {}),
+    ...(contextDescription !== undefined ? { contextDescription } : {}),
   };
 }
 
@@ -149,7 +158,11 @@ export async function handleAnalyzeEvidence(
   requirePermission(auth, 'ai_copilot');
 
   const db = getDb();
-  await enforceRateLimit(db, payload.tenantId);
+  const logId = await reserveRateLimitSlot(db, payload.tenantId, {
+    feature: 'analyze_evidence',
+    uid: auth.uid,
+    model: CLAUDE_MODEL,
+  });
 
   const promptText = payload.contextDescription
     ? `AUDITOR CONTEXT: ${payload.contextDescription}\n\n${PHOTO_ANALYSIS_PROMPT}`
@@ -166,24 +179,34 @@ export async function handleAnalyzeEvidence(
   const result = await callClaude(ISO_AUDITOR_SYSTEM_PROMPT, content, { maxTokens: 1024 });
 
   if (!result.ok) {
-    await writeAiLog(db, payload.tenantId, {
-      feature: 'analyze_evidence',
-      uid: auth.uid,
-      model: CLAUDE_MODEL,
-      status: 'error',
-      errorMessage: result.error,
-    });
+    await writeAiLog(
+      db,
+      payload.tenantId,
+      {
+        feature: 'analyze_evidence',
+        uid: auth.uid,
+        model: CLAUDE_MODEL,
+        status: 'error',
+        errorMessage: result.error,
+      },
+      logId,
+    );
     throw new HttpsError('unavailable', 'The AI service is temporarily unavailable.');
   }
 
-  await writeAiLog(db, payload.tenantId, {
-    feature: 'analyze_evidence',
-    uid: auth.uid,
-    model: result.model,
-    status: 'success',
-    inputTokens: result.inputTokens,
-    outputTokens: result.outputTokens,
-  });
+  await writeAiLog(
+    db,
+    payload.tenantId,
+    {
+      feature: 'analyze_evidence',
+      uid: auth.uid,
+      model: result.model,
+      status: 'success',
+      inputTokens: result.inputTokens,
+      outputTokens: result.outputTokens,
+    },
+    logId,
+  );
 
   return {
     aiAnalysis: parseEvidenceAnalysis(result.text),

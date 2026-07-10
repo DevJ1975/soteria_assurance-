@@ -22,9 +22,16 @@ import {
   type NCRDraftResponse,
 } from '@soteria/core';
 import { ANTHROPIC_API_KEY } from '../common/secrets';
-import { requireTenantMatch, requirePermission } from '../common/guards';
+import {
+  MAX_SHORT_FIELD_LENGTH,
+  MAX_TEXT_FIELD_LENGTH,
+  optionalString,
+  requirePermission,
+  requireString,
+  requireTenantMatch,
+} from '../common/guards';
 import { getDb } from '../common/admin';
-import { enforceRateLimit } from './rateLimiter';
+import { reserveRateLimitSlot } from './rateLimiter';
 import { writeAiLog } from './aiLog';
 import { callClaude, CLAUDE_MODEL } from './anthropicClient';
 import { parseNCRResponse } from './parseNCR';
@@ -49,29 +56,15 @@ function assertPayload(data: unknown): DraftNCRPayload {
     throw new HttpsError('invalid-argument', 'Request body is required.');
   }
   const d = data as Record<string, unknown>;
-  const required: Array<keyof DraftNCRPayload> = [
-    'tenantId',
-    'clauseNumber',
-    'clauseTitle',
-    'requirementText',
-    'auditorRawNotes',
-    'organizationContext',
-  ];
-  for (const key of required) {
-    if (typeof d[key] !== 'string' || (d[key] as string).length === 0) {
-      throw new HttpsError('invalid-argument', `Missing or invalid field: ${key}.`);
-    }
-  }
+  const evidenceDescription = optionalString(d, 'evidenceDescription', MAX_TEXT_FIELD_LENGTH);
   return {
-    tenantId: d['tenantId'] as string,
-    clauseNumber: d['clauseNumber'] as string,
-    clauseTitle: d['clauseTitle'] as string,
-    requirementText: d['requirementText'] as string,
-    auditorRawNotes: d['auditorRawNotes'] as string,
-    organizationContext: d['organizationContext'] as string,
-    ...(typeof d['evidenceDescription'] === 'string'
-      ? { evidenceDescription: d['evidenceDescription'] }
-      : {}),
+    tenantId: requireString(d, 'tenantId', MAX_SHORT_FIELD_LENGTH),
+    clauseNumber: requireString(d, 'clauseNumber', MAX_SHORT_FIELD_LENGTH),
+    clauseTitle: requireString(d, 'clauseTitle', MAX_SHORT_FIELD_LENGTH),
+    requirementText: requireString(d, 'requirementText', MAX_TEXT_FIELD_LENGTH),
+    auditorRawNotes: requireString(d, 'auditorRawNotes', MAX_TEXT_FIELD_LENGTH),
+    organizationContext: requireString(d, 'organizationContext', MAX_TEXT_FIELD_LENGTH),
+    ...(evidenceDescription !== undefined ? { evidenceDescription } : {}),
   };
 }
 
@@ -87,33 +80,49 @@ export async function handleDraftNCR(
   requirePermission(auth, 'ai_copilot');
 
   const db = getDb();
-  await enforceRateLimit(db, payload.tenantId);
+  // Atomically reserves the slot AND creates the pending aiLogs entry, so
+  // concurrent bursts cannot slip past the hourly cap.
+  const logId = await reserveRateLimitSlot(db, payload.tenantId, {
+    feature: 'draft_ncr',
+    uid: auth.uid,
+    model: CLAUDE_MODEL,
+  });
 
   const prompt = buildNCRPrompt(payload);
   const result = await callClaude(ISO_AUDITOR_SYSTEM_PROMPT, prompt);
 
   if (!result.ok) {
-    await writeAiLog(db, payload.tenantId, {
-      feature: 'draft_ncr',
-      uid: auth.uid,
-      model: CLAUDE_MODEL,
-      status: 'error',
-      errorMessage: result.error,
-    });
+    await writeAiLog(
+      db,
+      payload.tenantId,
+      {
+        feature: 'draft_ncr',
+        uid: auth.uid,
+        model: CLAUDE_MODEL,
+        status: 'error',
+        errorMessage: result.error,
+      },
+      logId,
+    );
     // Graceful degradation — the client can fall back to manual drafting.
     throw new HttpsError('unavailable', 'The AI service is temporarily unavailable.');
   }
 
   const aiDraft = parseNCRResponse(result.text);
 
-  await writeAiLog(db, payload.tenantId, {
-    feature: 'draft_ncr',
-    uid: auth.uid,
-    model: result.model,
-    status: 'success',
-    inputTokens: result.inputTokens,
-    outputTokens: result.outputTokens,
-  });
+  await writeAiLog(
+    db,
+    payload.tenantId,
+    {
+      feature: 'draft_ncr',
+      uid: auth.uid,
+      model: result.model,
+      status: 'success',
+      inputTokens: result.inputTokens,
+      outputTokens: result.outputTokens,
+    },
+    logId,
+  );
 
   return { aiDraft, disclaimer: AI_DISCLAIMER, model: result.model };
 }

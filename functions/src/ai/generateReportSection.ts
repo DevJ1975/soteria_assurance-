@@ -12,9 +12,15 @@
 import { onCall, HttpsError, type CallableRequest } from 'firebase-functions/v2/https';
 import { AI_DISCLAIMER, ISO_AUDITOR_SYSTEM_PROMPT } from '@soteria/core';
 import { ANTHROPIC_API_KEY } from '../common/secrets';
-import { requireTenantMatch, requirePermission } from '../common/guards';
+import {
+  MAX_SHORT_FIELD_LENGTH,
+  MAX_TEXT_FIELD_LENGTH,
+  requirePermission,
+  requireString,
+  requireTenantMatch,
+} from '../common/guards';
 import { getDb } from '../common/admin';
-import { enforceRateLimit } from './rateLimiter';
+import { reserveRateLimitSlot } from './rateLimiter';
 import { writeAiLog } from './aiLog';
 import { callClaude, CLAUDE_MODEL } from './anthropicClient';
 
@@ -83,9 +89,7 @@ function assertPayload(data: unknown): GenerateReportSectionPayload {
     throw new HttpsError('invalid-argument', 'Request body is required.');
   }
   const d = data as Record<string, unknown>;
-  if (typeof d['tenantId'] !== 'string' || (d['tenantId'] as string).length === 0) {
-    throw new HttpsError('invalid-argument', 'Missing or invalid field: tenantId.');
-  }
+  const tenantId = requireString(d, 'tenantId', MAX_SHORT_FIELD_LENGTH);
   const sectionType = d['sectionType'];
   if (
     typeof sectionType !== 'string' ||
@@ -93,13 +97,11 @@ function assertPayload(data: unknown): GenerateReportSectionPayload {
   ) {
     throw new HttpsError('invalid-argument', 'Missing or invalid field: sectionType.');
   }
-  if (typeof d['auditSummary'] !== 'string' || (d['auditSummary'] as string).length === 0) {
-    throw new HttpsError('invalid-argument', 'Missing or invalid field: auditSummary.');
-  }
+  const auditSummary = requireString(d, 'auditSummary', MAX_TEXT_FIELD_LENGTH);
   return {
-    tenantId: d['tenantId'] as string,
+    tenantId,
     sectionType: sectionType as ReportSectionType,
-    auditSummary: d['auditSummary'] as string,
+    auditSummary,
   };
 }
 
@@ -112,30 +114,44 @@ export async function handleGenerateReportSection(
   requirePermission(auth, 'ai_copilot');
 
   const db = getDb();
-  await enforceRateLimit(db, payload.tenantId);
+  const logId = await reserveRateLimitSlot(db, payload.tenantId, {
+    feature: 'generate_report_section',
+    uid: auth.uid,
+    model: CLAUDE_MODEL,
+  });
 
   const prompt = buildReportSectionPrompt(payload.sectionType, payload.auditSummary);
   const result = await callClaude(ISO_AUDITOR_SYSTEM_PROMPT, prompt, { maxTokens: 1536 });
 
   if (!result.ok) {
-    await writeAiLog(db, payload.tenantId, {
-      feature: 'generate_report_section',
-      uid: auth.uid,
-      model: CLAUDE_MODEL,
-      status: 'error',
-      errorMessage: result.error,
-    });
+    await writeAiLog(
+      db,
+      payload.tenantId,
+      {
+        feature: 'generate_report_section',
+        uid: auth.uid,
+        model: CLAUDE_MODEL,
+        status: 'error',
+        errorMessage: result.error,
+      },
+      logId,
+    );
     throw new HttpsError('unavailable', 'The AI service is temporarily unavailable.');
   }
 
-  await writeAiLog(db, payload.tenantId, {
-    feature: 'generate_report_section',
-    uid: auth.uid,
-    model: result.model,
-    status: 'success',
-    inputTokens: result.inputTokens,
-    outputTokens: result.outputTokens,
-  });
+  await writeAiLog(
+    db,
+    payload.tenantId,
+    {
+      feature: 'generate_report_section',
+      uid: auth.uid,
+      model: result.model,
+      status: 'success',
+      inputTokens: result.inputTokens,
+      outputTokens: result.outputTokens,
+    },
+    logId,
+  );
 
   return {
     aiDraftSection: result.text,

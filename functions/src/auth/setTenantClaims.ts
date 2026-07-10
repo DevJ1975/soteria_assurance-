@@ -112,6 +112,24 @@ export async function handleSetTenantClaims(
     if (payload.role === 'super_admin') {
       throw new HttpsError('permission-denied', 'Cannot grant super_admin role.');
     }
+
+    // Checking only the DESTINATION tenant is not enough: without inspecting
+    // the target's CURRENT claims, a tenant_admin could rehome any user on the
+    // platform into their own tenant (account hijack). Only claim-less (new)
+    // users or existing members of the caller's tenant may be (re)provisioned.
+    let existingTenantId: unknown;
+    try {
+      const targetUser = await getAdminAuth().getUser(payload.targetUid);
+      existingTenantId = targetUser.customClaims?.['tenantId'];
+    } catch {
+      throw new HttpsError('not-found', 'Target user does not exist.');
+    }
+    if (typeof existingTenantId === 'string' && existingTenantId !== caller.tenantId) {
+      throw new HttpsError(
+        'permission-denied',
+        'Target user already belongs to another tenant.',
+      );
+    }
   }
 
   const permissions: string[] = [...ROLE_PERMISSIONS[payload.role]];

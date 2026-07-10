@@ -19,8 +19,12 @@ export type AIFeature =
   | 'analyze_evidence'
   | 'generate_report_section';
 
-/** Outcome of an AI call, for observability and degradation tracking. */
-export type AILogStatus = 'success' | 'error';
+/**
+ * Outcome of an AI call, for observability and degradation tracking.
+ * 'pending' marks a rate-limit reservation whose model call is still in
+ * flight (see {@link ./rateLimiter#reserveRateLimitSlot}).
+ */
+export type AILogStatus = 'pending' | 'success' | 'error';
 
 /** A single AI request/response audit record. */
 export interface AILogEntry {
@@ -41,9 +45,15 @@ export interface AILogEntry {
 export type AILogInput = Omit<AILogEntry, 'createdAt'>;
 
 /**
- * Appends an AI log entry to `/tenants/{tenantId}/aiLogs`.
+ * Writes an AI log entry to `/tenants/{tenantId}/aiLogs`.
  *
- * Returns the new document id. Failures here must never mask the AI result, so
+ * When `logId` is supplied the entry FINALISES an existing rate-limit
+ * reservation (created by `reserveRateLimitSlot`): the reservation's
+ * `createdAt` is preserved — it anchors the request's position in the
+ * rate-limit window — and a `completedAt` stamp is added. Without `logId` a
+ * fresh entry is appended.
+ *
+ * Returns the document id. Failures here must never mask the AI result, so
  * callers should await this but treat a logging error as non-fatal where
  * appropriate.
  */
@@ -51,8 +61,14 @@ export async function writeAiLog(
   db: Firestore,
   tenantId: string,
   entry: AILogInput,
+  logId?: string,
 ): Promise<string> {
-  const ref = await db.collection(aiLogsPath(tenantId)).add({
+  const logs = db.collection(aiLogsPath(tenantId));
+  if (logId !== undefined) {
+    await logs.doc(logId).set({ ...entry, completedAt: Timestamp.now() }, { merge: true });
+    return logId;
+  }
+  const ref = await logs.add({
     ...entry,
     createdAt: Timestamp.now(),
   });
