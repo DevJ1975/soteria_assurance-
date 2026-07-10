@@ -129,15 +129,49 @@ export function signInWithGoogleCredential(
 // Phone (web)
 // ---------------------------------------------------------------------------
 
+// One live verifier per DOM container. Constructing a second verifier on a
+// container that already hosts one throws inside the reCAPTCHA widget, which
+// made every retry of the phone flow fail until a full page reload.
+const recaptchaVerifiers = new Map<string, RecaptchaVerifier>();
+
 /**
- * Creates an invisible {@link RecaptchaVerifier} bound to a DOM container.
+ * Creates an invisible {@link RecaptchaVerifier} bound to a DOM container,
+ * clearing any verifier previously mounted on the same container so the phone
+ * sign-in flow can be retried without reloading the page.
  *
  * Web-only: the reCAPTCHA verifier requires a DOM and is not used on mobile
  * (Expo uses its own phone-auth flow). `containerId` is the id of an element
  * present in the page (e.g. an empty `<div id="recaptcha-container" />`).
  */
 export function createRecaptchaVerifier(containerId: string): RecaptchaVerifier {
-  return new RecaptchaVerifier(getFirebaseAuth(), containerId, { size: 'invisible' });
+  const previous = recaptchaVerifiers.get(containerId);
+  if (previous !== undefined) {
+    try {
+      previous.clear();
+    } catch {
+      // The widget may already be gone (e.g. the container was unmounted);
+      // a fresh verifier below is the recovery either way.
+    }
+  }
+  const verifier = new RecaptchaVerifier(getFirebaseAuth(), containerId, { size: 'invisible' });
+  recaptchaVerifiers.set(containerId, verifier);
+  return verifier;
+}
+
+/**
+ * Clears and forgets the verifier mounted on `containerId` (call on unmount of
+ * the hosting component). Safe to call when none exists.
+ */
+export function clearRecaptchaVerifier(containerId: string): void {
+  const verifier = recaptchaVerifiers.get(containerId);
+  if (verifier !== undefined) {
+    try {
+      verifier.clear();
+    } catch {
+      // Already torn down with its container — forgetting it is enough.
+    }
+    recaptchaVerifiers.delete(containerId);
+  }
 }
 
 /**

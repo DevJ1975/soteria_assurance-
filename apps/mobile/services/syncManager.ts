@@ -17,6 +17,7 @@ import {
   clauseAssessmentsCol,
   evidenceCol,
   findingsCol,
+  patchDoc,
   setDocById,
 } from '@soteria/firebase';
 import { database } from '../db';
@@ -42,7 +43,44 @@ export interface SyncResult {
   skippedOffline: boolean;
 }
 
-const UNSYNCED = (): Q.Clause => Q.where('sync_status', Q.notEq<SyncStatus>('synced'));
+// 'rejected' rows are terminal (server permission-denied) — excluded so they
+// never re-push; see the SyncStatus docs in db/schema.ts.
+const UNSYNCED = (): Q.Clause =>
+  Q.where('sync_status', Q.notIn(['synced', 'rejected'] satisfies SyncStatus[]));
+
+/**
+ * True when an error is Firestore's PERMISSION_DENIED — the rules refused the
+ * write, so retrying can never succeed (immutable post-issuance data, fenced
+ * server-authored field, or role limits). Such rows become 'rejected'.
+ */
+function isPermissionDenied(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    (error as { code: unknown }).code === 'permission-denied'
+  );
+}
+
+/**
+ * Remote ids of local audits whose report has been issued (or that have since
+ * closed). Children of these audits are refused by the rules' isAuditReported
+ * gate, so the pushers reject them locally without burning a network write
+ * (and the rules' billed get()) on every pass.
+ */
+async function reportedAuditRemoteIds(): Promise<Set<string>> {
+  const rows = await database.collections
+    .get<Audit>(TABLE_AUDITS)
+    .query(Q.where('status', Q.oneOf(['report_issued', 'closed'])))
+    .fetch();
+  const ids = new Set<string>();
+  for (const row of rows) {
+    if (row.remoteId !== null) {
+      ids.add(row.remoteId);
+    }
+  }
+  return ids;
+}
 
 /**
  * Generates a stable Firestore document id for a locally-created row.
@@ -68,12 +106,21 @@ async function pushAudits(): Promise<{ pushed: number; failed: number }> {
   let failed = 0;
   for (const row of rows) {
     try {
+      const isFirstPush = row.remoteId === null;
       const remoteId = row.remoteId ?? newRemoteId();
-      await setDocById(auditsCol(row.tenantId), auditToDoc(row, remoteId));
+      const doc = auditToDoc(row, remoteId, isFirstPush);
+      if (isFirstPush) {
+        await setDocById(auditsCol(row.tenantId), doc);
+      } else {
+        // Merge-patch on update: a full overwrite would DELETE the
+        // server-authored fields this client never carries (`findings`
+        // summary, AI scores) and be refused by the rules' field fences.
+        await patchDoc(auditsCol(row.tenantId), remoteId, doc);
+      }
       await markRowSynced(row, remoteId);
       pushed += 1;
-    } catch {
-      await markRowFailed(row);
+    } catch (error) {
+      await (isPermissionDenied(error) ? markRowRejected(row) : markRowFailed(row));
       failed += 1;
     }
   }
@@ -87,7 +134,13 @@ async function pushClauses(): Promise<{ pushed: number; failed: number }> {
     .fetch();
   let pushed = 0;
   let failed = 0;
+  const reported = await reportedAuditRemoteIds();
   for (const row of rows) {
+    if (reported.has(row.auditId)) {
+      await markRowRejected(row);
+      failed += 1;
+      continue;
+    }
     try {
       const remoteId = row.remoteId ?? newRemoteId();
       await setDocById(
@@ -96,8 +149,8 @@ async function pushClauses(): Promise<{ pushed: number; failed: number }> {
       );
       await markRowSynced(row, remoteId);
       pushed += 1;
-    } catch {
-      await markRowFailed(row);
+    } catch (error) {
+      await (isPermissionDenied(error) ? markRowRejected(row) : markRowFailed(row));
       failed += 1;
     }
   }
@@ -111,14 +164,20 @@ async function pushFindings(): Promise<{ pushed: number; failed: number }> {
     .fetch();
   let pushed = 0;
   let failed = 0;
+  const reported = await reportedAuditRemoteIds();
   for (const row of rows) {
+    if (reported.has(row.auditId)) {
+      await markRowRejected(row);
+      failed += 1;
+      continue;
+    }
     try {
       const remoteId = row.remoteId ?? newRemoteId();
       await setDocById(findingsCol(row.tenantId, row.auditId), findingToDoc(row, remoteId));
       await markRowSynced(row, remoteId);
       pushed += 1;
-    } catch {
-      await markRowFailed(row);
+    } catch (error) {
+      await (isPermissionDenied(error) ? markRowRejected(row) : markRowFailed(row));
       failed += 1;
     }
   }
@@ -132,6 +191,7 @@ async function pushEvidence(): Promise<{ pushed: number; failed: number }> {
     .fetch();
   let pushed = 0;
   let failed = 0;
+  const reported = await reportedAuditRemoteIds();
   for (const row of rows) {
     // Evidence metadata only syncs once its binary has been uploaded; until then
     // the file URL is not a real Storage URL. The evidence service flips
@@ -139,13 +199,26 @@ async function pushEvidence(): Promise<{ pushed: number; failed: number }> {
     if (row.uploadStatus !== 'uploaded') {
       continue;
     }
+    if (reported.has(row.auditId)) {
+      await markRowRejected(row);
+      failed += 1;
+      continue;
+    }
     try {
+      const isFirstPush = row.remoteId === null;
       const remoteId = row.remoteId ?? newRemoteId();
-      await setDocById(evidenceCol(row.tenantId, row.auditId), evidenceToDoc(row, remoteId));
+      const doc = evidenceToDoc(row, remoteId);
+      if (isFirstPush) {
+        await setDocById(evidenceCol(row.tenantId, row.auditId), doc);
+      } else {
+        // Merge-patch: overwriting would delete server-authored aiAnalysis /
+        // aiHazardsDetected and be refused by the rules fence.
+        await patchDoc(evidenceCol(row.tenantId, row.auditId), remoteId, doc);
+      }
       await markRowSynced(row, remoteId);
       pushed += 1;
-    } catch {
-      await markRowFailed(row);
+    } catch (error) {
+      await (isPermissionDenied(error) ? markRowRejected(row) : markRowFailed(row));
       failed += 1;
     }
   }
@@ -167,6 +240,15 @@ async function markRowFailed(row: SyncableRow): Promise<void> {
   await database.write(async () => {
     await row.update((draft) => {
       draft.syncStatus = 'failed';
+    });
+  });
+}
+
+/** Terminal: the server refused the write; the row will not be re-pushed. */
+async function markRowRejected(row: SyncableRow): Promise<void> {
+  await database.write(async () => {
+    await row.update((draft) => {
+      draft.syncStatus = 'rejected';
     });
   });
 }

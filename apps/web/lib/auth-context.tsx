@@ -57,6 +57,12 @@ export interface AuthContextValue {
   startPhone: (phoneNumber: string, recaptchaContainerId: string) => Promise<ConfirmationResult>;
   confirmPhone: (confirmation: ConfirmationResult, code: string) => Promise<void>;
   signOut: () => Promise<void>;
+  /**
+   * Force-refreshes the ID token and re-reads the tenant claims. Used by the
+   * "awaiting provisioning" screen so freshly-minted claims take effect
+   * without a manual sign-out/sign-in.
+   */
+  refreshClaims: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -114,6 +120,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       signOut: async () => {
         await signOutUser();
+      },
+      refreshClaims: async () => {
+        const next = await getCurrentClaims(true).catch(() => null);
+        setClaims(next);
       },
     }),
     [user, claims, loading, firebaseConfig],

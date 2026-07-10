@@ -4,8 +4,8 @@
  * never by talking to Anthropic directly. The returned `aiDraft` is stored in
  * `aiDraft*` fields by the caller and always carries the `disclaimer` string.
  */
-import { getFunctions, httpsCallable } from 'firebase/functions';
-import { getFirebaseApp } from '@soteria/firebase';
+import { httpsCallable } from 'firebase/functions';
+import { getFirebaseFunctions } from '@soteria/firebase';
 import type { NCRDraftResponse } from '@soteria/core';
 
 /** Request payload for the `draftNCR` callable. */
@@ -41,7 +41,7 @@ export interface SuggestQuestionsResult {
 /** Drafts a non-conformity report from the auditor's raw notes via Claude. */
 export async function callDraftNCR(request: DraftNCRRequest): Promise<DraftNCRResult> {
   const callable = httpsCallable<DraftNCRRequest, DraftNCRResult>(
-    getFunctions(getFirebaseApp()),
+    getFirebaseFunctions(),
     'draftNCR',
   );
   const { data } = await callable(request);
@@ -53,7 +53,7 @@ export async function callSuggestQuestions(
   request: SuggestQuestionsRequest,
 ): Promise<SuggestQuestionsResult> {
   const callable = httpsCallable<SuggestQuestionsRequest, SuggestQuestionsResult>(
-    getFunctions(getFirebaseApp()),
+    getFirebaseFunctions(),
     'suggestQuestions',
   );
   const { data } = await callable(request);

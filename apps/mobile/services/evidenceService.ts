@@ -22,6 +22,57 @@ import { scheduleSync } from './syncManager';
 const MAX_IMAGE_DIMENSION = 1600;
 const JPEG_COMPRESSION = 0.7;
 
+/**
+ * File-extension → MIME map for the capture formats the app produces
+ * (expo-camera JPEGs, expo-av recordings, picked videos/PDFs). Storage rules
+ * validate the declared content type, so uploads must never fall back to
+ * application/octet-stream.
+ */
+const MIME_BY_EXTENSION: Record<string, string> = {
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  webp: 'image/webp',
+  heic: 'image/heic',
+  m4a: 'audio/m4a',
+  aac: 'audio/aac',
+  mp3: 'audio/mpeg',
+  wav: 'audio/wav',
+  caf: 'audio/x-caf',
+  '3gp': 'audio/3gpp',
+  mp4: 'video/mp4',
+  mov: 'video/quicktime',
+  webm: 'video/webm',
+  pdf: 'application/pdf',
+};
+
+/** Fallback extension + MIME per evidence type when the URI has no usable one. */
+const DEFAULT_FORMAT_BY_TYPE: Record<EvidenceType, { extension: string; mimeType: string }> = {
+  photo: { extension: 'jpg', mimeType: 'image/jpeg' },
+  screenshot: { extension: 'jpg', mimeType: 'image/jpeg' },
+  signature: { extension: 'png', mimeType: 'image/png' },
+  audio: { extension: 'm4a', mimeType: 'audio/m4a' },
+  video: { extension: 'mp4', mimeType: 'video/mp4' },
+  document: { extension: 'pdf', mimeType: 'application/pdf' },
+};
+
+/**
+ * Resolves the real file extension + MIME type for an evidence file from its
+ * local URI, falling back to the evidence type's default format. Images are
+ * always re-encoded to JPEG by {@link compressImage} before this is called.
+ */
+export function resolveEvidenceFormat(
+  type: EvidenceType,
+  uri: string,
+): { extension: string; mimeType: string } {
+  const match = /\.([a-z0-9]+)(?:\?.*)?$/i.exec(uri);
+  const extension = match?.[1]?.toLowerCase();
+  if (extension !== undefined && MIME_BY_EXTENSION[extension] !== undefined) {
+    return { extension, mimeType: MIME_BY_EXTENSION[extension] };
+  }
+  return DEFAULT_FORMAT_BY_TYPE[type];
+}
+
 export interface CaptureEvidenceInput {
   tenantId: string;
   auditId: string;
@@ -82,7 +133,10 @@ export async function captureEvidence(input: CaptureEvidenceInput): Promise<Evid
   const processed = isImage ? await compressImage(input.uri) : { uri: input.uri };
   const geo = input.geotag ? await readGeoLocation() : null;
   const size = await fileSize(processed.uri).catch(() => 0);
-  const fileName = `${Date.now()}_${input.title.replace(/[^a-z0-9]+/gi, '_')}.jpg`;
+  // Storage rules validate declared content types, so name the file with its
+  // REAL extension (a meeting recording is `.m4a` audio, not a `.jpg`).
+  const format = resolveEvidenceFormat(input.type, processed.uri);
+  const fileName = `${Date.now()}_${input.title.replace(/[^a-z0-9]+/gi, '_')}.${format.extension}`;
 
   const collection = database.collections.get<Evidence>(TABLE_EVIDENCE);
   let created!: Evidence;
@@ -99,7 +153,7 @@ export async function captureEvidence(input: CaptureEvidenceInput): Promise<Evid
       draft.fileUrl = '';
       draft.fileName = fileName;
       draft.fileSize = size;
-      draft.mimeType = isImage ? 'image/jpeg' : 'application/octet-stream';
+      draft.mimeType = format.mimeType;
       draft.thumbnailUrl = null;
       draft.capturedAt = new Date();
       draft.capturedByAuditorId = input.capturedByAuditorId;
@@ -142,9 +196,19 @@ export async function uploadEvidenceFile(row: Evidence): Promise<void> {
 
   const response = await fetch(row.localUri);
   const blob = await response.blob();
-  await uploadEvidence(row.tenantId, row.auditId, row.fileName, blob, {
-    contentType: row.mimeType,
-  });
+  try {
+    await uploadEvidence(row.tenantId, row.auditId, row.fileName, blob, {
+      contentType: row.mimeType,
+    });
+  } catch (error) {
+    // Evidence objects are create-only in Storage rules, so a retry after a
+    // crash-between-upload-and-DB-write is rejected as an overwrite. If the
+    // object already exists remotely, treat the upload as already done.
+    const url = await getDownloadUrl(row.tenantId, row.auditId, row.fileName).catch(() => null);
+    if (url === null) {
+      throw error;
+    }
+  }
   const url = await getDownloadUrl(row.tenantId, row.auditId, row.fileName);
 
   await database.write(async () => {

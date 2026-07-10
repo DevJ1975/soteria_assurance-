@@ -18,7 +18,14 @@
 import { appSchema, tableSchema } from '@nozbe/watermelondb';
 
 /** Local sync lifecycle state for a record (mirrors §11 sync indicator). */
-export type SyncStatus = 'pending' | 'syncing' | 'synced' | 'failed';
+/**
+ * `rejected` is TERMINAL: the server refused the write (Firestore
+ * permission-denied — e.g. the parent audit's report was issued, or the row
+ * touches a server-authored field). Rejected rows are excluded from future
+ * push passes; re-queueing them would retry a permanently denied write on
+ * every pass, burning quota on the rules' isAuditReported get() each time.
+ */
+export type SyncStatus = 'pending' | 'syncing' | 'synced' | 'failed' | 'rejected';
 
 export const TABLE_AUDITS = 'audits';
 export const TABLE_CLAUSE_ASSESSMENTS = 'clause_assessments';

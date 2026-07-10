@@ -35,6 +35,10 @@ jest.mock('firebase/storage', () => ({
   getStorage: jest.fn(() => ({ __storage: true })),
   connectStorageEmulator: jest.fn(),
 }));
+jest.mock('firebase/functions', () => ({
+  getFunctions: jest.fn(() => ({ __functions: true })),
+  connectFunctionsEmulator: jest.fn(),
+}));
 
 function setFullConfig(): void {
   process.env.NEXT_PUBLIC_FIREBASE_API_KEY = 'k';
@@ -199,7 +203,7 @@ describe('connectEmulatorsIfConfigured', () => {
     expect(mockConnectAuth).not.toHaveBeenCalled();
   });
 
-  it('wires auth, firestore and storage emulators when enabled', () => {
+  it('wires auth, firestore, storage and functions emulators when enabled', () => {
     process.env.NEXT_PUBLIC_USE_EMULATOR = 'true';
     setFullConfig();
     // Re-require in an isolated registry so config's one-time
@@ -211,11 +215,23 @@ describe('connectEmulatorsIfConfigured', () => {
       const auth = require('firebase/auth') as { connectAuthEmulator: jest.Mock };
       const fs = require('firebase/firestore') as { connectFirestoreEmulator: jest.Mock };
       const storage = require('firebase/storage') as { connectStorageEmulator: jest.Mock };
+      const fns = require('firebase/functions') as {
+        getFunctions: jest.Mock;
+        connectFunctionsEmulator: jest.Mock;
+      };
       /* eslint-enable @typescript-eslint/no-require-imports */
       expect(cfg.connectEmulatorsIfConfigured()).toBe(true);
       expect(auth.connectAuthEmulator).toHaveBeenCalledTimes(1);
       expect(fs.connectFirestoreEmulator).toHaveBeenCalledTimes(1);
       expect(storage.connectStorageEmulator).toHaveBeenCalledTimes(1);
+      expect(fns.connectFunctionsEmulator).toHaveBeenCalledTimes(1);
+      expect(fns.connectFunctionsEmulator).toHaveBeenCalledWith(
+        { __functions: true },
+        '127.0.0.1',
+        5001,
+      );
+      // The functions instance is region-pinned via the shared core constant.
+      expect(fns.getFunctions).toHaveBeenCalledWith({ name: 'mock-app' }, 'us-central1');
     });
   });
 

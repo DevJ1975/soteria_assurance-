@@ -18,7 +18,9 @@
 import { type FirebaseApp, type FirebaseOptions, getApp, getApps, initializeApp } from 'firebase/app';
 import { type Auth, connectAuthEmulator, getAuth } from 'firebase/auth';
 import { type Firestore, connectFirestoreEmulator, getFirestore } from 'firebase/firestore';
+import { type Functions, connectFunctionsEmulator, getFunctions } from 'firebase/functions';
 import { type FirebaseStorage, connectStorageEmulator, getStorage } from 'firebase/storage';
+import { FIREBASE_FUNCTIONS_REGION } from '@soteria/core';
 
 /**
  * The Firebase project number, which doubles as the `messagingSenderId`.
@@ -188,11 +190,26 @@ export function getFirebaseStorage(): FirebaseStorage {
   return getStorage(getFirebaseApp());
 }
 
+/**
+ * Returns the {@link Functions} instance pinned to the deployed region.
+ *
+ * ALWAYS use this instead of calling `getFunctions(app)` directly: the
+ * region-less overload relies on the SDK's default region, which silently
+ * breaks the moment the deploy region changes. The shared
+ * {@link FIREBASE_FUNCTIONS_REGION} constant keeps clients and the Functions
+ * runtime (`setGlobalOptions({ region })` in functions/src/index.ts) aligned.
+ */
+export function getFirebaseFunctions(): Functions {
+  return getFunctions(getFirebaseApp(), FIREBASE_FUNCTIONS_REGION);
+}
+
 /** Host the local emulator suite binds to by default. */
 const EMULATOR_HOST = '127.0.0.1';
 const AUTH_EMULATOR_PORT = 9099;
 const FIRESTORE_EMULATOR_PORT = 8080;
 const STORAGE_EMULATOR_PORT = 9199;
+/** Must match `emulators.functions.port` in firebase.json. */
+const FUNCTIONS_EMULATOR_PORT = 5001;
 
 /**
  * Reads the "use emulator" flag from either the Next.js or Expo public env var.
@@ -208,9 +225,9 @@ function shouldUseEmulators(): boolean {
 let emulatorsConnected = false;
 
 /**
- * Wires the Auth, Firestore and Storage SDK instances to the local Firebase
- * Emulator Suite when `NEXT_PUBLIC_USE_EMULATOR` / `EXPO_PUBLIC_USE_EMULATOR`
- * is set to `true`/`1`. No-op otherwise.
+ * Wires the Auth, Firestore, Storage and Functions SDK instances to the local
+ * Firebase Emulator Suite when `NEXT_PUBLIC_USE_EMULATOR` /
+ * `EXPO_PUBLIC_USE_EMULATOR` is set to `true`/`1`. No-op otherwise.
  *
  * Idempotent: safe to call from app start-up on every render/import.
  *
@@ -229,6 +246,9 @@ export function connectEmulatorsIfConfigured(): boolean {
   });
   connectFirestoreEmulator(getFirebaseDb(), EMULATOR_HOST, FIRESTORE_EMULATOR_PORT);
   connectStorageEmulator(getFirebaseStorage(), EMULATOR_HOST, STORAGE_EMULATOR_PORT);
+  // Without this, emulator-mode callables would silently target PRODUCTION
+  // functions while auth/firestore/storage talk to the emulator.
+  connectFunctionsEmulator(getFirebaseFunctions(), EMULATOR_HOST, FUNCTIONS_EMULATOR_PORT);
 
   emulatorsConnected = true;
   return true;

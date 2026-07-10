@@ -142,6 +142,11 @@ export const SoteriaStrings = {
     howToLocal: 'Local dev: add them to apps/web/.env.local, then restart the dev server.',
     howToHosting:
       'Hosting (Vercel / Firebase): add them in the project’s Environment Variables, then redeploy.',
+    provisioningTitle: 'Account awaiting setup',
+    provisioningBody:
+      'You’re signed in, but your account hasn’t been assigned to an organization yet. An administrator needs to provision your access — this screen refreshes automatically once that happens.',
+    provisioningChecking: 'Checking again…',
+    provisioningRecheck: 'Check now',
   },
 } as const;
 

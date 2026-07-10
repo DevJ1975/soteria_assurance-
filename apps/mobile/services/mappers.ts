@@ -23,7 +23,18 @@ import { nowTimestamp, timestampFromMillis } from '../lib/timestamps';
 // Local model  ->  Firestore document (@soteria/core type)
 // ---------------------------------------------------------------------------
 
-export function auditToDoc(model: Audit, remoteId: string): AuditDoc {
+/**
+ * @param isFirstPush - `true` when the row has never been pushed (no
+ *   `remoteId` yet), i.e. the write CREATES the Firestore document.
+ *
+ * Server-authored audit fields are deliberately absent from the push payload:
+ * the `findings` summary is recomputed by the onAuditComplete trigger (and
+ * fenced by Firestore rules on update — a drifted local copy would be
+ * permanently rejected), so it is only seeded on the creating push;
+ * aiCertificationReadinessScore / aiRiskFlags are hydration-only and never
+ * pushed at all.
+ */
+export function auditToDoc(model: Audit, remoteId: string, isFirstPush: boolean): AuditDoc {
   const doc: AuditDoc = {
     id: remoteId,
     tenantId: model.tenantId,
@@ -42,16 +53,12 @@ export function auditToDoc(model: Audit, remoteId: string): AuditDoc {
     auditDays: model.auditDays,
     sitesInScope: model.sitesInScope,
     auditPlan: model.auditPlan,
-    findings: model.findingsSummary,
     confidentiality: model.confidentiality,
     createdAt: timestampFromMillis(model.localCreatedAt.getTime()),
     updatedAt: timestampFromMillis(model.localUpdatedAt.getTime()),
-  };
-  if (model.aiReadinessScore !== null) {
-    doc.aiCertificationReadinessScore = model.aiReadinessScore;
-  }
-  if (model.aiRiskFlags !== null) {
-    doc.aiRiskFlags = model.aiRiskFlags;
+  } as AuditDoc;
+  if (isFirstPush) {
+    doc.findings = model.findingsSummary;
   }
   return doc;
 }
