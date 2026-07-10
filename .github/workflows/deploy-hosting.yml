@@ -71,9 +71,14 @@ jobs:
         run: |
           missing=()
           if [ -z "${FIREBASE_TOKEN}" ]; then missing+=("FIREBASE_TOKEN (secret)"); fi
+          # All five vars below are REQUIRED by getFirebaseConfig(); a build that
+          # omits any of them deploys a page that throws client-side on load
+          # (blank screen), so fail the deploy here instead.
           if [ -z "${NEXT_PUBLIC_FIREBASE_API_KEY}" ]; then missing+=("NEXT_PUBLIC_FIREBASE_API_KEY (variable)"); fi
           if [ -z "${NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN}" ]; then missing+=("NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN (variable)"); fi
           if [ -z "${NEXT_PUBLIC_FIREBASE_PROJECT_ID}" ]; then missing+=("NEXT_PUBLIC_FIREBASE_PROJECT_ID (variable)"); fi
+          if [ -z "${NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET}" ]; then missing+=("NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET (variable)"); fi
+          if [ -z "${NEXT_PUBLIC_FIREBASE_APP_ID}" ]; then missing+=("NEXT_PUBLIC_FIREBASE_APP_ID (variable)"); fi
           if [ "${#missing[@]}" -ne 0 ]; then
             echo "::error::Missing required CI config: ${missing[*]}"
             echo "Set the secret with 'gh secret set FIREBASE_TOKEN' and the public config with 'gh variable set NEXT_PUBLIC_FIREBASE_*' (or repo Settings -> Secrets and variables -> Actions)."

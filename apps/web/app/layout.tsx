@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Montserrat, Inter, JetBrains_Mono } from 'next/font/google';
 import { SoteriaStrings } from '@soteria/core';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Providers } from './providers';
 import './globals.css';
 
@@ -41,7 +42,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${montserrat.variable} ${inter.variable} ${jetbrainsMono.variable}`}
     >
       <body>
-        <Providers>{children}</Providers>
+        {/* Root safety net: any client-side throw below the providers (e.g. a
+            failed Firebase init) renders a recoverable fallback instead of a
+            blank white page. */}
+        <ErrorBoundary fullScreen>
+          <Providers>{children}</Providers>
+        </ErrorBoundary>
       </body>
     </html>
   );

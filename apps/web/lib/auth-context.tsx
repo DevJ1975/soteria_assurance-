@@ -12,6 +12,7 @@ import {
   confirmPhoneCode,
   createRecaptchaVerifier,
   getCurrentClaims,
+  getFirebaseConfigStatus,
   onAuthStateChangedTyped,
   registerWithEmail,
   signInWithEmail,
@@ -19,6 +20,7 @@ import {
   signOutUser,
   startPhoneSignIn,
   type ConfirmationResult,
+  type FirebaseConfigStatus,
   type FirebaseUser,
 } from '@soteria/firebase';
 import type { FirebaseCustomClaims } from '@soteria/core';
@@ -37,6 +39,13 @@ export interface AuthContextValue {
   claims: FirebaseCustomClaims | null;
   /** `true` until the initial auth state (and its claims) have resolved. */
   loading: boolean;
+  /**
+   * Whether the public Firebase config is present. When `configured` is `false`
+   * the app renders a setup screen instead of initialising the SDK — this keeps
+   * a missing env var from throwing at the provider root and white-screening the
+   * whole app.
+   */
+  firebaseConfig: FirebaseConfigStatus;
   signInEmail: (email: string, password: string) => Promise<void>;
   registerEmail: (email: string, password: string, displayName: string) => Promise<void>;
   signInGoogle: () => Promise<void>;
@@ -56,8 +65,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [claims, setClaims] = useState<FirebaseCustomClaims | null>(null);
   const [loading, setLoading] = useState(true);
+  // Resolved once from the (build-time-inlined) public env vars. When the config
+  // is absent we must NOT touch the Firebase SDK — initialising it would throw
+  // and, with no auth state ever resolving, leave the whole app blank.
+  const [firebaseConfig] = useState<FirebaseConfigStatus>(getFirebaseConfigStatus);
 
   useEffect(() => {
+    if (!firebaseConfig.configured) {
+      // Nothing to subscribe to; unblock the tree so the setup screen can show.
+      setLoading(false);
+      return;
+    }
     const unsubscribe = onAuthStateChangedTyped((nextUser) => {
       setUser(nextUser);
       if (nextUser === null) {
@@ -72,13 +90,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .finally(() => setLoading(false));
     });
     return unsubscribe;
-  }, []);
+  }, [firebaseConfig.configured]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
       claims,
       loading,
+      firebaseConfig,
       signInEmail: async (email, password) => {
         await signInWithEmail(email, password);
       },
@@ -97,7 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await signOutUser();
       },
     }),
-    [user, claims, loading],
+    [user, claims, loading, firebaseConfig],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -9,6 +9,7 @@ import {
   FirebaseConfigError,
   connectEmulatorsIfConfigured,
   getFirebaseConfig,
+  getFirebaseConfigStatus,
   initFirebase,
 } from '../config';
 import {
@@ -137,6 +138,32 @@ describe('getFirebaseConfig', () => {
       // messagingSenderId is optional (has a default) — must NOT be listed.
       expect(message).not.toContain('MESSAGING_SENDER_ID');
     }
+  });
+});
+
+describe('getFirebaseConfigStatus', () => {
+  beforeEach(clearFirebaseEnv);
+  afterAll(clearFirebaseEnv);
+
+  it('reports configured with an empty missing list when all required keys are set', () => {
+    setFullConfig();
+    expect(getFirebaseConfigStatus()).toEqual({ configured: true, missing: [] });
+  });
+
+  it('does not throw and lists every missing required key when unset', () => {
+    const status = getFirebaseConfigStatus();
+    expect(status.configured).toBe(false);
+    expect(status.missing).toEqual(
+      expect.arrayContaining(['API_KEY', 'AUTH_DOMAIN', 'PROJECT_ID', 'STORAGE_BUCKET', 'APP_ID']),
+    );
+    // messagingSenderId has a default — it is never reported as missing.
+    expect(status.missing).not.toContain('MESSAGING_SENDER_ID');
+  });
+
+  it('treats an empty-string env var as missing', () => {
+    setFullConfig();
+    process.env.NEXT_PUBLIC_FIREBASE_APP_ID = '';
+    expect(getFirebaseConfigStatus().missing).toEqual(['APP_ID']);
   });
 });
 

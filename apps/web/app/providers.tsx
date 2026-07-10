@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/lib/auth-context';
+import { FirebaseConfigGate } from '@/components/FirebaseConfigGate';
 
 /**
  * Client-side providers mounted once at the root: React Query (client-side
@@ -25,7 +26,9 @@ export function Providers({ children }: { children: ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>{children}</AuthProvider>
+      <AuthProvider>
+        <FirebaseConfigGate>{children}</FirebaseConfigGate>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

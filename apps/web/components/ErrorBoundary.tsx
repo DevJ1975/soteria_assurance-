@@ -3,11 +3,18 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { SoteriaStrings } from '@soteria/core';
 import { Button } from '@/components/ui/Button';
+import { cn } from '@/lib/cn';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
   /** Optional override for the fallback heading. */
   title?: string;
+  /**
+   * When `true`, the fallback fills the viewport (`min-h-screen`) instead of a
+   * compact in-panel height. Use at the app root so an unexpected error never
+   * leaves a blank page.
+   */
+  fullScreen?: boolean;
 }
 
 interface ErrorBoundaryState {
@@ -48,7 +55,10 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       return (
         <div
           role="alert"
-          className="flex min-h-64 flex-col items-center justify-center gap-md p-xl text-center"
+          className={cn(
+            'flex flex-col items-center justify-center gap-md p-xl text-center',
+            this.props.fullScreen ? 'min-h-screen bg-background' : 'min-h-64',
+          )}
         >
           <h2 className="font-display text-xl font-semibold text-text-primary">
             {this.props.title ?? SoteriaStrings.errors.generic}

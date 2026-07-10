@@ -50,6 +50,21 @@ function readPublicEnv(suffix: string): string | undefined {
 }
 
 /**
+ * Public config keys (env-var suffixes) that MUST be present for the Firebase
+ * app to initialise. `MESSAGING_SENDER_ID` is intentionally excluded — it
+ * defaults to {@link DEFAULT_MESSAGING_SENDER_ID}; `MEASUREMENT_ID` is optional.
+ * Single source of truth for both {@link getFirebaseConfig} (which throws) and
+ * {@link getFirebaseConfigStatus} (which does not).
+ */
+const REQUIRED_PUBLIC_CONFIG_SUFFIXES = [
+  'API_KEY',
+  'AUTH_DOMAIN',
+  'PROJECT_ID',
+  'STORAGE_BUCKET',
+  'APP_ID',
+] as const;
+
+/**
  * Thrown when a required public Firebase config value is missing from the
  * environment. Surfacing a typed error (rather than letting the SDK fail with
  * an opaque message) makes misconfiguration obvious during app start-up.
@@ -59,6 +74,33 @@ export class FirebaseConfigError extends Error {
     super(message);
     this.name = 'FirebaseConfigError';
   }
+}
+
+/** Result of {@link getFirebaseConfigStatus}. */
+export interface FirebaseConfigStatus {
+  /** `true` when every required public config value is present. */
+  configured: boolean;
+  /**
+   * The env-var suffixes that are missing (e.g. `['API_KEY', 'APP_ID']`); empty
+   * when {@link FirebaseConfigStatus.configured} is `true`. Prefix with
+   * `NEXT_PUBLIC_FIREBASE_` (web) or `EXPO_PUBLIC_FIREBASE_` (mobile) for the
+   * actual variable name.
+   */
+  missing: string[];
+}
+
+/**
+ * Non-throwing counterpart to {@link getFirebaseConfig}: reports whether the
+ * required public config is present WITHOUT initialising the SDK. The app
+ * shells use this to render an actionable "configuration required" screen
+ * instead of white-screening when the env vars are absent (a single throw at
+ * the provider root would otherwise unmount the whole React tree).
+ */
+export function getFirebaseConfigStatus(): FirebaseConfigStatus {
+  const missing = REQUIRED_PUBLIC_CONFIG_SUFFIXES.filter(
+    (suffix) => readPublicEnv(suffix) === undefined,
+  );
+  return { configured: missing.length === 0, missing: [...missing] };
 }
 
 /**
@@ -80,13 +122,7 @@ export function getFirebaseConfig(): FirebaseOptions {
   // Optional: only present when Google Analytics is enabled for the web app.
   const measurementId = readPublicEnv('MEASUREMENT_ID');
 
-  const missing: string[] = [];
-  if (apiKey === undefined) missing.push('API_KEY');
-  if (authDomain === undefined) missing.push('AUTH_DOMAIN');
-  if (projectId === undefined) missing.push('PROJECT_ID');
-  if (storageBucket === undefined) missing.push('STORAGE_BUCKET');
-  if (appId === undefined) missing.push('APP_ID');
-
+  const { missing } = getFirebaseConfigStatus();
   if (missing.length > 0) {
     throw new FirebaseConfigError(
       `Missing required Firebase config env var(s): ${missing

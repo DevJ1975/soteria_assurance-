@@ -132,6 +132,17 @@ export const SoteriaStrings = {
     tenantMismatch: 'This record belongs to a different organization.',
     aiTimeout: 'The AI request took too long. Please try again.',
   },
+  setup: {
+    configTitle: 'Configuration required',
+    firebaseMissing:
+      'The app can’t connect to its backend yet because the Firebase configuration is missing.',
+    missingVarsLabel: 'Missing environment variables',
+    publicNote:
+      'These are public client keys — safe to set in any environment (they are not secrets).',
+    howToLocal: 'Local dev: add them to apps/web/.env.local, then restart the dev server.',
+    howToHosting:
+      'Hosting (Vercel / Firebase): add them in the project’s Environment Variables, then redeploy.',
+  },
 } as const;
 
 /** Deeply-readonly type of the Soteria string catalogue. */
