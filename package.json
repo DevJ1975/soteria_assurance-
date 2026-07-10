@@ -21,7 +21,7 @@
     "test:functions": "turbo run test --filter=soteria-functions",
     "build:web": "turbo run build --filter=@soteria/web",
     "build:mobile": "turbo run build --filter=@soteria/mobile",
-    "deploy": "scripts/deploy.sh",
+    "deploy:all": "scripts/deploy.sh",
     "deploy:functions": "scripts/deploy.sh --only functions",
     "deploy:rules": "scripts/deploy.sh --only rules",
     "deploy:web": "scripts/deploy.sh --only hosting",

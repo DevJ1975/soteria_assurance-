@@ -6,6 +6,24 @@
 > **adversarially verified** by an independent reviewer against the actual source.
 > 44 of 44 raw findings survived verification; 0 were refuted.
 
+## Remediation status (updated same day)
+
+The repo-fixable findings were remediated on this branch immediately after the
+audit (commits `fix(security)`/`fix(functions)`/`fix(clients)`/`ci(deploy)`):
+both CRITICALs (Firestore catch-all rewrite; Functions esbuild bundling), all
+seven repo-fixable HIGHs (audit status transition gate, Storage catch-all,
+audio evidence content types, claims-hijack guard, transactional AI rate
+limiter, caReminders index/idempotency/recipient, hosting CI branch triggers)
+and the mechanical MEDIUM/LOW config items (functions predeploy, functions
+emulator wiring, deploy script ordering/portability/shadowing, wiki read gate,
+CA role whitelists, mobile sync rejection handling, provisioning screen, phone
+reCAPTCHA retry). A NEW critical was found during remediation: `apps/mobile/lib/`
+was never committed (8 modules imported by the app are missing), leaving the
+mobile app unbuildable — flagged for a follow-up recreate like the web `lib/`
+fix (commit bd02683). The 8 **[console]** items remain manual actions; the
+first-admin bootstrap now ships as `scripts/bootstrap-admin.mjs` +
+docs/FIREBASE_SETUP.md §4b.
+
 ## Summary
 
 | Severity | Count |

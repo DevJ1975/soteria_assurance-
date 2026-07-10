@@ -85,20 +85,28 @@ build_web() {
 # --- Deploy steps ------------------------------------------------------------
 deploy_rules() {
   echo "[soteria-deploy] Deploying Firestore rules + indexes and Storage rules ..."
-  firebase deploy "${FIREBASE_FLAGS[@]}" \
+  firebase deploy ${FIREBASE_FLAGS[@]+"${FIREBASE_FLAGS[@]}"} \
     --only firestore:rules,firestore:indexes,storage
 }
 
 deploy_functions() {
   echo "[soteria-deploy] Deploying Cloud Functions ..."
   # The firebase.json predeploy hook runs `npm --prefix functions run build`.
-  firebase deploy "${FIREBASE_FLAGS[@]}" --only functions
+  firebase deploy ${FIREBASE_FLAGS[@]+"${FIREBASE_FLAGS[@]}"} --only functions
 }
 
 deploy_hosting() {
   build_web
   echo "[soteria-deploy] Deploying Hosting (target: web) ..."
-  firebase deploy "${FIREBASE_FLAGS[@]}" --only hosting:web
+  firebase deploy ${FIREBASE_FLAGS[@]+"${FIREBASE_FLAGS[@]}"} --only hosting:web
+}
+
+# Hosting deploy that reuses an out/ directory already produced by build_web —
+# used by the 'all' path, which builds the web app FIRST so a build failure
+# aborts the whole release before any rules/functions have shipped.
+deploy_hosting_prebuilt() {
+  echo "[soteria-deploy] Deploying Hosting (target: web, prebuilt) ..."
+  firebase deploy ${FIREBASE_FLAGS[@]+"${FIREBASE_FLAGS[@]}"} --only hosting:web
 }
 
 case "${ONLY_TARGET}" in
@@ -112,9 +120,12 @@ case "${ONLY_TARGET}" in
     deploy_rules
     ;;
   all)
+    # Validate the full build up front: a web build failure must abort the
+    # release BEFORE rules/functions deploy, or we'd ship a partial release.
+    build_web
     deploy_rules
     deploy_functions
-    deploy_hosting
+    deploy_hosting_prebuilt
     ;;
   *)
     echo "[soteria-deploy] ERROR: unknown --only target '${ONLY_TARGET}'." >&2

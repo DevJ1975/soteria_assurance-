@@ -7,7 +7,12 @@ name: Deploy Web Hosting
 
 on:
   push:
-    branches: [main]
+    # The repo's ACTIVE integration branch is claude/plan-review-execution-hrq5z7
+    # (the GitHub default branch); `main` is kept for when the team migrates.
+    # A trigger that only watched `main` meant merges never deployed anything.
+    branches:
+      - main
+      - claude/plan-review-execution-hrq5z7
     # Only redeploy when something that affects the hosted site changes.
     paths:
       - 'apps/web/**'

@@ -19,6 +19,11 @@ ISO 45001:2018 AI-Powered Audit Management Platform.
 
 ## 1. Prerequisites
 
+- **Blaze (pay-as-you-go) billing plan** on the Firebase project — a hard
+  requirement, not a nice-to-have: Cloud Functions v2 deploys, Secret Manager
+  (`ANTHROPIC_API_KEY` / `SENDGRID_API_KEY`), and Phone-auth SMS all refuse to
+  work on the free Spark plan. Upgrade in Console → ⚙ → Usage and billing →
+  Details & settings, and set a **budget alert** while you're there.
 - Node.js >= 20 and pnpm (`packageManager: pnpm@10.x`).
 - Firebase CLI: `npm i -g firebase-tools` (v13+).
 - Access to the Firebase project `830573978482` with at least the
@@ -128,9 +133,46 @@ mint. In the Console:
 1. **Authentication → Sign-in method → Google → Enable.**
 2. Set a **support email** and Save.
 3. **Web:** ensure your hosting domain(s) are listed under
-   **Authentication → Settings → Authorized domains**.
-4. **Mobile/Expo:** add the generated OAuth client IDs to the Expo/native config
-   as required by your auth library.
+   **Authentication → Settings → Authorized domains**. For this project that
+   means, on top of the `localhost` / `*.firebaseapp.com` / `*.web.app`
+   defaults, the Vercel hosts:
+   - `soteria-assurance-web.vercel.app`
+   - `soteria-assurance-web-devj1975s-projects.vercel.app`
+   - any custom domain you attach later.
+
+   **Preview-deploy caveat:** per-PR Vercel preview URLs are ephemeral and
+   Firebase does not support wildcard authorized domains, so **Google and
+   Phone sign-in cannot work on preview URLs** — test those providers on a
+   stable (production/aliased) domain; Email/Password works everywhere.
+4. **Mobile/Expo:** the mobile Google button is currently a stub — native
+   OAuth client IDs are not wired yet. When implementing, add the generated
+   OAuth client IDs to the Expo/native config as required by your auth
+   library.
+
+---
+
+## 4b. Bootstrap the first admin (one-time per project)
+
+Every tenant-scoped read/write requires custom claims, and the
+`setTenantClaims` callable only accepts callers who ALREADY hold
+`tenant_admin`/`super_admin` claims — so the very first admin cannot be
+provisioned through the app. Mint their claims once with Admin credentials:
+
+```bash
+# Uses the service-account credentials from section 2 (Option A):
+export GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
+pnpm --filter @soteria/core build   # once, so the script can read the RBAC matrix
+node scripts/bootstrap-admin.mjs \
+  --email you@example.com \
+  --tenant-id <tenantId> \
+  --tenant-type consultancy \
+  --role super_admin
+```
+
+The user then signs out and back in (forces an ID-token refresh) and can
+provision everyone else from inside the app via `setTenantClaims`. The web
+app shows an "Account awaiting setup" screen (with automatic claim polling)
+to any signed-in user whose claims have not been minted yet.
 
 ---
 
