@@ -12,6 +12,15 @@
 @layer base {
   :root {
     color-scheme: light;
+
+    /* Token font-family names (RULE 5) bound to the self-hosted @fontsource
+     * families imported in app/layout.tsx. The Tailwind preset resolves
+     * `font-display/body/mono` as `var(--font-*), <literal>, <generic>`, so
+     * these variables select the bundled variable fonts with a graceful
+     * fallback to any locally-installed copy. */
+    --font-montserrat: 'Montserrat Variable';
+    --font-inter: 'Inter Variable';
+    --font-jetbrains-mono: 'JetBrains Mono Variable';
   }
 
   html,
