@@ -8,15 +8,23 @@ rules_version = '2';
 // users whose JWT custom claim `tenantId` matches the path (mirrors the
 // Firestore tenant-isolation model in DESIGN_DOC §7).
 //
-// Stored objects include evidence photos/videos/documents, meeting and witness
-// recordings, signatures, generated report PDFs, and tenant branding assets.
+// Stored objects include evidence photos/recordings/documents, meeting and
+// witness recordings, signatures, generated report PDFs, and tenant branding
+// assets.
+//
+// There is deliberately NO tenant-wide catch-all: Storage grants access when
+// ANY overlapping match allows it, so a broad catch-all would override every
+// stricter per-path rule below (including the server-only reports path). Any
+// new object family must be added here explicitly; unmatched paths fall
+// through to the default deny.
 //
 // Immutability (DESIGN_DOC §13): once an audit's report is issued, evidence
-// files must not be deletable. Storage rules cannot read Firestore to check
-// audit status, so immutability is enforced authoritatively in Firestore +
-// Cloud Functions; here we apply a best-effort guard by forbidding client
-// deletes of evidence objects outright (deletion, when ever required, happens
-// via a privileged Cloud Function using the admin SDK).
+// files must not be deletable OR replaceable. Storage rules cannot read
+// Firestore to check audit status, so immutability is enforced authoritatively
+// in Firestore + Cloud Functions; here we apply a best-effort guard by
+// forbidding client deletes AND in-place overwrites of evidence objects
+// outright (deletion, when ever required, happens via a privileged Cloud
+// Function using the admin SDK).
 // =============================================================================
 
 service firebase.storage {
@@ -44,39 +52,54 @@ service firebase.storage {
         && request.resource.size < 25 * 1024 * 1024;
     }
 
-    // General media (audio/video recordings, PDFs, documents) cap at 500 MB to
-    // accommodate meeting recordings while still bounding abuse.
-    function isWithinMediaSizeLimit() {
-      return request.resource.size < 500 * 1024 * 1024;
+    // Audio/video recordings and PDF documents cap at 500 MB to accommodate
+    // meeting recordings while still bounding abuse. The client must declare a
+    // real content type (evidenceService derives it from the captured file) —
+    // opaque application/octet-stream uploads are rejected.
+    function isValidMedia() {
+      return (
+          request.resource.contentType.matches('audio/.*')
+          || request.resource.contentType.matches('video/.*')
+          || request.resource.contentType == 'application/pdf'
+        )
+        && request.resource.size < 500 * 1024 * 1024;
     }
 
-    // ----- Evidence images -------------------------------------------------
-    // Tenant-scoped evidence photos. Best-effort immutability: no client
-    // deletes (the parent audit may be reported; the authoritative check lives
-    // in Firestore/Functions).
+    // ----- Evidence files ----------------------------------------------------
+    // Tenant-scoped evidence: photos/screenshots (images), meeting/witness
+    // audio, field video, and PDF documents — matching EvidenceType in
+    // @soteria/core. Create-only: overwriting an existing evidence object is
+    // tampering, so updates are refused along with deletes (best-effort
+    // immutability; the authoritative check lives in Firestore/Functions).
     match /tenants/{tenantId}/audits/{auditId}/evidence/{fileName} {
       allow read: if belongsToTenant(tenantId);
-      allow create, update: if belongsToTenant(tenantId)
+      allow create: if belongsToTenant(tenantId)
         && hasRole(['super_admin', 'tenant_admin', 'lead_auditor', 'auditor'])
-        && isValidImage();
+        && (isValidImage() || isValidMedia());
+      allow update: if false; // Evidence is never client-replaceable.
       allow delete: if false; // Evidence is never client-deletable.
     }
 
     // ----- Meeting & witness recordings ------------------------------------
+    // Reserved path for dedicated recording storage (currently recordings ride
+    // the evidence/ path as EvidenceType 'audio'). Same create-only posture.
     match /tenants/{tenantId}/audits/{auditId}/recordings/{fileName} {
       allow read: if belongsToTenant(tenantId);
-      allow create, update: if belongsToTenant(tenantId)
+      allow create: if belongsToTenant(tenantId)
         && hasRole(['super_admin', 'tenant_admin', 'lead_auditor', 'auditor'])
-        && isWithinMediaSizeLimit();
+        && isValidMedia();
+      allow update: if false;
       allow delete: if false;
     }
 
     // ----- Signatures (findings, meetings, witness statements) -------------
+    // A captured signature must never be silently replaced after the fact.
     match /tenants/{tenantId}/audits/{auditId}/signatures/{fileName} {
       allow read: if belongsToTenant(tenantId);
-      allow create, update: if belongsToTenant(tenantId)
+      allow create: if belongsToTenant(tenantId)
         && hasRole(['super_admin', 'tenant_admin', 'lead_auditor', 'auditor', 'auditee'])
         && isValidImage();
+      allow update: if false;
       allow delete: if false;
     }
 
@@ -89,11 +112,13 @@ service firebase.storage {
 
     // ----- Corrective-action closure evidence ------------------------------
     // Auditees may upload evidence proving a corrective action is closed.
+    // Replacement during the CA rework cycle is a legitimate flow, so updates
+    // stay allowed here (unlike audit evidence).
     match /tenants/{tenantId}/correctiveActions/{caId}/{fileName} {
       allow read: if belongsToTenant(tenantId);
       allow create, update: if belongsToTenant(tenantId)
         && hasRole(['super_admin', 'tenant_admin', 'lead_auditor', 'auditor', 'auditee'])
-        && isWithinMediaSizeLimit();
+        && (isValidImage() || isValidMedia());
       allow delete: if false;
     }
 
@@ -103,17 +128,6 @@ service firebase.storage {
       allow create, update, delete: if belongsToTenant(tenantId)
         && hasRole(['super_admin', 'tenant_admin'])
         && (request.method == 'delete' || isValidImage());
-    }
-
-    // ----- Catch-all within a tenant ---------------------------------------
-    // Any other tenant-scoped object: tenant members read; staff write; no
-    // client deletes by default.
-    match /tenants/{tenantId}/{allPaths=**} {
-      allow read: if belongsToTenant(tenantId);
-      allow create, update: if belongsToTenant(tenantId)
-        && hasRole(['super_admin', 'tenant_admin', 'lead_auditor', 'auditor'])
-        && isWithinMediaSizeLimit();
-      allow delete: if false;
     }
 
     // ----- Default deny -----------------------------------------------------
