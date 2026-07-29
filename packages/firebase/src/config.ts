@@ -28,25 +28,71 @@ import { type FirebaseStorage, connectStorageEmulator, getStorage } from 'fireba
  */
 export const DEFAULT_MESSAGING_SENDER_ID = '830573978482';
 
-/**
- * Reads a public env var trying the Next.js (`NEXT_PUBLIC_*`) name first and
- * the Expo (`EXPO_PUBLIC_*`) name second, so the same code works on both
- * platforms. Returns `undefined` when neither is set.
- */
-function readPublicEnv(suffix: string): string | undefined {
-  const nextKey = `NEXT_PUBLIC_FIREBASE_${suffix}`;
-  const expoKey = `EXPO_PUBLIC_FIREBASE_${suffix}`;
-  // `process.env` is the lowest-common-denominator config surface available in
-  // both the Next.js and Expo bundlers (both inline these at build time).
-  const fromNext = process.env[nextKey];
-  if (fromNext !== undefined && fromNext !== '') {
-    return fromNext;
-  }
-  const fromExpo = process.env[expoKey];
-  if (fromExpo !== undefined && fromExpo !== '') {
-    return fromExpo;
+/** Returns the first value that is set and non-empty, else `undefined`. */
+function firstNonEmpty(...values: (string | undefined)[]): string | undefined {
+  for (const value of values) {
+    if (value !== undefined && value !== '') {
+      return value;
+    }
   }
   return undefined;
+}
+
+/**
+ * Every public Firebase value, read as a FULLY-SPELLED-OUT `process.env.<KEY>`
+ * member expression — Next.js name first, Expo name second, so the same code
+ * works on both platforms.
+ *
+ * CRITICAL — do not collapse these into a computed lookup such as
+ * ``process.env[`NEXT_PUBLIC_FIREBASE_${suffix}`]``. There is no `process` in a
+ * browser: bundlers inline public env vars by *textually substituting the exact
+ * member expression* at build time (webpack's DefinePlugin for Next.js, the
+ * equivalent transform in Metro for Expo). A computed key is invisible to that
+ * substitution, so it survives into the bundle and resolves against Next's
+ * empty `process` shim (`{ env: {} }`) — every value comes back `undefined` in
+ * the browser no matter what was set at build time, and `getFirebaseConfig()`
+ * throws {@link FirebaseConfigError} on every page load. Spell each key out.
+ */
+function readPublicEnvTable(): Record<string, string | undefined> {
+  return {
+    API_KEY: firstNonEmpty(
+      process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+      process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
+    ),
+    AUTH_DOMAIN: firstNonEmpty(
+      process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+      process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
+    ),
+    PROJECT_ID: firstNonEmpty(
+      process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+      process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
+    ),
+    STORAGE_BUCKET: firstNonEmpty(
+      process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+      process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
+    ),
+    MESSAGING_SENDER_ID: firstNonEmpty(
+      process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+      process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+    ),
+    APP_ID: firstNonEmpty(
+      process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+      process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
+    ),
+    MEASUREMENT_ID: firstNonEmpty(
+      process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
+      process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID,
+    ),
+  };
+}
+
+/**
+ * Reads a public env var trying the Next.js (`NEXT_PUBLIC_*`) name first and
+ * the Expo (`EXPO_PUBLIC_*`) name second. Returns `undefined` when neither is
+ * set (an empty string counts as unset).
+ */
+function readPublicEnv(suffix: string): string | undefined {
+  return readPublicEnvTable()[suffix];
 }
 
 /**
