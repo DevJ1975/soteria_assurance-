@@ -18,16 +18,28 @@ The repo root `vercel.json` makes the monorepo deploy as a static site:
   "framework": null,                                        // serve the static export directly
   "installCommand": "pnpm install --frozen-lockfile",
   "buildCommand": "pnpm turbo run build --filter=@soteria/web...", // builds workspace deps first
-  "outputDirectory": "apps/web/out",                        // Next.js static export output
+  "outputDirectory": "out",                                 // RELATIVE TO THE ROOT DIRECTORY (apps/web)
   "ignoreCommand": "npx --yes turbo-ignore @soteria/web"    // skip deploys when web is untouched
 }
 ```
 
 Why these choices:
 
-- **`framework: null` + `outputDirectory: apps/web/out`** — the app is a static
-  export (every route is statically known; entity ids travel via query params).
-  Serving `out/` directly is identical to how Firebase Hosting serves it.
+- **`framework: null` + `outputDirectory: out`** — the app is a static export
+  (every route is statically known; entity ids travel via query params). Serving
+  `out/` directly is identical to how Firebase Hosting serves it.
+
+  > ⚠️ `outputDirectory` is resolved **relative to the project's Root Directory**,
+  > which is set to `apps/web` (Project → Settings → Build & Deployment). The two
+  > settings are coupled: `apps/web` + `out` → `apps/web/out`. Spelling it
+  > `apps/web/out` here resolves to `apps/web/apps/web/out` and the deploy fails
+  > with *"No Output Directory named \"out\" found after the Build completed"*
+  > even though the build itself succeeded. If you ever clear the Root Directory
+  > back to the repo root, change this to `apps/web/out` in the same commit.
+  >
+  > `vercel.json` itself is always read from the **repo root**, regardless of the
+  > Root Directory — which is why the install/build/ignore commands above are
+  > written as repo-root commands and still work.
 - **`buildCommand` via Turbo with `--filter=@soteria/web...`** — the `...` builds
   `@soteria/web` **and its workspace dependencies** (`@soteria/core`, `ui`,
   `firebase`), which resolve via their `dist/` entry points.
@@ -38,7 +50,10 @@ Why these choices:
 ### One-time setup
 
 1. **Import the repo** at <https://vercel.com/new> (Vercel auto-detects pnpm +
-   `vercel.json`). Leave **Root Directory** as the repo root.
+   `vercel.json`). Set **Root Directory** to `apps/web` and enable *Include
+   source files outside of the Root Directory* — the build needs the workspace
+   root for pnpm + Turbo. This must match `outputDirectory` in `vercel.json`
+   (see the warning above).
 2. **Add environment variables** (Project → Settings → Environment Variables) —
    the public Firebase web config (same values as the GitHub Actions repo
    variables used by Firebase Hosting CI):

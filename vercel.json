@@ -3,7 +3,7 @@
   "framework": null,
   "installCommand": "pnpm install --frozen-lockfile",
   "buildCommand": "pnpm turbo run build --filter=@soteria/web...",
-  "outputDirectory": "apps/web/out",
+  "outputDirectory": "out",
   "ignoreCommand": "npx --yes turbo-ignore @soteria/web",
   "github": { "silent": true }
 }
