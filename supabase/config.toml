@@ -429,3 +429,19 @@ verify_jwt = true
 [functions.admin-user-action]
 enabled = true
 verify_jwt = true
+
+[functions.draft-ncr]
+enabled = true
+verify_jwt = true
+
+[functions.suggest-questions]
+enabled = true
+verify_jwt = true
+
+[functions.analyze-evidence]
+enabled = true
+verify_jwt = true
+
+[functions.summarize-meeting]
+enabled = true
+verify_jwt = true

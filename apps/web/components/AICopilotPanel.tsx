@@ -2,7 +2,10 @@
 
 import { useState } from 'react';
 import { Sparkles, X, AlertTriangle } from 'lucide-react';
-import { SoteriaStrings } from '@soteria/core';
+import { SoteriaStrings,
+  DEFAULT_STANDARD_ID,
+  type StandardId,
+} from '@soteria/core';
 import { useAuth } from '@/lib/auth-context';
 import { callSuggestQuestions } from '@/lib/supabase-functions';
 import { Button } from '@/components/ui/Button';
@@ -12,6 +15,12 @@ import { cn } from '@/lib/cn';
 export interface AICopilotPanelProps {
   open: boolean;
   onClose: () => void;
+  /**
+   * Which standard to reason against. The panel is reachable from the app
+   * shell rather than from one audit, so it falls back to the platform
+   * default; screens that know their audit should pass its standard.
+   */
+  standardId?: StandardId;
 }
 
 /**
@@ -19,7 +28,11 @@ export interface AICopilotPanelProps {
  * the typed callable wrapper (no server actions — static export). Every result
  * carries the mandatory AI disclaimer (RULE: AI content must be reviewed).
  */
-export function AICopilotPanel({ open, onClose }: AICopilotPanelProps) {
+export function AICopilotPanel({
+  open,
+  onClose,
+  standardId = DEFAULT_STANDARD_ID,
+}: AICopilotPanelProps) {
   const { claims } = useAuth();
   const [clauseNumber, setClauseNumber] = useState('6.1.2');
   const [clauseTitle, setClauseTitle] = useState('Hazard identification and assessment');
@@ -41,6 +54,7 @@ export function AICopilotPanel({ open, onClose }: AICopilotPanelProps) {
     try {
       const result = await callSuggestQuestions({
         tenantId,
+        standardId,
         clauseNumber,
         clauseTitle,
         intervieweeRole,

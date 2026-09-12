@@ -13,22 +13,29 @@
     "./standards": {
       "types": "./dist/standards/index.d.ts",
       "default": "./dist/standards/index.js"
+    },
+    "./esm": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist-esm/index.mjs"
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "dist-esm"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && node scripts/build-esm.mjs",
     "test": "jest",
     "lint": "eslint src",
     "typecheck": "tsc --noEmit",
-    "clean": "rimraf dist"
+    "clean": "rimraf dist dist-esm",
+    "build:esm": "node scripts/build-esm.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.18.0",
     "@types/jest": "^29.5.14",
     "@types/node": "^20.17.12",
+    "esbuild": "^0.28.2",
     "eslint": "^9.18.0",
     "jest": "^29.7.0",
     "rimraf": "^6.0.1",

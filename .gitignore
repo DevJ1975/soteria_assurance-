@@ -3,6 +3,10 @@ node_modules/
 
 # Build output
 dist/
+# ESM bundle of @soteria/core, consumed by the Supabase Edge Functions. Built,
+# never committed — which means `pnpm build` must run before
+# `supabase functions deploy`, or the functions will not resolve their import.
+dist-esm/
 build/
 .next/
 out/

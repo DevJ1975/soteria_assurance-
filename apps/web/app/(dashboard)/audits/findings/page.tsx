@@ -4,6 +4,8 @@ import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Plus, Sparkles } from 'lucide-react';
 import {
+  DEFAULT_STANDARD_ID,
+  getStandard,
   SoteriaStrings,
   FINDING_TYPE_META,
   AI_DISCLAIMER,
@@ -15,7 +17,7 @@ import { Button } from '@/components/ui/Button';
 import { Input, Select, Textarea } from '@/components/ui/Input';
 import { FindingTypeBadge } from '@/components/FindingTypeBadge';
 import { LoadingState, EmptyState, ErrorState } from '@/components/ui/States';
-import { useFindings, useTenantId } from '@/lib/hooks';
+import { useAudit, useFindings, useTenantId } from '@/lib/hooks';
 import { useAuth } from '@/lib/auth-context';
 import { callDraftNCR } from '@/lib/supabase-functions';
 import { insertFinding, timestampNow } from '@/lib/supabase-data';
@@ -26,6 +28,7 @@ function FindingsView() {
   const params = useSearchParams();
   const auditId = params.get('id') ?? '';
   const tenantId = useTenantId();
+  const auditQuery = useAudit(auditId);
   const { user } = useAuth();
   const findingsQuery = useFindings(auditId);
 
@@ -55,13 +58,19 @@ function FindingsView() {
     setError(null);
     setAiNotice(null);
     try {
+      const audit = auditQuery.data;
+      // The standard and the scope come from the audit being worked on — a
+      // draft reasoned against the wrong standard would cite the wrong clauses.
+      const standardId = audit?.standardId ?? DEFAULT_STANDARD_ID;
       const result = await callDraftNCR({
         tenantId,
+        standardId,
         clauseNumber,
         clauseTitle,
         requirementText: requirement || clauseTitle,
         auditorRawNotes: objectiveEvidence || title,
-        organizationContext: 'ISO 45001:2018 certification audit',
+        organizationContext:
+          audit?.scope || `${getStandard(standardId).name} audit`,
       });
       setTitle(result.aiDraft.ncrTitle);
       setStatement(result.aiDraft.findingStatement);
