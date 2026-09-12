@@ -39,6 +39,9 @@ const config: Config = {
       // sit between the existing tokens, kept here (named, commented) so screens
       // can reference them as utilities instead of scattering raw hex.
       colors: {
+        // shadcn's `bg-primary` / `text-primary-foreground` need a DEFAULT on
+        // the existing primary scale; the 50..900 shades are untouched.
+        primary: { DEFAULT: '#1B4F8E', foreground: '#FFFFFF' },
         // Sidebar / chrome navy is the same deep navy as primary-800 (#0A2647);
         // aliased for intent so `bg-sidebar` reads as "the nav shell".
         sidebar: '#0A2647',
@@ -52,6 +55,23 @@ const config: Config = {
         ink: '#33404F',
         // Gold light — the brighter accent used on dark (navy) surfaces.
         'gold-light': '#E7C66B',
+
+        // --- shadcn semantic aliases (components/shadcn/) -------------------
+        // The shadcn primitives are written against the conventional semantic
+        // names (bg-card, text-muted-foreground, ring-ring...). Rather than
+        // give them a second palette, each one resolves to the SAME Soteria
+        // token value the rest of the app uses, so RULE 5 still holds: there is
+        // one source of truth for colour, and shadcn just reads it by another
+        // name. `background` and `border` already exist in the token preset
+        // with matching semantics, so they are deliberately NOT redefined.
+        foreground: '#1A1D23', // = text-primary
+        card: { DEFAULT: '#FFFFFF', foreground: '#1A1D23' }, // = surface
+        popover: { DEFAULT: '#FFFFFF', foreground: '#1A1D23' },
+        muted: { DEFAULT: '#F4F7FB', foreground: '#6B7280' }, // = background/text-secondary
+        accent: { DEFAULT: '#E8EEF5', foreground: '#103372' }, // = primary-50/700
+        destructive: { DEFAULT: '#C0392B', foreground: '#FFFFFF' }, // = major-nc
+        input: '#D1D9E6', // = border token
+        ring: '#1B4F8E', // = primary-500
       },
       boxShadow: {
         // Card shadow exactly as specified in the design system recipe.
@@ -68,7 +88,7 @@ const config: Config = {
       },
     },
   },
-  plugins: [],
+  plugins: [require('tailwindcss-animate')],
 };
 
 export default config;
