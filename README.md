@@ -81,7 +81,7 @@ soteria-assurance/
 
 | Tool    | Version              |
 | ------- | -------------------- |
-| Node.js | `>=20` (see `.nvmrc`) |
+| Node.js | `>=22` (see `.nvmrc`) — @supabase/supabase-js needs the native WebSocket that landed in 22 |
 | pnpm    | `10.33.0`            |
 
 ```bash
