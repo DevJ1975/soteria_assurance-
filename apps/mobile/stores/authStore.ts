@@ -3,7 +3,7 @@
  *
  * Holds the current Firebase user (id/email/displayName) plus the parsed
  * tenant-scoping {@link FirebaseCustomClaims}. The actual auth lifecycle is
- * driven by `@soteria/firebase` (`onAuthStateChangedTyped` + `getCurrentClaims`)
+ * driven by `lib/AuthProvider` (Supabase `onAuthStateChange` + the profile row)
  * inside the `AuthProvider`; this store is the single read surface the UI uses
  * to know "who am I, which tenant, what role".
  *
@@ -43,10 +43,10 @@ export const useAuthStore = create<AuthState>()(
       initializing: true,
       user: null,
       claims: null,
-      setInitializing: (value): void => set({ initializing: value }),
-      setUser: (user): void => set({ user }),
-      setClaims: (claims): void => set({ claims }),
-      reset: (): void => set({ user: null, claims: null }),
+      setInitializing: (value) => set({ initializing: value }),
+      setUser: (user) => set({ user }),
+      setClaims: (claims) => set({ claims }),
+      reset: () => set({ user: null, claims: null }),
     }),
     {
       name: 'soteria-auth',

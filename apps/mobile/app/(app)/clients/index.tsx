@@ -1,6 +1,6 @@
 /**
  * Clients (DESIGN_DOC §8) — the tenant's client organizations, read tenant-scoped
- * from Firestore via `@soteria/firebase` (RULE 2). A back-office reference list,
+ * from Supabase via `lib/useTenantData` (RULE 2). A back-office reference list,
  * so it fetches on demand via React Query rather than the offline DB.
  */
 import type React from 'react';

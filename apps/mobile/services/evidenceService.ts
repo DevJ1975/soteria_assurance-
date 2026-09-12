@@ -12,7 +12,7 @@
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as Location from 'expo-location';
 import type { EvidenceGeoLocation, EvidenceType } from '@soteria/core';
-import { uploadEvidence, getDownloadUrl } from '@soteria/firebase';
+import { uploadEvidence } from '../lib/storage';
 import { database } from '../db';
 import type { Evidence } from '../db/models/Evidence';
 import { TABLE_EVIDENCE } from '../db/schema';
@@ -108,7 +108,7 @@ export async function captureEvidence(input: CaptureEvidenceInput): Promise<Evid
       draft.findingIds = [];
       draft.isVerified = false;
       draft.uploadStatus = 'local_only';
-      draft.syncStatus = 'pending';
+      draft.uploadState = 'pending';
       draft.localUpdatedAt = new Date();
     });
   });
@@ -142,17 +142,24 @@ export async function uploadEvidenceFile(row: Evidence): Promise<void> {
 
   const response = await fetch(row.localUri);
   const blob = await response.blob();
-  await uploadEvidence(row.tenantId, row.auditId, row.fileName, blob, {
-    contentType: row.mimeType,
+  const storagePath = await uploadEvidence({
+    tenantId: row.tenantId,
+    auditId: row.auditId,
+    fileName: row.fileName,
+    body: blob,
+    mimeType: row.mimeType,
   });
-  const url = await getDownloadUrl(row.tenantId, row.auditId, row.fileName);
+  // The durable reference is the object path. Buckets are private, so a URL
+  // signed now would expire long before the evidence is read; screens sign one
+  // when they actually display it.
+  const url = storagePath;
 
   await database.write(async () => {
     await row.update((draft) => {
       draft.fileUrl = url;
       draft.uploadStatus = 'uploaded';
       // Metadata can now sync to Firestore (the URL is a real Storage URL).
-      draft.syncStatus = 'pending';
+      draft.uploadState = 'pending';
       draft.localUpdatedAt = new Date();
     });
   });

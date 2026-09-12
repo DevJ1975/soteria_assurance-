@@ -1,11 +1,10 @@
 /**
- * Report service — thin, typed `httpsCallable` client over the `generateReportPdf`
+ * Report service — thin, typed client over the `generate-report-pdf`
  * Cloud Function (DESIGN_DOC §9.7). PDF rendering and Storage writes happen
  * server-side (RULE 3 / RULE 10); this only triggers the callable and returns
  * the stored object's path, which the caller resolves to a download URL.
  */
-import { httpsCallable } from 'firebase/functions';
-import { getFunctionsInstance } from '../lib/firebase';
+import { invokeFunction } from '../lib/functions';
 
 /** `generateReportPdf` callable payload. */
 export interface GenerateReportPdfPayload {
@@ -25,10 +24,8 @@ export interface GenerateReportPdfResult {
 export async function generateReportPdf(
   payload: GenerateReportPdfPayload,
 ): Promise<GenerateReportPdfResult> {
-  const callable = httpsCallable<GenerateReportPdfPayload, GenerateReportPdfResult>(
-    getFunctionsInstance(),
-    'generateReportPdf',
+  return invokeFunction<GenerateReportPdfResult>(
+    'generate-report-pdf',
+    payload as unknown as Record<string, unknown>,
   );
-  const response = await callable(payload);
-  return response.data;
 }

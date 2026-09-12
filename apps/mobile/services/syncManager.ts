@@ -2,23 +2,21 @@
  * Bidirectional offline sync manager (DESIGN_DOC §11).
  *
  * RULE 9 — every mutation is written to WatermelonDB first; this manager later
- * pushes the unsynced local rows to the tenant-scoped Firestore collections and
- * pulls remote changes back. UI actions NEVER await sync: call
- * {@link scheduleSync} (fire-and-forget) after a local write, or rely on the
- * connectivity-driven trigger registered in the root provider.
+ * pushes the unsynced local rows to Supabase and pulls remote changes back. UI
+ * actions NEVER await sync: call {@link scheduleSync} (fire-and-forget) after a
+ * local write, or rely on the connectivity-driven trigger in the root provider.
  *
- * RULE 2 — every Firestore reference is produced by the `@soteria/firebase`
- * tenant-scoped helpers (`auditsCol` / `findingsCol` / …); there is no raw
- * root-collection access anywhere here.
+ * RULE 2 — tenant scoping is enforced by RLS on every table, and each row
+ * carries its own `tenant_id`; there is no unscoped write anywhere here.
+ *
+ * Rows created offline have no server id. Rather than minting one on the
+ * device — the Firebase implementation generated `loc_…` strings, which are
+ * not valid uuids and would be rejected by Postgres — the first push inserts
+ * without an id and stores the uuid the database returns in `remote_id`. Every
+ * later push upserts on that id.
  */
-import { Q } from '@nozbe/watermelondb';
-import {
-  auditsCol,
-  clauseAssessmentsCol,
-  evidenceCol,
-  findingsCol,
-  setDocById,
-} from '@soteria/firebase';
+import { Model, Q } from '@nozbe/watermelondb';
+import { supabase } from '../lib/supabase';
 import { database } from '../db';
 import type { Audit } from '../db/models/Audit';
 import type { ClauseAssessment } from '../db/models/ClauseAssessment';
@@ -29,9 +27,15 @@ import {
   TABLE_CLAUSE_ASSESSMENTS,
   TABLE_EVIDENCE,
   TABLE_FINDINGS,
-  type SyncStatus,
+
 } from '../db/schema';
-import { auditToDoc, clauseToDoc, evidenceToDoc, findingToDoc } from './mappers';
+import {
+  auditToRow,
+  clauseToRow,
+  emptyFindingsSummary,
+  evidenceToRow,
+  findingToRow,
+} from './mappers';
 import { isOnline } from './offline';
 import { useAuditStore } from '../stores/auditStore';
 
@@ -42,35 +46,43 @@ export interface SyncResult {
   skippedOffline: boolean;
 }
 
-const UNSYNCED = (): Q.Clause => Q.where('sync_status', Q.notEq<SyncStatus>('synced'));
+const UNSYNCED = (): Q.Clause => Q.where('sync_status', Q.notEq('synced'));
+
+
+// ---------------------------------------------------------------------------
+// Push: local -> Supabase
+// ---------------------------------------------------------------------------
 
 /**
- * Generates a stable Firestore document id for a locally-created row.
+ * Pushes one table's unsynced rows.
  *
- * Lightweight and dependency-free; collision risk is negligible at per-tenant
- * scale and these ids are only ever used as Firestore document keys, assigned
- * once and then persisted back to the row's `remote_id`.
+ * The four tables differed only in their mapper and target, so they share one
+ * implementation. Rows are pushed individually rather than in a batch: a
+ * single malformed row should not block the rest of an auditor's day of work
+ * from reaching the server, and each row's own sync state records what
+ * happened to it.
  */
-function newRemoteId(): string {
-  return `loc_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
-}
-
-// ---------------------------------------------------------------------------
-// Push: local -> Firestore
-// ---------------------------------------------------------------------------
-
-async function pushAudits(): Promise<{ pushed: number; failed: number }> {
-  const rows = await database.collections
-    .get<Audit>(TABLE_AUDITS)
-    .query(UNSYNCED())
-    .fetch();
+async function pushTable<T extends Model & SyncableRow>(
+  table: string,
+  remoteTable: string,
+  toRow: (model: T) => Record<string, unknown>,
+  options: { only?: (model: T) => boolean } = {},
+): Promise<{ pushed: number; failed: number }> {
+  const rows = await database.collections.get<T>(table).query(UNSYNCED()).fetch();
   let pushed = 0;
   let failed = 0;
+
   for (const row of rows) {
+    if (options.only && !options.only(row)) continue;
     try {
-      const remoteId = row.remoteId ?? newRemoteId();
-      await setDocById(auditsCol(row.tenantId), auditToDoc(row, remoteId));
-      await markRowSynced(row, remoteId);
+      const payload = toRow(row);
+      const { data, error } = await supabase
+        .from(remoteTable)
+        .upsert(payload, { onConflict: 'id' })
+        .select('id')
+        .single();
+      if (error) throw error;
+      await markRowSynced(row, data.id as string);
       pushed += 1;
     } catch {
       await markRowFailed(row);
@@ -78,78 +90,27 @@ async function pushAudits(): Promise<{ pushed: number; failed: number }> {
     }
   }
   return { pushed, failed };
+}
+
+async function pushAudits(): Promise<{ pushed: number; failed: number }> {
+  return pushTable<Audit>(TABLE_AUDITS, 'audits', auditToRow);
 }
 
 async function pushClauses(): Promise<{ pushed: number; failed: number }> {
-  const rows = await database.collections
-    .get<ClauseAssessment>(TABLE_CLAUSE_ASSESSMENTS)
-    .query(UNSYNCED())
-    .fetch();
-  let pushed = 0;
-  let failed = 0;
-  for (const row of rows) {
-    try {
-      const remoteId = row.remoteId ?? newRemoteId();
-      await setDocById(
-        clauseAssessmentsCol(row.tenantId, row.auditId),
-        clauseToDoc(row, remoteId),
-      );
-      await markRowSynced(row, remoteId);
-      pushed += 1;
-    } catch {
-      await markRowFailed(row);
-      failed += 1;
-    }
-  }
-  return { pushed, failed };
+  return pushTable<ClauseAssessment>(TABLE_CLAUSE_ASSESSMENTS, 'clause_assessments', clauseToRow);
 }
 
 async function pushFindings(): Promise<{ pushed: number; failed: number }> {
-  const rows = await database.collections
-    .get<Finding>(TABLE_FINDINGS)
-    .query(UNSYNCED())
-    .fetch();
-  let pushed = 0;
-  let failed = 0;
-  for (const row of rows) {
-    try {
-      const remoteId = row.remoteId ?? newRemoteId();
-      await setDocById(findingsCol(row.tenantId, row.auditId), findingToDoc(row, remoteId));
-      await markRowSynced(row, remoteId);
-      pushed += 1;
-    } catch {
-      await markRowFailed(row);
-      failed += 1;
-    }
-  }
-  return { pushed, failed };
+  return pushTable<Finding>(TABLE_FINDINGS, 'findings', findingToRow);
 }
 
 async function pushEvidence(): Promise<{ pushed: number; failed: number }> {
-  const rows = await database.collections
-    .get<Evidence>(TABLE_EVIDENCE)
-    .query(UNSYNCED())
-    .fetch();
-  let pushed = 0;
-  let failed = 0;
-  for (const row of rows) {
-    // Evidence metadata only syncs once its binary has been uploaded; until then
-    // the file URL is not a real Storage URL. The evidence service flips
-    // `uploadStatus` to 'uploaded' after the background upload completes.
-    if (row.uploadStatus !== 'uploaded') {
-      continue;
-    }
-    try {
-      const remoteId = row.remoteId ?? newRemoteId();
-      await setDocById(evidenceCol(row.tenantId, row.auditId), evidenceToDoc(row, remoteId));
-      await markRowSynced(row, remoteId);
-      pushed += 1;
-    } catch {
-      await markRowFailed(row);
-      failed += 1;
-    }
-  }
-  return { pushed, failed };
+  // Metadata only syncs once the binary is in the bucket; until then
+  // `storage_path` would point at nothing. The evidence service flips
+  // `uploadStatus` to 'uploaded' when the background upload finishes.
+  return pushTable<Evidence>(TABLE_EVIDENCE, 'evidence', evidenceToRow, {
+    only: (row) => row.uploadStatus === 'uploaded',
+  });
 }
 
 type SyncableRow = Audit | ClauseAssessment | Finding | Evidence;
@@ -158,7 +119,7 @@ async function markRowSynced(row: SyncableRow, remoteId: string): Promise<void> 
   await database.write(async () => {
     await row.update((draft) => {
       draft.remoteId = remoteId;
-      draft.syncStatus = 'synced';
+      draft.uploadState = 'synced';
     });
   });
 }
@@ -166,7 +127,7 @@ async function markRowSynced(row: SyncableRow, remoteId: string): Promise<void> 
 async function markRowFailed(row: SyncableRow): Promise<void> {
   await database.write(async () => {
     await row.update((draft) => {
-      draft.syncStatus = 'failed';
+      draft.uploadState = 'failed';
     });
   });
 }
@@ -239,32 +200,39 @@ export function scheduleSync(): void {
 }
 
 /**
- * Pull pass — load this tenant's audits from Firestore into the local DB. Used
- * on first launch / explicit refresh, not in the hot field-edit path.
+ * Pull pass — load this tenant's audits from Supabase into the local database.
+ * Used on first launch and explicit refresh, not in the hot field-edit path.
  *
- * Records that already exist locally (matched by `remote_id`) are updated;
- * unseen records are inserted.
+ * Records already present locally (matched on `remote_id`) are updated; unseen
+ * ones are inserted. Local edits are not overwritten selectively — a row the
+ * auditor has changed is still pending push, and the next push wins, because
+ * work captured on site is the thing that must not be lost.
  */
 export async function pullAudits(tenantId: string, leadAuditorId?: string): Promise<number> {
-  const { getAuditsForTenant } = await import('@soteria/firebase');
-  const remote = await getAuditsForTenant(tenantId, leadAuditorId);
+  let request = supabase
+    .from('audits')
+    .select('*')
+    .eq('tenant_id', tenantId)
+    .order('planned_start_date', { ascending: false });
+  if (leadAuditorId) request = request.eq('lead_auditor_id', leadAuditorId);
+
+  const { data, error } = await request;
+  if (error) throw error;
+  const remote = data ?? [];
   const collection = database.collections.get<Audit>(TABLE_AUDITS);
 
   await database.write(async () => {
-    for (const doc of remote) {
-      const existing = await collection
-        .query(Q.where('remote_id', doc.id))
-        .fetch();
-      if (existing.length > 0 && existing[0] !== undefined) {
-        const row = existing[0];
-        await row.update((draft) => {
-          applyAuditDoc(draft, doc);
+    for (const row of remote) {
+      const existing = await collection.query(Q.where('remote_id', row.id as string)).fetch();
+      const first = existing[0];
+      if (first !== undefined) {
+        await first.update((draft) => {
+          applyAuditRow(draft, row);
         });
       } else {
         await collection.create((draft) => {
-          draft.remoteId = doc.id;
-          applyAuditDoc(draft, doc);
-          draft.localCreatedAt = doc.createdAt.toDate();
+          draft.remoteId = row.id as string;
+          applyAuditRow(draft, row);
         });
       }
     }
@@ -273,30 +241,31 @@ export async function pullAudits(tenantId: string, leadAuditorId?: string): Prom
   return remote.length;
 }
 
-function applyAuditDoc(
-  draft: Audit,
-  doc: Awaited<ReturnType<typeof import('@soteria/firebase')['getAuditsForTenant']>>[number],
-): void {
-  draft.tenantId = doc.tenantId;
-  draft.clientId = doc.clientId;
-  draft.auditNumber = doc.auditNumber;
-  draft.auditType = doc.auditType;
-  draft.auditStage = doc.auditStage;
-  draft.standard = doc.standard;
-  draft.scope = doc.scope;
-  draft.status = doc.status;
-  draft.leadAuditorId = doc.leadAuditorId;
-  draft.managementRepresentativeName = doc.managementRepresentativeName;
-  draft.plannedStartDate = doc.plannedStartDate;
-  draft.plannedEndDate = doc.plannedEndDate;
-  draft.auditDays = doc.auditDays;
-  draft.confidentiality = doc.confidentiality;
-  draft.aiReadinessScore = doc.aiCertificationReadinessScore ?? null;
-  draft.auditTeam = doc.auditTeam;
-  draft.sitesInScope = doc.sitesInScope;
-  draft.auditPlan = doc.auditPlan;
-  draft.findingsSummary = doc.findings;
-  draft.aiRiskFlags = doc.aiRiskFlags ?? null;
-  draft.syncStatus = 'synced';
-  draft.localUpdatedAt = doc.updatedAt.toDate();
+/** Copies a Supabase `audits` row onto a local model draft. */
+function applyAuditRow(draft: Audit, row: Record<string, unknown>): void {
+  draft.tenantId = row.tenant_id as string;
+  draft.clientId = row.client_id as string;
+  draft.auditNumber = row.audit_number as string;
+  draft.auditType = row.audit_type as Audit['auditType'];
+  draft.auditStage = row.audit_stage as Audit['auditStage'];
+  draft.standard = (row.standard_id as string) ?? 'iso45001';
+  draft.scope = (row.scope as string) ?? '';
+  draft.status = row.status as Audit['status'];
+  draft.leadAuditorId = (row.lead_auditor_id as string | null) ?? '';
+  draft.managementRepresentativeName = (row.management_representative_name as string) ?? '';
+  draft.plannedStartDate = (row.planned_start_date as string) ?? '';
+  draft.plannedEndDate = (row.planned_end_date as string) ?? '';
+  draft.auditDays = Number(row.audit_days ?? 1);
+  draft.confidentiality = (row.confidentiality as Audit['confidentiality']) ?? 'standard';
+  draft.aiReadinessScore = (row.ai_certification_readiness_score as number | null) ?? null;
+  draft.auditTeam = (row.audit_team as Audit['auditTeam']) ?? [];
+  draft.sitesInScope = (row.sites_in_scope as string[]) ?? [];
+  draft.auditPlan = (row.audit_plan as Audit['auditPlan']) ?? ({} as Audit['auditPlan']);
+  draft.findingsSummary =
+    (row.findings as Audit['findingsSummary']) ?? emptyFindingsSummary();
+  draft.aiRiskFlags = (row.ai_risk_flags as string[]) ?? [];
+  // Pulled rows are already on the server, so they start clean.
+  draft.uploadState = 'synced';
+  draft.localUpdatedAt = new Date();
 }
+

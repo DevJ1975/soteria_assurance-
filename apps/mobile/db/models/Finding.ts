@@ -47,7 +47,7 @@ export class Finding extends Model {
   @text('target_closure_date') public targetClosureDate!: string | null;
   @text('status') public status!: FindingStatus;
 
-  @text('sync_status') public syncStatus!: SyncStatus;
+  @text('sync_status') public uploadState!: SyncStatus;
   @readonly @date('local_created_at') public localCreatedAt!: Date;
   @date('local_updated_at') public localUpdatedAt!: Date;
 

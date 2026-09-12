@@ -4,7 +4,7 @@
  * Field evidence captured offline. `localUri` points at the on-device file
  * (a compressed photo from {@link evidenceService}); `fileUrl` is populated
  * once the background upload to tenant-scoped Storage succeeds. `uploadStatus`
- * tracks the file-upload phase independently of the document `syncStatus`.
+ * tracks the file-upload phase independently of the document `uploadState`.
  */
 import { Model, type Relation } from '@nozbe/watermelondb';
 import { date, field, json, readonly, relation, text } from '@nozbe/watermelondb/decorators';
@@ -49,7 +49,7 @@ export class Evidence extends Model {
   @field('is_verified') public isVerified!: boolean;
   @text('upload_status') public uploadStatus!: UploadStatus;
 
-  @text('sync_status') public syncStatus!: SyncStatus;
+  @text('sync_status') public uploadState!: SyncStatus;
   @readonly @date('local_created_at') public localCreatedAt!: Date;
   @date('local_updated_at') public localUpdatedAt!: Date;
 

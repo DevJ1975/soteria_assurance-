@@ -1,5 +1,5 @@
 /**
- * Register screen — Email/Password account creation via `@soteria/firebase`
+ * Register screen — Email/Password account creation via `lib/auth`
  * `registerWithEmail` (RULE 3), which also sets the display name and sends a
  * verification email. Tenant claims are provisioned server-side
  * (`setTenantClaims`) after sign-up; the AuthProvider refreshes them.
@@ -10,7 +10,7 @@ import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { Button, HelperText, Text, TextInput } from 'react-native-paper';
 import { SoteriaStrings } from '@soteria/core';
-import { registerWithEmail } from '@soteria/firebase';
+import { registerWithEmail } from '../../lib/auth';
 import { Screen } from '../../components/common/Screen';
 import { colors, fontSize, fontWeight, spacing } from '../../theme';
 

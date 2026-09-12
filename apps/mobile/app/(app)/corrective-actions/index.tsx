@@ -1,6 +1,6 @@
 /**
  * Corrective Actions (DESIGN_DOC §9.8) — the tenant's CARs, read tenant-scoped
- * from Firestore via `@soteria/firebase` (RULE 2). Shows the CA number, title,
+ * from Supabase via `lib/useTenantData` (RULE 2). Shows the CA number, title,
  * status and target date with an overdue indicator computed from the shared
  * `isOverdue` util.
  */

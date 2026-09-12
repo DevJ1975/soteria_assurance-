@@ -11,7 +11,8 @@ import { useState } from 'react';
 import { FlatList, Modal, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { Button, IconButton, Text } from 'react-native-paper';
-import { SoteriaStrings } from '@soteria/core';
+import {
+  DEFAULT_STANDARD_ID, SoteriaStrings } from '@soteria/core';
 import { getClauseByNumber } from '@soteria/core';
 import { Screen } from '../../../../../components/common/Screen';
 import { EmptyState, LoadingState } from '../../../../../components/common/StateViews';
@@ -34,7 +35,7 @@ export default function FindingsScreen(): React.JSX.Element {
   const [formOpen, setFormOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const clause = activeClause !== null ? getClauseByNumber(activeClause) : undefined;
+  const clause = activeClause !== null ? getClauseByNumber(DEFAULT_STANDARD_ID, activeClause) : undefined;
 
   const handleSubmit = async (values: FindingFormValues): Promise<void> => {
     if (audit === null || user === null) {

@@ -66,7 +66,7 @@ export async function upsertClauseAssessment(
       draft.auditorNotes = input.auditorNotes;
       draft.subClauseNotes = input.subClauseNotes;
       draft.isComplete = input.isComplete;
-      draft.syncStatus = 'pending';
+      draft.uploadState = 'pending';
       draft.localUpdatedAt = new Date();
     };
 
@@ -164,7 +164,7 @@ export async function createFinding(input: CreateFindingInput): Promise<Finding>
       draft.raisedAt = now;
       draft.targetClosureDate = targetClosureFor(input.type, now);
       draft.status = 'open';
-      draft.syncStatus = 'pending';
+      draft.uploadState = 'pending';
       draft.localUpdatedAt = now;
     });
   });
@@ -181,7 +181,7 @@ export async function setFindingStatus(
   await database.write(async () => {
     await row.update((draft) => {
       draft.status = status;
-      draft.syncStatus = 'pending';
+      draft.uploadState = 'pending';
       draft.localUpdatedAt = new Date();
     });
   });
@@ -200,7 +200,7 @@ export async function setAuditStatus(
   await database.write(async () => {
     await row.update((draft) => {
       draft.status = status;
-      draft.syncStatus = 'pending';
+      draft.uploadState = 'pending';
       draft.localUpdatedAt = new Date();
     });
   });

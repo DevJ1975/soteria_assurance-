@@ -9,7 +9,8 @@ import { useMemo } from 'react';
 import { FlatList } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import type { ConformityStatus } from '@soteria/core';
-import { SoteriaStrings } from '@soteria/core';
+import {
+  DEFAULT_STANDARD_ID, SoteriaStrings } from '@soteria/core';
 import { flattenClauses } from '@soteria/core';
 import { Screen } from '../../../../../components/common/Screen';
 import { LoadingState } from '../../../../../components/common/StateViews';
@@ -32,7 +33,7 @@ export default function ClauseNavigatorScreen(): React.JSX.Element {
     return map;
   }, [assessments]);
 
-  const clauses = useMemo(() => flattenClauses(), []);
+  const clauses = useMemo(() => flattenClauses(DEFAULT_STANDARD_ID), []);
 
   if (loading) {
     return (

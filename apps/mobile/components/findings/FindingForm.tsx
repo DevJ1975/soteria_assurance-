@@ -12,6 +12,7 @@ import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { Button, Chip, HelperText, Text, TextInput } from 'react-native-paper';
 import {
+  DEFAULT_STANDARD_ID,
   AI_DISCLAIMER,
   FINDING_TYPE_META,
   SoteriaStrings,
@@ -70,6 +71,7 @@ export function FindingForm({
     try {
       const result = await draftNCR({
         tenantId,
+        standardId: DEFAULT_STANDARD_ID,
         clauseNumber,
         clauseTitle,
         requirementText,

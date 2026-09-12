@@ -7,6 +7,7 @@
  * the session store so the field flow + recovery (RULE 8) know what is open.
  */
 import type React from 'react';
+import type { StyleProp, TextStyle } from 'react-native';
 import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -103,7 +104,7 @@ export default function AuditOverviewScreen(): React.JSX.Element {
         {tiles.map((tile) => (
           <Text
             key={tile.href}
-            style={styles.tile}
+            style={styles.tile as StyleProp<TextStyle>}
             onPress={(): void => router.push(tile.href)}
           >
             <MaterialCommunityIcons name={tile.icon} size={22} color={colors.primary[500]} />

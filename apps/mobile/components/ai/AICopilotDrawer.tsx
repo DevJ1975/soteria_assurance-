@@ -11,7 +11,8 @@ import type React from 'react';
 import { useState } from 'react';
 import { Modal, ScrollView, StyleSheet, View } from 'react-native';
 import { Button, Divider, HelperText, IconButton, Text } from 'react-native-paper';
-import { AI_DISCLAIMER, SoteriaStrings } from '@soteria/core';
+import {
+  DEFAULT_STANDARD_ID, AI_DISCLAIMER, SoteriaStrings } from '@soteria/core';
 import { getClauseByNumber } from '@soteria/core';
 import { colors, fontSize, fontWeight, spacing } from '../../theme';
 import { useAuditStore } from '../../stores/auditStore';
@@ -33,7 +34,7 @@ export function AICopilotDrawer({ tenantId, industry, intervieweeRole }: Props):
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const clause = clauseNumber !== null ? getClauseByNumber(clauseNumber) : undefined;
+  const clause = clauseNumber !== null ? getClauseByNumber(DEFAULT_STANDARD_ID, clauseNumber) : undefined;
 
   const handleSuggest = async (): Promise<void> => {
     if (clause === undefined) {
@@ -44,6 +45,7 @@ export function AICopilotDrawer({ tenantId, industry, intervieweeRole }: Props):
     try {
       const result = await suggestQuestions({
         tenantId,
+        standardId: DEFAULT_STANDARD_ID,
         clauseNumber: clause.number,
         clauseTitle: clause.title,
         intervieweeRole,

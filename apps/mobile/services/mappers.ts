@@ -1,135 +1,24 @@
 /**
- * Mappers between WatermelonDB model rows and the canonical `@soteria/core`
- * domain types. Used by the sync manager to (a) build a Firestore payload from
- * a local row on push, and (b) hydrate a local row from a Firestore document on
- * pull.
+ * Mappers from WatermelonDB model rows to Supabase rows.
  *
- * The `remoteId` on a local row IS the Firestore document `id`; a row created
- * offline has no `remoteId` yet, so the sync manager generates one before push.
+ * `remoteId` on a local row is the Postgres `id`. A row created offline has
+ * none until its first successful push, when the database generates one and
+ * the sync manager stores it back.
  */
-import type {
-  Audit as AuditDoc,
-  ClauseAssessment as ClauseDoc,
-  Evidence as EvidenceDoc,
-  Finding as FindingDoc,
-} from '@soteria/core';
+import type { Audit as AuditDoc } from '@soteria/core';
 import type { Audit } from '../db/models/Audit';
 import type { ClauseAssessment } from '../db/models/ClauseAssessment';
 import type { Finding } from '../db/models/Finding';
 import type { Evidence } from '../db/models/Evidence';
-import { nowTimestamp, timestampFromMillis } from '../lib/timestamps';
+import { nowTimestamp } from '../lib/timestamps';
 
 // ---------------------------------------------------------------------------
-// Local model  ->  Firestore document (@soteria/core type)
+// Shared helpers
 // ---------------------------------------------------------------------------
 
-export function auditToDoc(model: Audit, remoteId: string): AuditDoc {
-  const doc: AuditDoc = {
-    id: remoteId,
-    tenantId: model.tenantId,
-    clientId: model.clientId,
-    auditNumber: model.auditNumber,
-    auditType: model.auditType,
-    auditStage: model.auditStage,
-    standard: 'ISO 45001:2018',
-    scope: model.scope,
-    status: model.status,
-    leadAuditorId: model.leadAuditorId,
-    auditTeam: model.auditTeam,
-    managementRepresentativeName: model.managementRepresentativeName,
-    plannedStartDate: model.plannedStartDate,
-    plannedEndDate: model.plannedEndDate,
-    auditDays: model.auditDays,
-    sitesInScope: model.sitesInScope,
-    auditPlan: model.auditPlan,
-    findings: model.findingsSummary,
-    confidentiality: model.confidentiality,
-    createdAt: timestampFromMillis(model.localCreatedAt.getTime()),
-    updatedAt: timestampFromMillis(model.localUpdatedAt.getTime()),
-  };
-  if (model.aiReadinessScore !== null) {
-    doc.aiCertificationReadinessScore = model.aiReadinessScore;
-  }
-  if (model.aiRiskFlags !== null) {
-    doc.aiRiskFlags = model.aiRiskFlags;
-  }
-  return doc;
-}
 
-export function clauseToDoc(model: ClauseAssessment, remoteId: string): ClauseDoc {
-  const doc: ClauseDoc = {
-    id: remoteId,
-    auditId: model.auditId,
-    tenantId: model.tenantId,
-    clauseNumber: model.clauseNumber,
-    clauseTitle: model.clauseTitle,
-    assignedAuditorId: model.assignedAuditorId,
-    conformityStatus: model.conformityStatus,
-    score: model.score,
-    auditorNotes: model.auditorNotes,
-    evidenceIds: model.evidenceIds,
-    findingIds: model.findingIds,
-    subClauseNotes: model.subClauseNotes,
-    isComplete: model.isComplete,
-    updatedAt: timestampFromMillis(model.localUpdatedAt.getTime()),
-  };
-  if (model.aiGeneratedSummary !== null) {
-    doc.aiGeneratedSummary = model.aiGeneratedSummary;
-  }
-  return doc;
-}
 
-export function findingToDoc(model: Finding, remoteId: string): FindingDoc {
-  const doc: FindingDoc = {
-    id: remoteId,
-    auditId: model.auditId,
-    tenantId: model.tenantId,
-    clientId: model.clientId,
-    findingNumber: model.findingNumber,
-    type: model.type,
-    clauseNumber: model.clauseNumber,
-    clauseTitle: model.clauseTitle,
-    requirement: model.requirement,
-    title: model.title,
-    objectiveEvidence: model.objectiveEvidence,
-    nonconformityStatement: model.nonconformityStatement,
-    evidenceIds: model.evidenceIds,
-    raisedByAuditorId: model.raisedByAuditorId,
-    raisedByAuditorName: model.raisedByAuditorName,
-    raisedAt: timestampFromMillis(model.raisedAt.getTime()),
-    status: model.status,
-    updatedAt: timestampFromMillis(model.localUpdatedAt.getTime()),
-  };
-  if (model.severity !== null) doc.severity = model.severity;
-  if (model.aiDraftStatement !== null) doc.aiDraftStatement = model.aiDraftStatement;
-  if (model.department !== null) doc.department = model.department;
-  if (model.area !== null) doc.area = model.area;
-  if (model.targetClosureDate !== null) doc.targetClosureDate = model.targetClosureDate;
-  return doc;
-}
 
-export function evidenceToDoc(model: Evidence, remoteId: string): EvidenceDoc {
-  const doc: EvidenceDoc = {
-    id: remoteId,
-    auditId: model.auditId,
-    tenantId: model.tenantId,
-    type: model.type,
-    title: model.title,
-    description: model.description,
-    fileUrl: model.fileUrl,
-    fileName: model.fileName,
-    fileSize: model.fileSize,
-    mimeType: model.mimeType,
-    capturedAt: timestampFromMillis(model.capturedAt.getTime()),
-    capturedByAuditorId: model.capturedByAuditorId,
-    clauseNumbers: model.clauseNumbers,
-    findingIds: model.findingIds,
-    isVerified: model.isVerified,
-  };
-  if (model.thumbnailUrl !== null) doc.thumbnailUrl = model.thumbnailUrl;
-  if (model.geoLocation !== null) doc.geoLocation = model.geoLocation;
-  return doc;
-}
 
 // ---------------------------------------------------------------------------
 // Default-row factories (used when creating a fresh local audit context).
@@ -151,3 +40,125 @@ export function emptyFindingsSummary(): AuditDoc['findings'] {
 
 /** A `@soteria/core` Timestamp for "now" (re-exported for convenience). */
 export { nowTimestamp };
+
+// ---------------------------------------------------------------------------
+// Postgres rows
+// ---------------------------------------------------------------------------
+
+/**
+ * Local models -> Supabase rows.
+ *
+ * Separate from the `*ToDoc` mappers above, which produced the camelCase
+ * document shapes Firestore stored. Postgres columns are snake_case and the
+ * id is generated by the database, so a row created offline carries no id on
+ * its first push and receives one back.
+ *
+ * `local_created_at` / `local_updated_at` are deliberately not sent: they are
+ * device clock readings, and a phone that has been offline for a day may have
+ * drifted. The server's own defaults are authoritative for row timestamps.
+ */
+
+/** Fields common to every synced row. */
+function baseRow(model: { tenantId: string }): Record<string, unknown> {
+  return { tenant_id: model.tenantId };
+}
+
+export function auditToRow(model: Audit): Record<string, unknown> {
+  return {
+    ...baseRow(model),
+    ...(model.remoteId ? { id: model.remoteId } : {}),
+    client_id: model.clientId,
+    audit_number: model.auditNumber,
+    audit_type: model.auditType,
+    audit_stage: model.auditStage,
+    // The local schema predates the multi-standard work and stores a display
+    // string; every audit captured by this build is ISO 45001.
+    standard_id: 'iso45001',
+    scope: model.scope,
+    status: model.status,
+    lead_auditor_id: model.leadAuditorId || null,
+    audit_team: model.auditTeam,
+    management_representative_name: model.managementRepresentativeName,
+    planned_start_date: model.plannedStartDate,
+    planned_end_date: model.plannedEndDate,
+    audit_days: model.auditDays,
+    sites_in_scope: model.sitesInScope,
+    audit_plan: model.auditPlan,
+    findings: model.findingsSummary,
+    confidentiality: model.confidentiality,
+    ai_certification_readiness_score: model.aiReadinessScore,
+    ai_risk_flags: model.aiRiskFlags ?? [],
+  };
+}
+
+export function clauseToRow(model: ClauseAssessment): Record<string, unknown> {
+  return {
+    ...baseRow(model),
+    ...(model.remoteId ? { id: model.remoteId } : {}),
+    audit_id: model.auditId,
+    standard_id: 'iso45001',
+    clause_number: model.clauseNumber,
+    clause_title: model.clauseTitle,
+    assigned_auditor_id: model.assignedAuditorId || null,
+    conformity_status: model.conformityStatus,
+    score: model.score,
+    auditor_notes: model.auditorNotes,
+    ai_generated_summary: model.aiGeneratedSummary,
+    evidence_ids: model.evidenceIds,
+    finding_ids: model.findingIds,
+    sub_clause_notes: model.subClauseNotes,
+    is_complete: model.isComplete,
+  };
+}
+
+export function findingToRow(model: Finding): Record<string, unknown> {
+  return {
+    ...baseRow(model),
+    ...(model.remoteId ? { id: model.remoteId } : {}),
+    audit_id: model.auditId,
+    client_id: model.clientId,
+    finding_number: model.findingNumber,
+    type: model.type,
+    severity: model.severity,
+    clause_number: model.clauseNumber,
+    clause_title: model.clauseTitle,
+    requirement: model.requirement,
+    title: model.title,
+    objective_evidence: model.objectiveEvidence,
+    nonconformity_statement: model.nonconformityStatement,
+    ai_draft_statement: model.aiDraftStatement,
+    department: model.department,
+    area: model.area,
+    evidence_ids: model.evidenceIds,
+    raised_by_auditor_id: model.raisedByAuditorId || null,
+    raised_by_auditor_name: model.raisedByAuditorName,
+    raised_at: model.raisedAt.toISOString(),
+    target_closure_date: model.targetClosureDate || null,
+    status: model.status,
+  };
+}
+
+export function evidenceToRow(model: Evidence): Record<string, unknown> {
+  return {
+    ...baseRow(model),
+    ...(model.remoteId ? { id: model.remoteId } : {}),
+    audit_id: model.auditId,
+    type: model.type,
+    title: model.title,
+    description: model.description,
+    // `local_uri` never leaves the device — it points at this phone's cache.
+    // The durable reference is the object path in the private bucket.
+    file_url: model.fileUrl ?? '',
+    file_name: model.fileName,
+    file_size: model.fileSize,
+    mime_type: model.mimeType,
+    storage_bucket: 'evidence',
+    storage_path: model.fileUrl ?? null,
+    thumbnail_path: model.thumbnailUrl ?? null,
+    captured_at: model.capturedAt.toISOString(),
+    captured_by_auditor_id: model.capturedByAuditorId || null,
+    clause_numbers: model.clauseNumbers,
+    finding_ids: model.findingIds,
+    is_verified: model.isVerified,
+  };
+}

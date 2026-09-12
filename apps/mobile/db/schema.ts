@@ -19,6 +19,8 @@ import { appSchema, tableSchema } from '@nozbe/watermelondb';
 
 /** Local sync lifecycle state for a record (mirrors §11 sync indicator). */
 export type SyncStatus = 'pending' | 'syncing' | 'synced' | 'failed';
+/** Alias making the distinction from WatermelonDB's own Model.syncStatus explicit. */
+export type UploadState = SyncStatus;
 
 export const TABLE_AUDITS = 'audits';
 export const TABLE_CLAUSE_ASSESSMENTS = 'clause_assessments';

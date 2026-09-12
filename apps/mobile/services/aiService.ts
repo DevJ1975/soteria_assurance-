@@ -3,14 +3,13 @@
  *
  * All AI calls run server-side in Firebase Functions (the ANTHROPIC_API_KEY
  * never touches the client — RULE 3). This module is a thin, fully-typed
- * `httpsCallable` client over the deployed callables (`draftNCR`,
+ * typed client over the deployed Edge Functions (`draft-ncr`,
  * `suggestQuestions`). The wire payload/result shapes mirror the function
  * signatures in `functions/src/ai/*` and reuse `@soteria/core` request types.
  *
  * Every result carries the mandatory {@link AI_DISCLAIMER}; callers MUST show it
  * (multi-agent-guide §8) and treat output as a draft for auditor review.
  */
-import { httpsCallable } from 'firebase/functions';
 import {
   AI_DISCLAIMER,
   type InterviewQuestionsPromptParams,
@@ -19,7 +18,7 @@ import {
   type NCRDraftRequest,
   type NCRDraftResponse,
 } from '@soteria/core';
-import { getFunctionsInstance } from '../lib/firebase';
+import { invokeFunction } from '../lib/functions';
 
 /** `draftNCR` callable payload — the core request plus the caller's tenant. */
 export interface DraftNCRPayload extends NCRDraftRequest {
@@ -51,12 +50,10 @@ export interface SuggestQuestionsResult {
  * Returns the structured draft; the auditor must review + edit before saving.
  */
 export async function draftNCR(payload: DraftNCRPayload): Promise<DraftNCRResult> {
-  const callable = httpsCallable<DraftNCRPayload, DraftNCRResult>(
-    getFunctionsInstance(),
-    'draftNCR',
+  return invokeFunction<DraftNCRResult>(
+    'draft-n-c-r',
+    payload as unknown as Record<string, unknown>,
   );
-  const response = await callable(payload);
-  return response.data;
 }
 
 /**
@@ -66,12 +63,10 @@ export async function draftNCR(payload: DraftNCRPayload): Promise<DraftNCRResult
 export async function suggestQuestions(
   payload: SuggestQuestionsPayload,
 ): Promise<SuggestQuestionsResult> {
-  const callable = httpsCallable<SuggestQuestionsPayload, SuggestQuestionsResult>(
-    getFunctionsInstance(),
-    'suggestQuestions',
+  return invokeFunction<SuggestQuestionsResult>(
+    'suggest-questions',
+    payload as unknown as Record<string, unknown>,
   );
-  const response = await callable(payload);
-  return response.data;
 }
 
 /** `summarizeMeeting` callable payload. */
@@ -95,12 +90,10 @@ export interface SummarizeMeetingResult {
 export async function summarizeMeeting(
   payload: SummarizeMeetingPayload,
 ): Promise<SummarizeMeetingResult> {
-  const callable = httpsCallable<SummarizeMeetingPayload, SummarizeMeetingResult>(
-    getFunctionsInstance(),
-    'summarizeMeeting',
+  return invokeFunction<SummarizeMeetingResult>(
+    'summarize-meeting',
+    payload as unknown as Record<string, unknown>,
   );
-  const response = await callable(payload);
-  return response.data;
 }
 
 /** Re-export so UI can render the disclaimer without re-importing core. */

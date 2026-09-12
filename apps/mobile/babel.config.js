@@ -12,7 +12,10 @@ module.exports = function babelConfig(api) {
   return {
     presets: ['babel-preset-expo'],
     plugins: [
-      ['@babel/plugin-proposal-decorators', { legacy: true }],
+      // @babel/plugin-proposal-decorators v8 replaced `{ legacy: true }` with
+      // an explicit `version`; the old shape is now a hard error. WatermelonDB
+      // models use the legacy (stage-1) semantics.
+      ['@babel/plugin-proposal-decorators', { version: 'legacy' }],
       'react-native-reanimated/plugin',
     ],
   };

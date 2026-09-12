@@ -13,7 +13,8 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, Button, SegmentedButtons, Text, TextInput } from 'react-native-paper';
-import { SoteriaStrings, type MeetingSummaryResponse } from '@soteria/core';
+import {
+  DEFAULT_STANDARD_ID, SoteriaStrings, type MeetingSummaryResponse } from '@soteria/core';
 import { Screen } from '../../../../../components/common/Screen';
 import { MeetingRecorder } from '../../../../../components/meetings/MeetingRecorder';
 import { cardSurface, colors, fontSize, fontWeight, spacing } from '../../../../../theme';
@@ -56,6 +57,7 @@ export default function MeetingsScreen(): React.JSX.Element {
     try {
       const result = await summarizeMeeting({
         tenantId,
+        standardId: DEFAULT_STANDARD_ID,
         meetingType: type,
         transcription: transcription.trim(),
       });

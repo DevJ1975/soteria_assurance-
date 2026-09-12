@@ -16,7 +16,8 @@ import { StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Button, Divider, Text, TextInput } from 'react-native-paper';
 import type { ConformityStatus } from '@soteria/core';
-import { SoteriaStrings, clauseScoreFromVerdicts } from '@soteria/core';
+import {
+  DEFAULT_STANDARD_ID, SoteriaStrings, clauseScoreFromVerdicts } from '@soteria/core';
 import { getClauseByNumber } from '@soteria/core';
 import { Screen } from '../../../../../components/common/Screen';
 import { EmptyState, LoadingState, SectionHeading } from '../../../../../components/common/StateViews';
@@ -52,7 +53,7 @@ export default function ClauseAssessmentScreen(): React.JSX.Element {
   const tenantId = useAuthStore((s) => s.claims?.tenantId ?? '');
   const setActiveClause = useAuditStore((s) => s.setActiveClause);
 
-  const clause = useMemo(() => getClauseByNumber(clauseId), [clauseId]);
+  const clause = useMemo(() => getClauseByNumber(DEFAULT_STANDARD_ID, clauseId), [clauseId]);
 
   const [status, setStatus] = useState<ConformityStatus>('not_audited');
   const [notes, setNotes] = useState('');

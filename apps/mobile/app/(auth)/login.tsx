@@ -1,7 +1,7 @@
 /**
  * Login screen — Email/Password and Phone sign-in.
  *
- * All auth calls go through `@soteria/firebase` (RULE 3). Phone sign-in uses
+ * All auth calls go through `lib/auth` (RULE 3). Phone sign-in uses
  * the {@link PhoneAuthFlow} abstraction (RN needs `FirebaseRecaptchaVerifierModal`
  * — see lib/phoneAuth.ts); here we present the two-step UI and a clear note
  * about wiring the native verifier ref. Strings come from SoteriaStrings.
@@ -14,8 +14,9 @@ import { Button, HelperText, SegmentedButtons, Text, TextInput } from 'react-nat
 import { SoteriaStrings } from '@soteria/core';
 import {
   signInWithEmail,
+  createPhoneAuthFlow,
   type ConfirmationResult,
-} from '@soteria/firebase';
+} from '../../lib/auth';
 import { Screen } from '../../components/common/Screen';
 import { colors, fontSize, fontWeight, spacing } from '../../theme';
 import type { PhoneAuthFlow } from '../../lib/phoneAuth';
@@ -40,7 +41,9 @@ export default function LoginScreen(): React.JSX.Element {
   // The native reCAPTCHA-backed flow is injected at runtime by the host once a
   // <FirebaseRecaptchaVerifierModal> ref is available (see lib/phoneAuth.ts).
   // It is null until then; the phone buttons stay disabled to signal that.
-  const [phoneFlow] = useState<PhoneAuthFlow | null>(null);
+  // Held in state so the same flow object survives re-renders between
+  // requesting the code and verifying it — it is what remembers the number.
+  const [phoneFlow] = useState<PhoneAuthFlow>(() => createPhoneAuthFlow());
 
   const handleEmailSignIn = async (): Promise<void> => {
     setBusy(true);
@@ -57,15 +60,14 @@ export default function LoginScreen(): React.JSX.Element {
 
 
   const handleSendCode = async (): Promise<void> => {
-    if (phoneFlow === null) {
-      setError('Phone sign-in requires the reCAPTCHA verifier (see lib/phoneAuth.ts).');
-      return;
-    }
     setBusy(true);
     setError(null);
     try {
-      const result = await phoneFlow.sendCode(phone.trim());
-      setConfirmation(result);
+      await phoneFlow.sendCode(phone.trim());
+      // Supabase verifies server-side, so there is no confirmation handle to
+      // carry — the flow itself remembers the number. Storing the flow marks
+      // the screen as awaiting a code.
+      setConfirmation(phoneFlow);
     } catch {
       setError(SoteriaStrings.errors.generic);
     } finally {
@@ -74,13 +76,13 @@ export default function LoginScreen(): React.JSX.Element {
   };
 
   const handleConfirmCode = async (): Promise<void> => {
-    if (phoneFlow === null || confirmation === null) {
+    if (confirmation === null) {
       return;
     }
     setBusy(true);
     setError(null);
     try {
-      await phoneFlow.confirm(confirmation, code.trim());
+      await phoneFlow.confirm(code.trim());
     } catch {
       setError(SoteriaStrings.errors.validation);
     } finally {

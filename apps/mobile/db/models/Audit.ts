@@ -51,7 +51,7 @@ export class Audit extends Model {
   public findingsSummary!: AuditFindingsSummary;
   @json('ai_risk_flags_json', identity<string[]>) public aiRiskFlags!: string[] | null;
 
-  @text('sync_status') public syncStatus!: SyncStatus;
+  @text('sync_status') public uploadState!: SyncStatus;
   @readonly @date('local_created_at') public localCreatedAt!: Date;
   @date('local_updated_at') public localUpdatedAt!: Date;
 }

@@ -12,7 +12,8 @@ import { useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { Searchbar, Text } from 'react-native-paper';
 import type { ISO45001Clause } from '@soteria/core';
-import { SoteriaStrings } from '@soteria/core';
+import {
+  DEFAULT_STANDARD_ID, SoteriaStrings } from '@soteria/core';
 import { flattenClauses } from '@soteria/core';
 import { Screen } from '../../../components/common/Screen';
 import { EmptyState } from '../../../components/common/StateViews';
@@ -22,7 +23,7 @@ export default function WikiScreen(): React.JSX.Element {
   const [query, setQuery] = useState('');
   const [expanded, setExpanded] = useState<string | null>(null);
 
-  const clauses = useMemo(() => flattenClauses(), []);
+  const clauses = useMemo(() => flattenClauses(DEFAULT_STANDARD_ID), []);
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (q === '') {

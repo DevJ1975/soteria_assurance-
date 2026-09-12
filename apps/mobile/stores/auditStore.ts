@@ -59,11 +59,11 @@ export const useAuditStore = create<AuditSessionState>()(
       lastSyncError: null,
       isCopilotOpen: false,
 
-      setActiveAudit: (auditId): void =>
+      setActiveAudit: (auditId) =>
         set({ activeAuditId: auditId, activeClauseNumber: null }),
-      setActiveClause: (clauseNumber): void => set({ activeClauseNumber: clauseNumber }),
-      setSyncIndicator: (indicator): void => set({ syncIndicator: indicator }),
-      setPendingChanges: (count): void =>
+      setActiveClause: (clauseNumber) => set({ activeClauseNumber: clauseNumber }),
+      setSyncIndicator: (indicator) => set({ syncIndicator: indicator }),
+      setPendingChanges: (count) =>
         set((state) => ({
           pendingChanges: count,
           // A nonzero queue while online surfaces as "pending"; zero as "synced"
@@ -77,21 +77,21 @@ export const useAuditStore = create<AuditSessionState>()(
                 ? 'pending'
                 : 'synced',
         })),
-      markSynced: (at): void =>
+      markSynced: (at) =>
         set({
           lastSyncedAt: at,
           pendingChanges: 0,
           syncIndicator: 'synced',
           lastSyncError: null,
         }),
-      setSyncError: (message): void =>
+      setSyncError: (message) =>
         set({
           lastSyncError: message,
           syncIndicator: message === null ? 'synced' : 'failed',
         }),
-      openCopilot: (): void => set({ isCopilotOpen: true }),
-      closeCopilot: (): void => set({ isCopilotOpen: false }),
-      clearSession: (): void =>
+      openCopilot: () => set({ isCopilotOpen: true }),
+      closeCopilot: () => set({ isCopilotOpen: false }),
+      clearSession: () =>
         set({
           activeAuditId: null,
           activeClauseNumber: null,

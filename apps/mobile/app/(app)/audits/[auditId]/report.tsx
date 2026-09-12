@@ -20,7 +20,7 @@ import {
   computeCertificationReadinessScore,
   computeFindingsSummary,
 } from '@soteria/core';
-import { getDownloadUrlForPath } from '@soteria/firebase';
+import { getDownloadUrlForPath } from '../../../../lib/storage';
 import { Screen } from '../../../../components/common/Screen';
 import { LoadingState, SectionHeading } from '../../../../components/common/StateViews';
 import { cardSurface, colors, fontSize, fontWeight, spacing } from '../../../../theme';
