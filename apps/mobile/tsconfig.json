@@ -2,6 +2,15 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
+    // WatermelonDB models are declared with legacy property decorators
+    // (@field/@text/@date/@json/@readonly). Without these two the entire db/
+    // layer fails to compile — 95 of this app's type errors were this flag.
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    // expo/tsconfig.base leaves `module` at a value that rejects the dynamic
+    // import in services/syncManager.ts.
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
     "noUnusedLocals": true,

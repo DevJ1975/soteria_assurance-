@@ -4,6 +4,7 @@
  * status and target date with an overdue indicator computed from the shared
  * `isOverdue` util.
  */
+import type React from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import type { CAStatus } from '@soteria/core';
@@ -31,7 +32,7 @@ const CA_STATUS_COLOR: Record<CAStatus, string> = {
   closed: colors.primary[500],
 };
 
-export default function CorrectiveActionsScreen(): JSX.Element {
+export default function CorrectiveActionsScreen(): React.JSX.Element {
   const { data, isLoading, isError } = useCorrectiveActions();
 
   if (isLoading) {
@@ -62,7 +63,7 @@ export default function CorrectiveActionsScreen(): JSX.Element {
           data={list}
           keyExtractor={(item): string => item.id}
           contentContainerStyle={styles.list}
-          renderItem={({ item }): JSX.Element => {
+          renderItem={({ item }): React.JSX.Element => {
             const overdue =
               item.status !== 'closed' && isOverdue(new Date(item.targetDate), now);
             return (

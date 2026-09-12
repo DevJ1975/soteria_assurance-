@@ -12,6 +12,7 @@
  * The whole tree is wrapped in an {@link AuditErrorBoundary} so even a provider
  * failure shows the recovery UI rather than a white screen (RULE 8).
  */
+import type React from 'react';
 import { useMemo } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -26,7 +27,7 @@ import { AuthProvider } from '../lib/AuthProvider';
 import { SyncProvider } from '../lib/SyncProvider';
 import { AuditErrorBoundary } from '../components/common/AuditErrorBoundary';
 
-export default function RootLayout(): JSX.Element {
+export default function RootLayout(): React.JSX.Element {
   // One QueryClient for the app's lifetime; defaults tuned for offline-first
   // (don't aggressively refetch — local DB is the source of truth).
   const queryClient = useMemo(

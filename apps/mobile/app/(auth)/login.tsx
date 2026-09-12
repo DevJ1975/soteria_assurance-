@@ -6,6 +6,7 @@
  * — see lib/phoneAuth.ts); here we present the two-step UI and a clear note
  * about wiring the native verifier ref. Strings come from SoteriaStrings.
  */
+import type React from 'react';
 import { useState } from 'react';
 import { Image, KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
 import { Link } from 'expo-router';
@@ -21,7 +22,7 @@ import type { PhoneAuthFlow } from '../../lib/phoneAuth';
 
 type Mode = 'email' | 'phone';
 
-export default function LoginScreen(): JSX.Element {
+export default function LoginScreen(): React.JSX.Element {
   const [mode, setMode] = useState<Mode>('email');
 
   // Email/password

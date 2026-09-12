@@ -5,6 +5,7 @@
  * {@link AuditErrorBoundary} so a render error in any screen degrades to the
  * recovery UI rather than a white screen. Pass `scroll` for scrollable content.
  */
+import type React from 'react';
 import type { ReactNode } from 'react';
 import { ScrollView, StyleSheet, View, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -20,7 +21,7 @@ interface ScreenProps {
   contentStyle?: ViewStyle;
 }
 
-export function Screen({ name, children, scroll = false, contentStyle }: ScreenProps): JSX.Element {
+export function Screen({ name, children, scroll = false, contentStyle }: ScreenProps): React.JSX.Element {
   const insets = useSafeAreaInsets();
   const padded: ViewStyle = {
     paddingBottom: insets.bottom + spacing.md,

@@ -4,6 +4,7 @@
  * verification email. Tenant claims are provisioned server-side
  * (`setTenantClaims`) after sign-up; the AuthProvider refreshes them.
  */
+import type React from 'react';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
 import { Link, useRouter } from 'expo-router';
@@ -13,7 +14,7 @@ import { registerWithEmail } from '@soteria/firebase';
 import { Screen } from '../../components/common/Screen';
 import { colors, fontSize, fontWeight, spacing } from '../../theme';
 
-export default function RegisterScreen(): JSX.Element {
+export default function RegisterScreen(): React.JSX.Element {
   const router = useRouter();
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');

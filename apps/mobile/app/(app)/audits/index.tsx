@@ -2,6 +2,7 @@
  * Audit list (DESIGN_DOC §9.1). Reads from the local DB (offline-first) and
  * lets the auditor open an audit, which sets it active in the audit store.
  */
+import type React from 'react';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Text } from 'react-native-paper';
@@ -14,7 +15,7 @@ import { auditStatusColor, auditStatusLabel, auditTypeLabel } from '../../../lib
 import { useAuditStore } from '../../../stores/auditStore';
 import type { Audit } from '../../../db/models/Audit';
 
-export default function AuditListScreen(): JSX.Element {
+export default function AuditListScreen(): React.JSX.Element {
   const router = useRouter();
   const { data: audits, loading } = useAudits();
   const setActiveAudit = useAuditStore((s) => s.setActiveAudit);
@@ -41,7 +42,7 @@ export default function AuditListScreen(): JSX.Element {
           data={audits}
           keyExtractor={(item): string => item.id}
           contentContainerStyle={styles.list}
-          renderItem={({ item }): JSX.Element => (
+          renderItem={({ item }): React.JSX.Element => (
             <Pressable
               onPress={(): void => open(item)}
               style={({ pressed }: { pressed: boolean }) => [

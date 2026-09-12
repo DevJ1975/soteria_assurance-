@@ -3,6 +3,7 @@
  * activities, interviewees, and inspection areas. The plan is part of the
  * `Audit` document (`auditPlan`), read from the local DB.
  */
+import type React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { Text } from 'react-native-paper';
@@ -12,7 +13,7 @@ import { EmptyState, LoadingState, SectionHeading } from '../../../../components
 import { cardSurface, colors, fontSize, fontWeight, spacing } from '../../../../theme';
 import { useAudit } from '../../../../lib/useLocalData';
 
-export default function AuditPlanScreen(): JSX.Element {
+export default function AuditPlanScreen(): React.JSX.Element {
   const { auditId } = useLocalSearchParams<{ auditId: string }>();
   const { data: audit, loading } = useAudit(auditId);
 

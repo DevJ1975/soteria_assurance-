@@ -12,6 +12,7 @@
  * Colors come from `@soteria/ui` tokens (RULE 5): green→conforming,
  * amber→warning, red→majorNC, grey→textMuted.
  */
+import type React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import { SoteriaStrings } from '@soteria/core';
@@ -43,7 +44,7 @@ function labelFor(indicator: SyncIndicator, pending: number): string {
   }
 }
 
-export function SyncStatusDot({ onPress }: { onPress?: () => void }): JSX.Element {
+export function SyncStatusDot({ onPress }: { onPress?: () => void }): React.JSX.Element {
   const indicator = useAuditStore((s) => s.syncIndicator);
   const pending = useAuditStore((s) => s.pendingChanges);
 

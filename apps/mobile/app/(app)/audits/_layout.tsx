@@ -2,12 +2,13 @@
  * Audits stack navigator — wraps the audit list and all audit-detail
  * sub-routes (`[auditId]/…`). The §11 sync dot stays in the header.
  */
+import type React from 'react';
 import { Stack } from 'expo-router';
 import { SoteriaStrings } from '@soteria/core';
 import { colors, fontWeight } from '../../../theme';
 import { SyncStatusDot } from '../../../components/common/SyncStatusDot';
 
-export default function AuditsLayout(): JSX.Element {
+export default function AuditsLayout(): React.JSX.Element {
   return (
     <Stack
       screenOptions={{

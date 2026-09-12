@@ -7,11 +7,12 @@
  * is shown with the mandatory disclaimer (multi-agent-guide §8) and is treated
  * as an auditor-reviewed draft. Strings from SoteriaStrings (RULE 4).
  */
+import type React from 'react';
 import { useState } from 'react';
 import { Modal, ScrollView, StyleSheet, View } from 'react-native';
 import { Button, Divider, HelperText, IconButton, Text } from 'react-native-paper';
 import { AI_DISCLAIMER, SoteriaStrings } from '@soteria/core';
-import { getClauseByNumber } from '@soteria/core/iso45001';
+import { getClauseByNumber } from '@soteria/core';
 import { colors, fontSize, fontWeight, spacing } from '../../theme';
 import { useAuditStore } from '../../stores/auditStore';
 import { suggestQuestions } from '../../services/aiService';
@@ -23,7 +24,7 @@ interface Props {
   intervieweeRole: string;
 }
 
-export function AICopilotDrawer({ tenantId, industry, intervieweeRole }: Props): JSX.Element {
+export function AICopilotDrawer({ tenantId, industry, intervieweeRole }: Props): React.JSX.Element {
   const isOpen = useAuditStore((s) => s.isCopilotOpen);
   const close = useAuditStore((s) => s.closeCopilot);
   const clauseNumber = useAuditStore((s) => s.activeClauseNumber);

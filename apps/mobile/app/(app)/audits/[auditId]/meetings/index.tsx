@@ -8,6 +8,7 @@
  * until then the transcription is entered/pasted here. Full attendee/agenda/
  * signature management is a later phase; the screen is typed for it.
  */
+import type React from 'react';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
@@ -22,7 +23,7 @@ import { useAuthStore } from '../../../../../stores/authStore';
 
 type MeetingType = 'opening' | 'closing';
 
-export default function MeetingsScreen(): JSX.Element {
+export default function MeetingsScreen(): React.JSX.Element {
   const { auditId } = useLocalSearchParams<{ auditId: string }>();
   const auditorId = useAuthStore((s) => s.user?.uid ?? 'unknown');
   const tenantId = useAuthStore((s) => s.claims?.tenantId ?? '');

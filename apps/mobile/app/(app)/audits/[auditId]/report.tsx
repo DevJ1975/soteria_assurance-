@@ -6,6 +6,7 @@
  * generator. The PDF itself is produced server-side (`generateReport`); this
  * screen is the auditor's on-device preview before issuing.
  */
+import type React from 'react';
 import { useMemo, useState } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
@@ -27,7 +28,7 @@ import { useClauseAssessments, useFindings } from '../../../../lib/useLocalData'
 import { generateReportPdf } from '../../../../services/reportService';
 import { useAuthStore } from '../../../../stores/authStore';
 
-export default function ReportScreen(): JSX.Element {
+export default function ReportScreen(): React.JSX.Element {
   const { auditId } = useLocalSearchParams<{ auditId: string }>();
   const { data: findings, loading: findingsLoading } = useFindings(auditId);
   const { data: assessments, loading: clausesLoading } = useClauseAssessments(auditId);
@@ -123,7 +124,7 @@ function Stat({
   label: string;
   value: number;
   color: string;
-}): JSX.Element {
+}): React.JSX.Element {
   return (
     <View style={styles.statCard}>
       <Text style={[styles.statValue, { color }]}>{value}</Text>

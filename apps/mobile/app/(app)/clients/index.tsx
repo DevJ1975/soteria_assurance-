@@ -3,6 +3,7 @@
  * from Firestore via `@soteria/firebase` (RULE 2). A back-office reference list,
  * so it fetches on demand via React Query rather than the offline DB.
  */
+import type React from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import { SoteriaStrings } from '@soteria/core';
@@ -11,7 +12,7 @@ import { EmptyState, LoadingState } from '../../../components/common/StateViews'
 import { cardSurface, colors, fontSize, fontWeight, spacing } from '../../../theme';
 import { useClients } from '../../../lib/useTenantData';
 
-export default function ClientsScreen(): JSX.Element {
+export default function ClientsScreen(): React.JSX.Element {
   const { data: clients, isLoading, isError } = useClients();
 
   if (isLoading) {
@@ -41,7 +42,7 @@ export default function ClientsScreen(): JSX.Element {
           data={list}
           keyExtractor={(item): string => item.id}
           contentContainerStyle={styles.list}
-          renderItem={({ item }): JSX.Element => (
+          renderItem={({ item }): React.JSX.Element => (
             <View style={styles.card}>
               <Text style={styles.name}>{item.organizationName}</Text>
               <Text style={styles.meta}>

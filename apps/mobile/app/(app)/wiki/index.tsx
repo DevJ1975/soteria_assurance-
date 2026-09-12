@@ -1,23 +1,24 @@
 /**
  * Wiki (DESIGN_DOC §15) — Phase-1 offline ISO 45001 clause guide.
  *
- * The reference content is the bundled `@soteria/core/iso45001` dataset (RULE 4,
+ * The reference content is the bundled `@soteria/core` dataset (RULE 4,
  * never hardcoded clause text), so the guide is fully available offline in the
  * field. Each top-level clause group is searchable; tapping expands its
  * paraphrased requirement and audit focus. (Tenant-specific wiki articles from
  * Firestore are a later phase.)
  */
+import type React from 'react';
 import { useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { Searchbar, Text } from 'react-native-paper';
 import type { ISO45001Clause } from '@soteria/core';
 import { SoteriaStrings } from '@soteria/core';
-import { flattenClauses } from '@soteria/core/iso45001';
+import { flattenClauses } from '@soteria/core';
 import { Screen } from '../../../components/common/Screen';
 import { EmptyState } from '../../../components/common/StateViews';
 import { cardSurface, colors, fontSize, fontWeight, spacing } from '../../../theme';
 
-export default function WikiScreen(): JSX.Element {
+export default function WikiScreen(): React.JSX.Element {
   const [query, setQuery] = useState('');
   const [expanded, setExpanded] = useState<string | null>(null);
 
@@ -35,7 +36,7 @@ export default function WikiScreen(): JSX.Element {
     );
   }, [clauses, query]);
 
-  const renderClause = (clause: ISO45001Clause): JSX.Element => {
+  const renderClause = (clause: ISO45001Clause): React.JSX.Element => {
     const isOpen = expanded === clause.number;
     return (
       <Pressable
@@ -81,7 +82,7 @@ export default function WikiScreen(): JSX.Element {
         <FlatList
           data={filtered}
           keyExtractor={(item): string => item.number}
-          renderItem={({ item }): JSX.Element => renderClause(item)}
+          renderItem={({ item }): React.JSX.Element => renderClause(item)}
           contentContainerStyle={styles.list}
         />
       )}

@@ -5,6 +5,7 @@
  * stores it as evidence and later queues it for server-side transcription. All
  * labels come from SoteriaStrings (RULE 4); colors from tokens (RULE 5).
  */
+import type React from 'react';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Audio } from 'expo-av';
@@ -17,7 +18,7 @@ interface Props {
   onRecordingComplete: (uri: string, durationSeconds: number) => void;
 }
 
-export function MeetingRecorder({ onRecordingComplete }: Props): JSX.Element {
+export function MeetingRecorder({ onRecordingComplete }: Props): React.JSX.Element {
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const [error, setError] = useState<string | null>(null);

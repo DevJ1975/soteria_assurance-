@@ -3,6 +3,7 @@
  * trigger, and sign-out. Sign-out is delegated to the AuthProvider so all auth
  * and session state is cleared consistently.
  */
+import type React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Button, Divider, List, Text } from 'react-native-paper';
 import { SoteriaStrings } from '@soteria/core';
@@ -15,7 +16,7 @@ import { useAuthStore } from '../../../stores/authStore';
 import { useAuditStore } from '../../../stores/auditStore';
 import { scheduleSync } from '../../../services/syncManager';
 
-export default function SettingsScreen(): JSX.Element {
+export default function SettingsScreen(): React.JSX.Element {
   const { signOut } = useAuth();
   const user = useAuthStore((s) => s.user);
   const claims = useAuthStore((s) => s.claims);
@@ -28,7 +29,7 @@ export default function SettingsScreen(): JSX.Element {
         <List.Item
           title={user?.displayName ?? 'Auditor'}
           description={user?.email ?? '—'}
-          left={(props: { color: string; style: object }): JSX.Element => (
+          left={(props: { color: string; style: object }): React.JSX.Element => (
             <List.Icon {...props} icon="account-circle" />
           )}
         />
@@ -36,7 +37,7 @@ export default function SettingsScreen(): JSX.Element {
         <List.Item
           title="Role"
           description={claims?.role ?? 'Pending provisioning'}
-          left={(props: { color: string; style: object }): JSX.Element => (
+          left={(props: { color: string; style: object }): React.JSX.Element => (
             <List.Icon {...props} icon="shield-account" />
           )}
         />
@@ -44,7 +45,7 @@ export default function SettingsScreen(): JSX.Element {
         <List.Item
           title="Tenant"
           description={claims?.tenantId ?? '—'}
-          left={(props: { color: string; style: object }): JSX.Element => (
+          left={(props: { color: string; style: object }): React.JSX.Element => (
             <List.Icon {...props} icon="domain" />
           )}
         />

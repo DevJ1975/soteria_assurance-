@@ -7,6 +7,7 @@
  * the mandatory disclaimer (multi-agent-guide §8) before it is accepted into
  * the editable statement. Submitting writes locally first (RULE 9).
  */
+import type React from 'react';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { Button, Chip, HelperText, Text, TextInput } from 'react-native-paper';
@@ -54,7 +55,7 @@ export function FindingForm({
   organizationContext,
   onSubmit,
   submitting = false,
-}: Props): JSX.Element {
+}: Props): React.JSX.Element {
   const [type, setType] = useState<FindingType>('minor_nc');
   const [title, setTitle] = useState('');
   const [objectiveEvidence, setObjectiveEvidence] = useState('');

@@ -6,6 +6,7 @@
  * Evidence row to WatermelonDB FIRST (RULE 9), and queues the background upload.
  * The UI returns immediately — uploads never block the auditor.
  */
+import type React from 'react';
 import { useRef, useState } from 'react';
 import { Modal, StyleSheet, View } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -30,7 +31,7 @@ export function EvidenceCaptureButton({
   capturedByAuditorId,
   clauseNumbers,
   titlePrefix = 'Evidence',
-}: Props): JSX.Element {
+}: Props): React.JSX.Element {
   const [permission, requestPermission] = useCameraPermissions();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);

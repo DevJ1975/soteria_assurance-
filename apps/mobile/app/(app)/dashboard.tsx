@@ -5,6 +5,7 @@
  * counts and the aggregate findings, and links into the active audit. All copy
  * from SoteriaStrings (RULE 4); all color/spacing from tokens (RULE 5).
  */
+import type React from 'react';
 import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -19,7 +20,7 @@ import { useAuthStore } from '../../stores/authStore';
 
 const ACTIVE_STATUSES: AuditStatus[] = ['in_progress', 'findings_review', 'report_pending'];
 
-export default function DashboardScreen(): JSX.Element {
+export default function DashboardScreen(): React.JSX.Element {
   const router = useRouter();
   const { data: audits, loading } = useAudits();
   const displayName = useAuthStore((s) => s.user?.displayName ?? null);
@@ -85,7 +86,7 @@ function StatCard({
   label: string;
   value: number;
   accent: string;
-}): JSX.Element {
+}): React.JSX.Element {
   return (
     <View style={[styles.statCard, { borderLeftColor: accent }]}>
       <Text style={[styles.statValue, { color: accent }]}>{value}</Text>

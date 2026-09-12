@@ -4,6 +4,7 @@
  * Each option is colored from `@soteria/ui` (`getConformityColor`, RULE 5) and
  * labelled from `@soteria/core` (`CONFORMITY_STATUS_META`, RULE 4).
  */
+import type React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import { CONFORMITY_STATUS_META, type ConformityStatus } from '@soteria/core';
@@ -23,7 +24,7 @@ interface Props {
   onChange: (status: ConformityStatus) => void;
 }
 
-export function ConformityPicker({ value, onChange }: Props): JSX.Element {
+export function ConformityPicker({ value, onChange }: Props): React.JSX.Element {
   return (
     <View style={styles.row}>
       {ORDER.map((status) => {

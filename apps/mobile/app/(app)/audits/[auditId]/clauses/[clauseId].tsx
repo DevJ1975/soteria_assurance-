@@ -3,20 +3,21 @@
  *
  * Pulls the canonical clause record (requirement text, audit focus, typical
  * questions, common nonconformities, expected documents) from
- * `@soteria/core/iso45001` (RULE 4 — never hardcoded). The auditor picks a
+ * `@soteria/core` (RULE 4 — never hardcoded). The auditor picks a
  * conformity status, writes notes, and marks the clause complete; saving writes
  * to WatermelonDB FIRST (RULE 9) and schedules a background sync.
  *
  * The clause score is derived from the auditor's verdicts via the shared
  * `clauseScoreFromVerdicts` util.
  */
+import type React from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Button, Divider, Text, TextInput } from 'react-native-paper';
 import type { ConformityStatus } from '@soteria/core';
 import { SoteriaStrings, clauseScoreFromVerdicts } from '@soteria/core';
-import { getClauseByNumber } from '@soteria/core/iso45001';
+import { getClauseByNumber } from '@soteria/core';
 import { Screen } from '../../../../../components/common/Screen';
 import { EmptyState, LoadingState, SectionHeading } from '../../../../../components/common/StateViews';
 import { ConformityPicker } from '../../../../../components/audit/ConformityPicker';
@@ -43,7 +44,7 @@ function scoreForStatus(status: ConformityStatus): number {
   }
 }
 
-export default function ClauseAssessmentScreen(): JSX.Element {
+export default function ClauseAssessmentScreen(): React.JSX.Element {
   const router = useRouter();
   const { auditId, clauseId } = useLocalSearchParams<{ auditId: string; clauseId: string }>();
   const { data: assessment, loading } = useClauseAssessment(auditId, clauseId);
@@ -184,7 +185,7 @@ export default function ClauseAssessmentScreen(): JSX.Element {
   );
 }
 
-function Bullet({ text }: { text: string }): JSX.Element {
+function Bullet({ text }: { text: string }): React.JSX.Element {
   return (
     <View style={styles.bulletRow}>
       <Text style={styles.bulletDot}>•</Text>

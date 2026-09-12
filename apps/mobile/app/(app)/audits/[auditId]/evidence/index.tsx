@@ -4,6 +4,7 @@
  * URL, its upload state, and whether it is geotagged. Capture writes locally
  * first and queues a background upload (RULE 9).
  */
+import type React from 'react';
 import { FlatList, Image, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { Text } from 'react-native-paper';
@@ -32,7 +33,7 @@ const UPLOAD_COLOR: Record<UploadStatus, string> = {
   failed: colors.majorNC,
 };
 
-export default function EvidenceScreen(): JSX.Element {
+export default function EvidenceScreen(): React.JSX.Element {
   const { auditId } = useLocalSearchParams<{ auditId: string }>();
   const { data: evidence, loading } = useEvidence(auditId);
   const auditorId = useAuthStore((s) => s.user?.uid ?? 'unknown');
@@ -67,7 +68,7 @@ export default function EvidenceScreen(): JSX.Element {
           numColumns={2}
           columnWrapperStyle={styles.column}
           contentContainerStyle={styles.list}
-          renderItem={({ item }): JSX.Element => {
+          renderItem={({ item }): React.JSX.Element => {
             const uri = item.fileUrl !== '' ? item.fileUrl : item.localUri;
             return (
               <View style={styles.tile}>

@@ -3,11 +3,12 @@
  * list screen visually consistent and token-driven (RULE 5). All copy is passed
  * in by callers from `@soteria/core` SoteriaStrings (RULE 4).
  */
+import type React from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import { colors, fontSize, fontWeight, spacing } from '../../theme';
 
-export function LoadingState({ label }: { label: string }): JSX.Element {
+export function LoadingState({ label }: { label: string }): React.JSX.Element {
   return (
     <View style={styles.centered}>
       <ActivityIndicator color={colors.primary[500]} />
@@ -16,7 +17,7 @@ export function LoadingState({ label }: { label: string }): JSX.Element {
   );
 }
 
-export function EmptyState({ message }: { message: string }): JSX.Element {
+export function EmptyState({ message }: { message: string }): React.JSX.Element {
   return (
     <View style={styles.centered}>
       <Text style={styles.muted}>{message}</Text>
@@ -24,7 +25,7 @@ export function EmptyState({ message }: { message: string }): JSX.Element {
   );
 }
 
-export function SectionHeading({ title }: { title: string }): JSX.Element {
+export function SectionHeading({ title }: { title: string }): React.JSX.Element {
   return <Text style={styles.heading}>{title}</Text>;
 }
 

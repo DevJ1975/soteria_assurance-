@@ -3,9 +3,10 @@
  *
  * Shows the clause number (mono, like a code), title, the current conformity
  * status badge, and a completion check. Clause data comes from
- * `@soteria/core/iso45001` (never hardcoded — RULE 4); the assessment status is
+ * `@soteria/core` (never hardcoded — RULE 4); the assessment status is
  * the local WatermelonDB row (or `not_audited` when none exists yet).
  */
+import type React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Text } from 'react-native-paper';
@@ -20,7 +21,7 @@ interface Props {
   onPress: () => void;
 }
 
-export function ClauseCard({ clause, status, isComplete, onPress }: Props): JSX.Element {
+export function ClauseCard({ clause, status, isComplete, onPress }: Props): React.JSX.Element {
   return (
     <Pressable
       onPress={onPress}

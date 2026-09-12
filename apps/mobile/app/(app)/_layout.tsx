@@ -8,6 +8,7 @@
  * Tab/header colors come from Soteria tokens (RULE 5) and labels from
  * SoteriaStrings (RULE 4).
  */
+import type React from 'react';
 import { Tabs } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { SoteriaStrings } from '@soteria/core';
@@ -17,12 +18,12 @@ import { SyncStatusDot } from '../../components/common/SyncStatusDot';
 type IconName = keyof typeof MaterialCommunityIcons.glyphMap;
 
 function tabIcon(name: IconName) {
-  return ({ color, size }: { color: string; size: number }): JSX.Element => (
+  return ({ color, size }: { color: string; size: number }): React.JSX.Element => (
     <MaterialCommunityIcons name={name} color={color} size={size} />
   );
 }
 
-export default function AppLayout(): JSX.Element {
+export default function AppLayout(): React.JSX.Element {
   return (
     <Tabs
       screenOptions={{

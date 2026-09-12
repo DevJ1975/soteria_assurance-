@@ -6,6 +6,7 @@
  * Reads the audit from the local DB (offline-first). Sets the audit active in
  * the session store so the field flow + recovery (RULE 8) know what is open.
  */
+import type React from 'react';
 import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -29,7 +30,7 @@ interface ModuleTile {
   href: string;
 }
 
-export default function AuditOverviewScreen(): JSX.Element {
+export default function AuditOverviewScreen(): React.JSX.Element {
   const router = useRouter();
   const { auditId } = useLocalSearchParams<{ auditId: string }>();
   const { data: audit, loading } = useAudit(auditId);
@@ -135,7 +136,7 @@ function Summary({
   label: string;
   value: number;
   color: string;
-}): JSX.Element {
+}): React.JSX.Element {
   return (
     <View style={styles.summaryCell}>
       <Text style={[styles.summaryValue, { color }]}>{value}</Text>

@@ -1,22 +1,23 @@
 /**
  * Clause navigator (DESIGN_DOC §9.3) — the full ISO 45001 clause tree from
- * `@soteria/core/iso45001` (RULE 4, never hardcoded), each row joined with its
+ * `@soteria/core` (RULE 4, never hardcoded), each row joined with its
  * local assessment status (or `not_audited` when none exists). Tapping a clause
  * opens its assessment screen.
  */
+import type React from 'react';
 import { useMemo } from 'react';
 import { FlatList } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import type { ConformityStatus } from '@soteria/core';
 import { SoteriaStrings } from '@soteria/core';
-import { flattenClauses } from '@soteria/core/iso45001';
+import { flattenClauses } from '@soteria/core';
 import { Screen } from '../../../../../components/common/Screen';
 import { LoadingState } from '../../../../../components/common/StateViews';
 import { ClauseCard } from '../../../../../components/audit/ClauseCard';
 import { useClauseAssessments } from '../../../../../lib/useLocalData';
 import { useAuditStore } from '../../../../../stores/auditStore';
 
-export default function ClauseNavigatorScreen(): JSX.Element {
+export default function ClauseNavigatorScreen(): React.JSX.Element {
   const router = useRouter();
   const { auditId } = useLocalSearchParams<{ auditId: string }>();
   const { data: assessments, loading } = useClauseAssessments(auditId);
@@ -46,7 +47,7 @@ export default function ClauseNavigatorScreen(): JSX.Element {
       <FlatList
         data={clauses}
         keyExtractor={(item): string => item.number}
-        renderItem={({ item }): JSX.Element => {
+        renderItem={({ item }): React.JSX.Element => {
           const local = statusByClause.get(item.number);
           return (
             <ClauseCard

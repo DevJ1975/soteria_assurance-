@@ -6,12 +6,13 @@
  * sequenced from the current local count. Status changes go through the
  * repository too. All copy from SoteriaStrings; colors via the badge tokens.
  */
+import type React from 'react';
 import { useState } from 'react';
 import { FlatList, Modal, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { Button, IconButton, Text } from 'react-native-paper';
 import { SoteriaStrings } from '@soteria/core';
-import { getClauseByNumber } from '@soteria/core/iso45001';
+import { getClauseByNumber } from '@soteria/core';
 import { Screen } from '../../../../../components/common/Screen';
 import { EmptyState, LoadingState } from '../../../../../components/common/StateViews';
 import { FindingForm, type FindingFormValues } from '../../../../../components/findings/FindingForm';
@@ -22,7 +23,7 @@ import { createFinding } from '../../../../../services/auditRepository';
 import { useAuthStore } from '../../../../../stores/authStore';
 import { useAuditStore } from '../../../../../stores/auditStore';
 
-export default function FindingsScreen(): JSX.Element {
+export default function FindingsScreen(): React.JSX.Element {
   const { auditId } = useLocalSearchParams<{ auditId: string }>();
   const { data: audit } = useAudit(auditId);
   const { data: findings, loading } = useFindings(auditId);
@@ -89,7 +90,7 @@ export default function FindingsScreen(): JSX.Element {
           data={findings}
           keyExtractor={(item): string => item.id}
           contentContainerStyle={styles.list}
-          renderItem={({ item }): JSX.Element => (
+          renderItem={({ item }): React.JSX.Element => (
             <View style={styles.card}>
               <View style={styles.cardHeader}>
                 <Text style={styles.findingNumber}>{item.findingNumber}</Text>
