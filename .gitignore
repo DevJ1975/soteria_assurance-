@@ -24,19 +24,11 @@ coverage/
 
 # Logs
 *.log
-firebase-debug.log
 
 # Environment
 .env
 .env.*
 !.env.example
-
-# Firebase
-.firebase/
-
-# Firebase Data Connect — generated SDKs (produced by dataconnect:sdk:generate)
-packages/dataconnect-generated/
-dataconnect/.dataconnect/
 
 # TypeScript incremental
 *.tsbuildinfo

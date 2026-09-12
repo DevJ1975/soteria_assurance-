@@ -9,8 +9,8 @@
  *
  * `@soteria/core` is dependency-free and must NOT import `firebase` or
  * `firebase-admin`. This interface is declared structurally so that both the
- * Firebase **client** SDK `Timestamp` and the Firebase **admin** SDK
- * `Timestamp` are assignable to it (they both expose `seconds`,
+ * Postgres `timestamptz` values are converted into this shape, and the
+ * local SQLite store round-trips it unchanged (both expose `seconds`,
  * `nanoseconds`, `toDate()` and `toMillis()`).
  */
 export interface Timestamp {

@@ -8,7 +8,7 @@ import { cn } from '@/lib/cn';
 type SyncState = 'synced' | 'syncing' | 'offline';
 
 /**
- * Topbar sync/status pill. The web app reads live from Firestore, so "sync"
+ * Topbar sync/status pill. The web app reads live from Supabase, so "sync"
  * here reflects network reachability (the offline-first WatermelonDB queue is a
  * mobile concern, RULE 9). Mirrors the mobile status vocabulary via
  * SoteriaStrings so copy stays consistent (RULE 4).

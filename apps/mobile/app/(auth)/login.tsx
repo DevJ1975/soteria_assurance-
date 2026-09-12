@@ -1,10 +1,11 @@
 /**
  * Login screen — Email/Password and Phone sign-in.
  *
- * All auth calls go through `lib/auth` (RULE 3). Phone sign-in uses
- * the {@link PhoneAuthFlow} abstraction (RN needs `FirebaseRecaptchaVerifierModal`
- * — see lib/phoneAuth.ts); here we present the two-step UI and a clear note
- * about wiring the native verifier ref. Strings come from SoteriaStrings.
+ * All auth calls go through `lib/auth` (RULE 3). Phone sign-in is a two-step
+ * UI over the {@link PhoneAuthFlow} abstraction: Supabase sends and verifies
+ * the one-time code server-side, so unlike the Firebase flow there is no
+ * reCAPTCHA verifier and no native module to wire up. Strings come from
+ * SoteriaStrings.
  */
 import type React from 'react';
 import { useState } from 'react';
@@ -38,9 +39,6 @@ export default function LoginScreen(): React.JSX.Element {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // The native reCAPTCHA-backed flow is injected at runtime by the host once a
-  // <FirebaseRecaptchaVerifierModal> ref is available (see lib/phoneAuth.ts).
-  // It is null until then; the phone buttons stay disabled to signal that.
   // Held in state so the same flow object survives re-renders between
   // requesting the code and verifying it — it is what remembers the number.
   const [phoneFlow] = useState<PhoneAuthFlow>(() => createPhoneAuthFlow());
@@ -166,8 +164,7 @@ export default function LoginScreen(): React.JSX.Element {
                   Send code
                 </Button>
                 <HelperText type="info" visible>
-                  Phone sign-in uses an invisible reCAPTCHA modal
-                  (FirebaseRecaptchaVerifierModal) wired via lib/phoneAuth.ts.
+                  We will text you a one-time code.
                 </HelperText>
               </>
             ) : (

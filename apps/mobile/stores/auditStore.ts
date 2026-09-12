@@ -25,7 +25,7 @@ export interface AuditSessionState {
 
   // Sync indicator (§11) — derived from the sync manager + NetInfo.
   syncIndicator: SyncIndicator;
-  /** Count of local records not yet pushed to Firestore. */
+  /** Count of local records not yet pushed to Supabase. */
   pendingChanges: number;
   /** Epoch millis of the last successful full sync, or null if never. */
   lastSyncedAt: number | null;

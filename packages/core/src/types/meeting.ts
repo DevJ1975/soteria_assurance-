@@ -63,7 +63,7 @@ export interface Meeting {
   agendaItems: MeetingAgendaItem[];
 
   // Recording
-  /** Firebase Storage URL. */
+  /** Storage object path or signed URL. */
   recordingUrl?: string;
   /** Seconds. */
   recordingDuration?: number;

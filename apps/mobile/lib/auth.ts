@@ -60,5 +60,5 @@ export function createPhoneAuthFlow(): PhoneAuthFlow {
   };
 }
 
-/** Matches the Firebase-era name the login screen imports. */
+/** Alias kept so the login screen's import does not have to change. */
 export type ConfirmationResult = PhoneAuthFlow;

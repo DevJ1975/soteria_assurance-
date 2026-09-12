@@ -6,7 +6,7 @@
  *   2. PaperProvider        — RN-Paper theme derived from Soteria tokens.
  *   3. QueryClientProvider  — TanStack Query v5 for server-state (AI, pulls).
  *   4. DatabaseProvider     — WatermelonDB instance (offline source of truth).
- *   5. AuthProvider         — Firebase auth lifecycle + route-group redirects.
+ *   5. AuthProvider         — Supabase auth lifecycle + route-group redirects.
  *   6. SyncProvider         — connectivity-driven background sync (§11).
  *
  * The whole tree is wrapped in an {@link AuditErrorBoundary} so even a provider

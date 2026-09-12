@@ -28,7 +28,7 @@ export interface Evidence {
   description: string;
 
   // File Info
-  /** Firebase Storage URL. */
+  /** Storage object path or signed URL. */
   fileUrl: string;
   fileName: string;
   /** Bytes. */

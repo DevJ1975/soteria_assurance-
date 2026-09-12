@@ -1,8 +1,8 @@
 /**
  * Auth Zustand store.
  *
- * Holds the current Firebase user (id/email/displayName) plus the parsed
- * tenant-scoping {@link FirebaseCustomClaims}. The actual auth lifecycle is
+ * Holds the current signed-in user (id/email/displayName) plus the parsed
+ * tenant-scoping {@link TenantClaims}. The actual auth lifecycle is
  * driven by `lib/AuthProvider` (Supabase `onAuthStateChange` + the profile row)
  * inside the `AuthProvider`; this store is the single read surface the UI uses
  * to know "who am I, which tenant, what role".
@@ -14,9 +14,9 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { FirebaseCustomClaims, UserRole } from '@soteria/core';
+import type { TenantClaims, UserRole } from '@soteria/core';
 
-/** Minimal, serialisable view of the signed-in Firebase user. */
+/** Minimal, serialisable view of the signed-in user. */
 export interface AuthUser {
   uid: string;
   email: string | null;
@@ -28,11 +28,11 @@ export interface AuthState {
   /** `true` until the first `onAuthStateChanged` callback fires. */
   initializing: boolean;
   user: AuthUser | null;
-  claims: FirebaseCustomClaims | null;
+  claims: TenantClaims | null;
 
   setInitializing: (value: boolean) => void;
   setUser: (user: AuthUser | null) => void;
-  setClaims: (claims: FirebaseCustomClaims | null) => void;
+  setClaims: (claims: TenantClaims | null) => void;
   /** Clears all auth state (on sign-out). */
   reset: () => void;
 }

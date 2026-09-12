@@ -4,8 +4,8 @@
  * The reference content is the bundled `@soteria/core` dataset (RULE 4,
  * never hardcoded clause text), so the guide is fully available offline in the
  * field. Each top-level clause group is searchable; tapping expands its
- * paraphrased requirement and audit focus. (Tenant-specific wiki articles from
- * Firestore are a later phase.)
+ * paraphrased requirement and audit focus. (Tenant-specific wiki articles are
+ * a later phase.)
  */
 import type React from 'react';
 import { useMemo, useState } from 'react';

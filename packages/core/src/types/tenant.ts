@@ -8,7 +8,7 @@ export interface Tenant {
   id: string;
   name: string;
   type: 'certification_body' | 'consultancy' | 'enterprise';
-  /** Firebase Storage URL. */
+  /** Storage object path or signed URL. */
   logo?: string;
   subscriptionTier: 'starter' | 'professional' | 'enterprise';
   subscriptionStatus: 'active' | 'trialing' | 'past_due' | 'canceled';

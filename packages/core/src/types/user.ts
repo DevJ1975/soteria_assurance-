@@ -15,12 +15,18 @@ export type UserRole =
   | 'viewer';
 
 /**
- * Custom claims embedded in every Firebase Auth JWT for tenant isolation.
+ * The tenant scoping carried alongside a signed-in user.
  *
- * See DESIGN_DOC §7 (Firebase Custom Claims).
+ * Named for what it is rather than where it came from: under Firebase these
+ * were custom claims minted into the JWT, but Supabase mints no such claims —
+ * they are resolved from the user's `profiles` row, which is also what RLS
+ * reads. Keeping the shape means the screens did not have to change; keeping
+ * the old name would have implied a JWT field that no longer exists.
+ *
+ * See DESIGN_DOC §7.
  */
-export interface FirebaseCustomClaims {
-  /** Tenant document ID. */
+export interface TenantClaims {
+  /** Tenant id. */
   tenantId: string;
   tenantType: 'cb' | 'consultancy' | 'enterprise';
   role: UserRole;
@@ -40,7 +46,7 @@ export interface AuditorQualification {
   issuedDate: string;
   /** ISO date string. */
   expiryDate: string;
-  /** Firebase Storage URL. */
+  /** Storage object path or signed URL. */
   documentUrl?: string;
 }
 
