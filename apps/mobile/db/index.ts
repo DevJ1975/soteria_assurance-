@@ -26,7 +26,7 @@ const adapter = new SQLiteAdapter({
   onSetUpError: (error: Error): void => {
     // A schema/adapter setup failure is fatal for offline work — surface it so
     // the error boundary can offer recovery rather than silently corrupting.
-    // eslint-disable-next-line no-console -- intentional fatal-path diagnostic
+     
     console.error('[WatermelonDB] adapter setup failed', error);
   },
 });

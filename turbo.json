@@ -9,8 +9,7 @@
         "dist/**",
         "lib/**",
         ".next/**",
-        "!.next/cache/**",
-        "out/**"
+        "!.next/cache/**"
       ]
     },
     "test": {

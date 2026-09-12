@@ -58,7 +58,7 @@ export class AuditErrorBoundary extends Component<Props, State> {
     void AsyncStorage.setItem(CHECKPOINT_KEY, JSON.stringify(checkpoint)).catch(() => {
       /* swallow — recovery UI is already shown */
     });
-    // eslint-disable-next-line no-console -- intentional crash-path diagnostic
+     
     console.error(`[AuditErrorBoundary:${this.props.screenName}]`, error);
   }
 

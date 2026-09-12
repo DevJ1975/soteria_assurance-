@@ -7,7 +7,6 @@
  */
 import {
   admin,
-  anonClient,
   createActor,
   createTenant,
   destroyTenant,

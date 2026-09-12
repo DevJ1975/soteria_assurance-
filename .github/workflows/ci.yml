@@ -1,0 +1,96 @@
+name: CI
+
+# Every push and every pull request. The repository went months with an empty
+# workflows directory, so nothing ran typecheck, lint, build or tests on any
+# change — which is how a type error, a broken build and a dead deploy config
+# all reached the default branch at once.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  # A newer push supersedes an in-flight run on the same ref.
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Public client config. The web build fails fast without these, and CI must
+  # exercise the same guard a Vercel build does rather than skipping it.
+  NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+  TURBO_TELEMETRY_DISABLED: '1'
+
+jobs:
+  checks:
+    name: Typecheck, lint, build, unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      # The same command Vercel runs. If the lockfile drifts from the
+      # manifests this fails here rather than at deploy time, which is the
+      # failure that actually bit this project.
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm turbo run typecheck
+
+      - name: Lint
+        run: pnpm turbo run lint
+
+      - name: Unit tests
+        run: pnpm turbo run test
+
+      # Runs last because it is the slowest and the least likely to fail on
+      # its own once the three above pass.
+      - name: Build
+        run: pnpm turbo run build
+
+  e2e:
+    name: Integration tests (Supabase)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      # Applies every migration to a clean database, so a migration that only
+      # works incrementally against a developer's existing local state fails
+      # here. That has already happened once in this repository.
+      - name: Start Supabase
+        run: supabase start
+
+      - name: Run integration tests
+        run: |
+          export SUPABASE_ANON_KEY="$(supabase status -o env | grep '^ANON_KEY=' | cut -d= -f2- | tr -d '"')"
+          export SUPABASE_SERVICE_ROLE_KEY="$(supabase status -o env | grep '^SERVICE_ROLE_KEY=' | cut -d= -f2- | tr -d '"')"
+          pnpm --filter @soteria/e2e run test:e2e
+
+      - name: Supabase logs on failure
+        if: failure()
+        run: supabase status || true

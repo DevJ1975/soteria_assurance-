@@ -1,28 +1,37 @@
-import js from '@eslint/js';
-import tseslint from 'typescript-eslint';
+// @ts-check
+import rootConfig from '../../eslint.config.mjs';
 
 /**
- * Flat ESLint config for the Soteria Assurance mobile app.
- *
- * Mirrors the repo-root rules; the no-console rule allows `warn`/`error` only
- * (RULE: no stray `console.log` in non-debug paths).
+ * Mobile lints from its own directory (`eslint .`), so the root config's
+ * `apps/mobile/**` override never matches — flat-config globs resolve against
+ * the working directory, which here is apps/mobile itself. Extending the root
+ * config and re-declaring the overrides locally is what actually applies them.
  */
-export default tseslint.config(
+export default [
+  ...rootConfig,
   {
-    ignores: ['node_modules/**', '.expo/**', 'dist/**', 'babel.config.js', 'metro.config.js'],
+    // Metro resolves static assets through require(); React Native has no
+    // import form that yields an asset reference.
+    files: ['**/*.{ts,tsx}'],
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+    },
   },
-  js.configs.recommended,
-  ...tseslint.configs.recommended,
   {
+    // babel.config.js and metro.config.js are CommonJS run by Node, not part
+    // of the app bundle, so they legitimately use module/require/__dirname.
+    files: ['*.js', '*.cjs'],
     languageOptions: {
-      parserOptions: {
-        ecmaFeatures: { jsx: true },
+      sourceType: 'commonjs',
+      globals: {
+        module: 'writable',
+        require: 'readonly',
+        __dirname: 'readonly',
+        process: 'readonly',
       },
     },
     rules: {
-      'no-console': ['error', { allow: ['warn', 'error'] }],
-      '@typescript-eslint/no-explicit-any': 'error',
-      '@typescript-eslint/explicit-function-return-type': 'off',
+      '@typescript-eslint/no-require-imports': 'off',
     },
   },
-);
+];

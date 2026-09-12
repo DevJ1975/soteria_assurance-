@@ -19,7 +19,7 @@ describe('isFinding', () => {
   );
 
   it('rejects an object missing the type field', () => {
-    const { type: _omit, ...rest } = makeFinding();
+    const { type: _unusedType, ...rest } = makeFinding();
     expect(isFinding(rest)).toBe(false);
   });
 
@@ -62,7 +62,7 @@ describe('isClauseAssessment', () => {
   );
 
   it('rejects an object missing subClauseNotes', () => {
-    const { subClauseNotes: _omit, ...rest } = makeClauseAssessment();
+    const { subClauseNotes: _unusedNotes, ...rest } = makeClauseAssessment();
     expect(isClauseAssessment(rest)).toBe(false);
   });
 
