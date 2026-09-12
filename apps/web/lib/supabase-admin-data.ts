@@ -34,15 +34,44 @@ export async function listAdminTenants(): Promise<AdminTenant[]> {
   }));
 }
 
+export interface CreateCompanyResult {
+  invited: boolean;
+  emailSent: boolean;
+  warning?: string;
+}
+
+/**
+ * Creates a company and, when an administrator address is supplied, invites
+ * them and sends the onboarding email.
+ *
+ * Goes through the `create-company` Edge Function rather than inserting the
+ * tenant directly: sending auth mail needs the service-role key, which must
+ * never reach the browser, and creating the company and its first
+ * administrator in one server-side operation avoids a company nobody can sign
+ * into.
+ */
 export async function createCompany(input: {
   name: string;
   type: AdminTenant['type'];
-}): Promise<void> {
-  const { error } = await createClient().from('tenants').insert({
-    name: input.name.trim(),
-    type: input.type,
+  adminEmail?: string;
+  adminName?: string;
+}): Promise<CreateCompanyResult> {
+  const { data, error } = await createClient().functions.invoke('create-company', {
+    body: {
+      name: input.name.trim(),
+      type: input.type,
+      adminEmail: input.adminEmail?.trim().toLowerCase() || undefined,
+      adminName: input.adminName?.trim() || undefined,
+      redirectTo: `${window.location.origin}/login`,
+    },
   });
   if (error) throw error;
+  const result = data as CreateCompanyResult;
+  return {
+    invited: Boolean(result?.invited),
+    emailSent: Boolean(result?.emailSent),
+    warning: result?.warning,
+  };
 }
 
 export async function listAuditorInvitations(): Promise<AuditorInvitation[]> {
@@ -281,4 +310,52 @@ export async function listTenantUsage(): Promise<TenantUsage[]> {
     activeAuditors: Number(row.active_auditors ?? 0),
     activeAdmins: Number(row.active_admins ?? 0),
   }));
+}
+
+/* ------------------------------------------------------ credential actions */
+
+/**
+ * These all go through the `admin-user-action` Edge Function. Setting someone
+ * else's password and sending auth mail on their behalf both require the
+ * service-role key, and the function re-checks the caller's role — a valid JWT
+ * proves who you are, not what you may do.
+ */
+async function adminUserAction<T>(body: Record<string, unknown>): Promise<T> {
+  const { data, error } = await createClient().functions.invoke('admin-user-action', {
+    body: { ...body, redirectTo: `${window.location.origin}/login` },
+  });
+  if (error) throw error;
+  return data as T;
+}
+
+/** Sets a user's password directly, for someone locked out of their account. */
+export async function setUserPassword(userId: string, password: string): Promise<void> {
+  await adminUserAction({ action: 'set_password', userId, password });
+}
+
+/** Emails a recovery link so the user chooses their own password. */
+export async function sendPasswordReset(userId: string): Promise<void> {
+  await adminUserAction({ action: 'send_password_reset', userId });
+}
+
+/** Re-sends a pending invitation and extends its expiry. */
+export async function resendInvitation(invitationId: string): Promise<void> {
+  await adminUserAction({ action: 'resend_invitation', invitationId });
+}
+
+/* -------------------------------------------------------------- onboarding */
+
+/**
+ * Marks the signed-in user's first-run onboarding complete.
+ *
+ * Self-written rather than set by an admin: the flag means "this person has
+ * seen the welcome", which only they can attest to. `users_can_update_own_
+ * profile` permits it and pins role and tenant_id, so it cannot be abused.
+ */
+export async function markOnboarded(userId: string): Promise<void> {
+  const { error } = await createClient()
+    .from('profiles')
+    .update({ onboarded_at: new Date().toISOString() })
+    .eq('id', userId);
+  if (error) throw error;
 }

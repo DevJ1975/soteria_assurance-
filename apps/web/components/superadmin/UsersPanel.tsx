@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { AlertCircle, Search, UserCheck, UserX } from 'lucide-react';
+import { AlertCircle, KeyRound, Search, UserCheck, UserX } from 'lucide-react';
 import {
   Alert,
   AlertDescription,
@@ -23,6 +23,7 @@ import {
   TableRow,
 } from '@/components/shadcn';
 import { Pagination } from './Pagination';
+import { PasswordDialog } from './PasswordDialog';
 import { usePlatformUsers, useSetUserActive, useSetUserRole } from '@/lib/admin-hooks';
 import type { AdminTenant, PlatformUser } from '@/lib/supabase-admin-data';
 
@@ -44,6 +45,7 @@ export function UsersPanel({
   tenants: AdminTenant[];
   currentUserId: string | undefined;
 }) {
+  const [passwordFor, setPasswordFor] = useState<PlatformUser | null>(null);
   const [search, setSearch] = useState('');
   const [tenantId, setTenantId] = useState('');
   const [offset, setOffset] = useState(0);
@@ -190,30 +192,44 @@ export function UsersPanel({
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        {isSelf ? (
-                          <span className="text-xs text-text-faint">you</span>
-                        ) : (
+                        <span className="inline-flex items-center justify-end gap-1">
+                          {/* Password help is offered for any account,
+                              including your own — locking yourself out is
+                              exactly when you need it. */}
                           <Button
                             variant="ghost"
                             size="sm"
                             disabled={busy}
-                            onClick={() =>
-                              setActive.mutate({ userId: user.id, isActive: !user.isActive })
-                            }
+                            onClick={() => setPasswordFor(user)}
                           >
-                            {user.isActive ? (
-                              <>
-                                <UserX aria-hidden />
-                                Deactivate
-                              </>
-                            ) : (
-                              <>
-                                <UserCheck aria-hidden />
-                                Reactivate
-                              </>
-                            )}
+                            <KeyRound aria-hidden />
+                            Password
                           </Button>
-                        )}
+                          {isSelf ? (
+                            <span className="px-2 text-xs text-text-faint">you</span>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              disabled={busy}
+                              onClick={() =>
+                                setActive.mutate({ userId: user.id, isActive: !user.isActive })
+                              }
+                            >
+                              {user.isActive ? (
+                                <>
+                                  <UserX aria-hidden />
+                                  Deactivate
+                                </>
+                              ) : (
+                                <>
+                                  <UserCheck aria-hidden />
+                                  Reactivate
+                                </>
+                              )}
+                            </Button>
+                          )}
+                        </span>
                       </TableCell>
                     </TableRow>
                   );
@@ -229,6 +245,8 @@ export function UsersPanel({
           </>
         )}
       </CardContent>
+
+      <PasswordDialog user={passwordFor} onClose={() => setPasswordFor(null)} />
     </Card>
   );
 }

@@ -23,11 +23,15 @@ import {
   listAuditorInvitations,
   listPlatformUsers,
   listTenantUsage,
+  resendInvitation,
   revokeInvitation,
+  sendPasswordReset,
+  setUserPassword,
   setUserActive,
   setUserRole,
   type ActivityQuery,
   type AdminTenant,
+  type CreateCompanyResult,
   type AuditLogEntry,
   type AuditorInvitation,
   type Page,
@@ -50,14 +54,18 @@ export function useAuditorInvitations(): UseQueryResult<AuditorInvitation[]> {
 }
 
 export function useCreateCompany(): UseMutationResult<
-  void,
+  CreateCompanyResult,
   Error,
-  { name: string; type: AdminTenant['type'] }
+  { name: string; type: AdminTenant['type']; adminEmail?: string; adminName?: string }
 > {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: createCompany,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: TENANTS_KEY }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: TENANTS_KEY });
+      void queryClient.invalidateQueries({ queryKey: INVITATIONS_KEY });
+      void queryClient.invalidateQueries({ queryKey: USAGE_KEY });
+    },
   });
 }
 
@@ -160,4 +168,28 @@ export function useAuditLogs(query: ActivityQuery): UseQueryResult<Page<AuditLog
 
 export function useTenantUsage(): UseQueryResult<TenantUsage[]> {
   return useQuery({ queryKey: USAGE_KEY, queryFn: listTenantUsage });
+}
+
+/* ------------------------------------------------------ credential actions */
+
+export function useSetUserPassword(): UseMutationResult<
+  void,
+  Error,
+  { userId: string; password: string }
+> {
+  return useMutation({
+    mutationFn: ({ userId, password }) => setUserPassword(userId, password),
+  });
+}
+
+export function useSendPasswordReset(): UseMutationResult<void, Error, string> {
+  return useMutation({ mutationFn: sendPasswordReset });
+}
+
+export function useResendInvitation(): UseMutationResult<void, Error, string> {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: resendInvitation,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: INVITATIONS_KEY }),
+  });
 }

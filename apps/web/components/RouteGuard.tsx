@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { SoteriaStrings } from '@soteria/core';
 import { useAuth } from '@/lib/auth-context';
+import { WelcomeScreen } from '@/components/WelcomeScreen';
 
 /**
  * Redirects unauthenticated users to /login. While auth state is resolving it
@@ -46,6 +47,12 @@ export function RouteGuard({ children }: { children: ReactNode }) {
         </div>
       </div>
     );
+  }
+
+  // Shown once per person, after the profile resolves so the welcome can name
+  // the organization and role they were given.
+  if (claims.onboardedAt === null) {
+    return <WelcomeScreen />;
   }
 
   return <>{children}</>;

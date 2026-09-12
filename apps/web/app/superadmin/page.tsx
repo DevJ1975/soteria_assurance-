@@ -8,6 +8,7 @@ import {
   Clock,
   Loader2,
   MailPlus,
+  Send,
   ShieldCheck,
   Users,
 } from 'lucide-react';
@@ -48,6 +49,7 @@ import {
   useCreateCompany,
   useInviteAuditor,
   usePlatformUsers,
+  useResendInvitation,
   useRevokeInvitation,
   useTenantUsage,
   type InvitationState,
@@ -89,6 +91,7 @@ function SuperadminContent() {
   const createCompany = useCreateCompany();
   const inviteAuditor = useInviteAuditor();
   const revoke = useRevokeInvitation();
+  const resend = useResendInvitation();
   const usage = useTenantUsage();
   // One directory page, purely to resolve actor ids to names in the activity
   // log. Cached under its own key, so the Users tab's paging never disturbs it.
@@ -179,6 +182,7 @@ function SuperadminContent() {
               invitations={invitationList}
               tenants={tenantList}
               revoke={revoke}
+              resend={resend}
             />
             <p className="text-xs text-text-muted">
               The tenant and role on an invitation are applied by the{' '}
@@ -210,18 +214,36 @@ function CreateCompanyCard({
 }) {
   const [name, setName] = useState('');
   const [type, setType] = useState<AdminTenant['type']>('enterprise');
-  const [created, setCreated] = useState<string | null>(null);
+  const [adminName, setAdminName] = useState('');
+  const [adminEmail, setAdminEmail] = useState('');
+  const [result, setResult] = useState<string | null>(null);
+
+  function reset() {
+    setResult(null);
+  }
 
   function onSubmit(event: FormEvent) {
     event.preventDefault();
     const trimmed = name.trim();
     if (trimmed === '') return;
     mutation.mutate(
-      { name: trimmed, type },
       {
-        onSuccess: () => {
+        name: trimmed,
+        type,
+        adminEmail: adminEmail.trim() || undefined,
+        adminName: adminName.trim() || undefined,
+      },
+      {
+        onSuccess: (outcome) => {
           setName('');
-          setCreated(trimmed);
+          setAdminName('');
+          setAdminEmail('');
+          setResult(
+            outcome.warning ??
+              (outcome.emailSent
+                ? `“${trimmed}” created. Onboarding email sent to ${adminEmail.trim()}.`
+                : `“${trimmed}” created.`),
+          );
         },
       },
     );
@@ -234,7 +256,10 @@ function CreateCompanyCard({
           <Building2 className="size-4 text-primary-500" aria-hidden />
           Set up a company
         </CardTitle>
-        <CardDescription>Create the tenant an audit team will work under.</CardDescription>
+        <CardDescription>
+          Creating a company with an administrator invites them and sends the onboarding email in
+          one step.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={onSubmit} className="space-y-4">
@@ -245,7 +270,7 @@ function CreateCompanyCard({
               value={name}
               onChange={(event) => {
                 setName(event.target.value);
-                setCreated(null);
+                reset();
               }}
               placeholder="Acme Manufacturing Ltd"
               required
@@ -265,10 +290,45 @@ function CreateCompanyCard({
               ))}
             </Select>
           </div>
-          <MutationFeedback
-            error={mutation.error}
-            success={created === null ? null : `“${created}” created.`}
-          />
+
+          <div className="space-y-4 rounded-lg border border-border-soft bg-muted/50 p-4">
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-text-primary">First administrator</p>
+              <p className="text-xs text-muted-foreground">
+                Optional. They are invited as a tenant admin and their profile is created by the{' '}
+                <code className="font-mono">handle_invited_user</code> trigger on first sign-in.
+              </p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="admin-name">Name</Label>
+                <Input
+                  id="admin-name"
+                  value={adminName}
+                  onChange={(event) => {
+                    setAdminName(event.target.value);
+                    reset();
+                  }}
+                  placeholder="Dana Okoro"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="admin-email">Email</Label>
+                <Input
+                  id="admin-email"
+                  type="email"
+                  value={adminEmail}
+                  onChange={(event) => {
+                    setAdminEmail(event.target.value);
+                    reset();
+                  }}
+                  placeholder="admin@acme.com"
+                />
+              </div>
+            </div>
+          </div>
+
+          <MutationFeedback error={mutation.error} success={result} />
           <Button type="submit" disabled={mutation.isPending}>
             {mutation.isPending ? <Loader2 className="animate-spin" aria-hidden /> : null}
             Create company
@@ -461,15 +521,18 @@ function InvitationsCard({
   invitations,
   tenants,
   revoke,
+  resend,
 }: {
   query: ReturnType<typeof useAuditorInvitations>;
   invitations: AuditorInvitation[];
   tenants: AdminTenant[];
   revoke: ReturnType<typeof useRevokeInvitation>;
+  resend: ReturnType<typeof useResendInvitation>;
 }) {
   // Two-step confirm: revoking is reversible by re-inviting, so an inline
   // confirmation is proportionate to the risk and keeps the row in context.
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
+  const [resent, setResent] = useState<string | null>(null);
   const tenantNames = new Map(tenants.map((tenant) => [tenant.id, tenant.name]));
 
   return (
@@ -483,7 +546,7 @@ function InvitationsCard({
       </CardHeader>
       <CardContent className="px-0 pb-0">
         <div className="px-6">
-          <MutationFeedback error={revoke.error} success={null} />
+          <MutationFeedback error={revoke.error ?? resend.error} success={resent} />
         </div>
         {query.isPending ? (
           <TableSkeleton columns={5} />
@@ -526,6 +589,25 @@ function InvitationsCard({
                       ) : null}
                     </TableCell>
                     <TableCell className="text-right">
+                      {revocable && state === 'pending' ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={resend.isPending && resend.variables === invitation.id}
+                          onClick={() =>
+                            resend.mutate(invitation.id, {
+                              onSuccess: () => setResent(`Invitation re-sent to ${invitation.email}.`),
+                            })
+                          }
+                        >
+                          {resend.isPending && resend.variables === invitation.id ? (
+                            <Loader2 className="animate-spin" aria-hidden />
+                          ) : (
+                            <Send aria-hidden />
+                          )}
+                          Resend
+                        </Button>
+                      ) : null}
                       {revocable ? (
                         confirming ? (
                           <span className="inline-flex items-center gap-2">

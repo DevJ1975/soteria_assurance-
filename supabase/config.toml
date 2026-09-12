@@ -421,3 +421,11 @@ enabled = true
 [functions.invite-auditor]
 enabled = true
 verify_jwt = true
+
+[functions.create-company]
+enabled = true
+verify_jwt = true
+
+[functions.admin-user-action]
+enabled = true
+verify_jwt = true

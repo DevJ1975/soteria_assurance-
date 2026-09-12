@@ -29,3 +29,13 @@ export {
 } from './table';
 export { Select } from './select';
 export { Tabs, TabsList, TabsTrigger, TabsContent } from './tabs';
+export {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from './dialog';

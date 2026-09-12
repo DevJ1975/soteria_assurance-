@@ -10,6 +10,10 @@ export interface TenantClaims {
   role: 'super_admin' | 'tenant_admin' | 'lead_auditor' | 'auditor' | 'auditee' | 'viewer';
   permissions: string[];
   clientIds?: string[];
+  /** Company name, for the first-run welcome. */
+  tenantName: string;
+  /** When this user finished the welcome. Null = never, so show it. */
+  onboardedAt: string | null;
 }
 
 export interface PhoneConfirmation {
@@ -25,6 +29,8 @@ export interface AuthContextValue {
   startPhone: (phoneNumber: string, recaptchaContainerId: string) => Promise<PhoneConfirmation>;
   confirmPhone: (confirmation: PhoneConfirmation, code: string) => Promise<void>;
   signOut: () => Promise<void>;
+  /** Marks the first-run welcome complete and updates claims in place. */
+  completeOnboarding: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -59,7 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void (async () => {
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('tenant_id, role')
+        .select('tenant_id, role, onboarded_at')
         .eq('id', user.id)
         .maybeSingle();
       if (profileError) throw profileError;
@@ -72,7 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       const { data: tenant, error: tenantError } = await supabase
         .from('tenants')
-        .select('type')
+        .select('type, name')
         .eq('id', profile.tenant_id)
         .maybeSingle();
       if (tenantError) throw tenantError;
@@ -82,6 +88,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           tenantType: tenant?.type === 'certification_body' ? 'cb' : tenant?.type ?? 'enterprise',
           role: profile.role,
           permissions: [],
+          tenantName: tenant?.name ?? '',
+          onboardedAt: profile.onboarded_at,
         });
         setClaimsLoading(false);
       }
@@ -121,6 +129,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       confirmPhone: async ({ phone }, token) => {
         const { error } = await supabase.auth.verifyOtp({ phone, token, type: 'sms' });
         if (error) throw error;
+      },
+      completeOnboarding: async () => {
+        if (!user) return;
+        const stamp = new Date().toISOString();
+        const { error } = await supabase
+          .from('profiles')
+          .update({ onboarded_at: stamp })
+          .eq('id', user.id);
+        if (error) throw error;
+        // Updated locally too, so the welcome screen closes immediately rather
+        // than waiting for the claims effect to re-run.
+        setClaims((current) => (current ? { ...current, onboardedAt: stamp } : current));
       },
       signOut: async () => {
         const { error } = await supabase.auth.signOut();

@@ -38,6 +38,17 @@ function requireEnv(name: string): string {
   return value;
 }
 
+/**
+ * An anonymous client, for the few auth endpoints that only exist on the
+ * public API — notably `resetPasswordForEmail`, which actually delivers a
+ * recovery email, where the admin API's `generateLink` only mints one.
+ */
+export function anonClient(): SupabaseClient {
+  return createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_ANON_KEY'), {
+    auth: { persistSession: false },
+  });
+}
+
 /** A service-role client. Never hand this to a caller-supplied tenant id. */
 export function serviceClient(): SupabaseClient {
   return createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY'), {
