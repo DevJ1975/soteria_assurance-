@@ -75,6 +75,14 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
+      # The Edge Functions import @soteria/core as an ESM bundle, and
+      # dist-esm/ is a build artifact rather than something committed. Supabase
+      # bundles the functions during `supabase start`, so the build has to come
+      # first — without it the stack fails to start with "no such file or
+      # directory: packages/core/dist-esm/index.mjs".
+      - name: Build @soteria/core (the Edge Functions import its ESM bundle)
+        run: pnpm turbo run build --filter=@soteria/core
+
       - uses: supabase/setup-cli@v1
         with:
           version: latest
