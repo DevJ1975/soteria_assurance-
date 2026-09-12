@@ -63,19 +63,42 @@ export async function listAuditorInvitations(): Promise<AuditorInvitation[]> {
   }));
 }
 
+/**
+ * Invites an auditor into a tenant.
+ *
+ * This goes through the `invite-auditor` Edge Function rather than inserting
+ * the row directly, because an invitation is only useful once the email has
+ * actually been sent — and sending it needs the service-role key, which must
+ * never reach the browser. The function also rejects invitations to addresses
+ * that already have an account, which a client-side insert cannot check.
+ */
 export async function inviteAuditor(input: {
   tenantId: string;
   email: string;
   displayName: string;
   role: AuditorInvitation['role'];
-  invitedBy: string;
 }): Promise<void> {
-  const { error } = await createClient().from('auditor_invitations').insert({
-    tenant_id: input.tenantId,
-    email: input.email.trim().toLowerCase(),
-    display_name: input.displayName.trim(),
-    role: input.role,
-    invited_by: input.invitedBy,
+  const { error } = await createClient().functions.invoke('invite-auditor', {
+    body: {
+      tenantId: input.tenantId,
+      email: input.email.trim().toLowerCase(),
+      displayName: input.displayName.trim(),
+      role: input.role,
+      redirectTo: `${window.location.origin}/login`,
+    },
   });
+  if (error) throw error;
+}
+
+/**
+ * Revokes a pending invitation. The database stamps `revoked_at`, and
+ * `handle_invited_user` only ever matches rows still in `pending`, so an
+ * invitation email already sitting in an inbox stops working immediately.
+ */
+export async function revokeInvitation(invitationId: string): Promise<void> {
+  const { error } = await createClient()
+    .from('auditor_invitations')
+    .update({ status: 'revoked' })
+    .eq('id', invitationId);
   if (error) throw error;
 }

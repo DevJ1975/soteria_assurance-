@@ -1,5 +1,6 @@
 import { createClient } from '@/utils/supabase/client';
 import type { NCRDraftResponse } from '@soteria/core';
+import { createSignedDownloadUrl } from './supabase-storage';
 
 export interface DraftNCRRequest {
   tenantId: string;
@@ -50,8 +51,10 @@ export async function callGenerateReportPdf(_request: {
   throw new Error('Report generation Edge Function is not configured yet.');
 }
 
+/**
+ * Signs a report object for download. Report objects are private, so the link
+ * expires; see `supabase-storage.ts` for the other buckets.
+ */
 export async function getDownloadUrlForPath(path: string): Promise<string> {
-  const { data, error } = await createClient().storage.from('reports').createSignedUrl(path, 300);
-  if (error) throw error;
-  return data.signedUrl;
+  return createSignedDownloadUrl('reports', path);
 }

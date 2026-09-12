@@ -7,7 +7,13 @@
  * disabled until the tenant (and any required audit id) is known, so we never
  * issue an unscoped read.
  */
-import { useQuery, type UseQueryResult } from '@tanstack/react-query';
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type UseMutationResult,
+  type UseQueryResult,
+} from '@tanstack/react-query';
 import type {
   Audit,
   ClauseAssessment,
@@ -19,9 +25,12 @@ import { useAuth } from './auth-context';
 import {
   getAudit,
   listAudits,
+  listClauseAssessments,
   listClients,
   listCorrectiveActions,
   listFindings,
+  upsertClauseAssessment,
+  type ClauseAssessmentInput,
 } from './supabase-data';
 
 /** Current tenant id from auth claims, or `''` before claims have resolved. */
@@ -75,8 +84,31 @@ export function useClauseAssessments(auditId: string): UseQueryResult<ClauseAsse
   const tenantId = useTenantId();
   return useQuery({
     queryKey: ['clauseAssessments', tenantId, auditId],
-    queryFn: async () => [],
+    queryFn: () => listClauseAssessments(tenantId, auditId),
     enabled: tenantId !== '' && auditId !== '',
+  });
+}
+
+/**
+ * Saves one clause's assessment and refreshes the audit's clause list.
+ *
+ * The mutation deliberately invalidates rather than patching the cache by
+ * hand: the row that comes back carries database-side values (generated id,
+ * `updated_at`, the completion stamp) that a local merge would get wrong.
+ */
+export function useSaveClauseAssessment(
+  auditId: string,
+): UseMutationResult<ClauseAssessment, Error, ClauseAssessmentInput> {
+  const tenantId = useTenantId();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: ClauseAssessmentInput) =>
+      upsertClauseAssessment(tenantId, auditId, input),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['clauseAssessments', tenantId, auditId],
+      });
+    },
   });
 }
 

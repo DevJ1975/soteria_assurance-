@@ -1,10 +1,16 @@
 import type {
   Audit,
+  ClauseAssessment,
   Client,
+  ConformityStatus,
   CorrectiveAction,
+  Evidence,
+  EvidenceType,
   Finding,
+  SubClauseNote,
 } from '@soteria/core';
 import { createClient } from '@/utils/supabase/client';
+import type { StorageBucket, UploadedObject } from './supabase-storage';
 
 export function timestampFromDate(value: Date): {
   seconds: number;
@@ -121,6 +127,212 @@ export async function listCorrectiveActions(tenantId: string): Promise<Correctiv
     .eq('tenant_id', requireTenantId(tenantId));
   if (error) throw error;
   return (data ?? []).map((row) => mapRow<CorrectiveAction>(row));
+}
+
+/**
+ * Clause assessments carry nested sub-clause notes and two id arrays, none of
+ * which the generic row mapper handles, so they get a dedicated mapper. The
+ * timestamp columns become the structural {@link Timestamp} the domain types
+ * expect rather than raw ISO strings.
+ */
+function mapClauseAssessment(row: Record<string, unknown>): ClauseAssessment {
+  return {
+    id: row.id as string,
+    auditId: row.audit_id as string,
+    tenantId: row.tenant_id as string,
+    clauseNumber: row.clause_number as string,
+    clauseTitle: row.clause_title as string,
+    assignedAuditorId: (row.assigned_auditor_id as string | null) ?? '',
+    conformityStatus: row.conformity_status as ConformityStatus,
+    score: Number(row.score ?? 0),
+    auditorNotes: (row.auditor_notes as string | null) ?? '',
+    aiGeneratedSummary: (row.ai_generated_summary as string | null) ?? undefined,
+    evidenceIds: (row.evidence_ids as string[] | null) ?? [],
+    findingIds: (row.finding_ids as string[] | null) ?? [],
+    subClauseNotes: (row.sub_clause_notes as SubClauseNote[] | null) ?? [],
+    isComplete: Boolean(row.is_complete),
+    completedAt: row.completed_at
+      ? timestampFromDate(new Date(row.completed_at as string))
+      : undefined,
+    updatedAt: timestampFromDate(new Date((row.updated_at as string | null) ?? Date.now())),
+  };
+}
+
+export async function listClauseAssessments(
+  tenantId: string,
+  auditId: string,
+): Promise<ClauseAssessment[]> {
+  const { data, error } = await createClient()
+    .from('clause_assessments')
+    .select('*')
+    .eq('tenant_id', requireTenantId(tenantId))
+    .eq('audit_id', auditId)
+    .order('clause_number');
+  if (error) throw error;
+  return (data ?? []).map((row) => mapClauseAssessment(row));
+}
+
+/** The fields a clause assessment screen can actually change. */
+export interface ClauseAssessmentInput {
+  clauseNumber: string;
+  clauseTitle: string;
+  conformityStatus: ConformityStatus;
+  score: number;
+  auditorNotes: string;
+  subClauseNotes: SubClauseNote[];
+  evidenceIds?: string[];
+  findingIds?: string[];
+  assignedAuditorId?: string;
+  isComplete: boolean;
+}
+
+/**
+ * Writes one clause's assessment. `(audit_id, clause_number)` is unique, so an
+ * upsert on that pair lets the UI save a clause without first knowing whether
+ * the row exists — which matters because the clause list is generated from the
+ * static ISO tree, not from the database.
+ */
+export async function upsertClauseAssessment(
+  tenantId: string,
+  auditId: string,
+  input: ClauseAssessmentInput,
+): Promise<ClauseAssessment> {
+  const { data, error } = await createClient()
+    .from('clause_assessments')
+    .upsert(
+      {
+        tenant_id: requireTenantId(tenantId),
+        audit_id: auditId,
+        clause_number: input.clauseNumber,
+        clause_title: input.clauseTitle,
+        conformity_status: input.conformityStatus,
+        score: input.score,
+        auditor_notes: input.auditorNotes,
+        sub_clause_notes: input.subClauseNotes,
+        evidence_ids: input.evidenceIds ?? [],
+        finding_ids: input.findingIds ?? [],
+        assigned_auditor_id: input.assignedAuditorId || null,
+        is_complete: input.isComplete,
+        // The stamp tracks the most recent sign-off, so an edit to a
+        // completed clause re-dates it; clearing the flag clears the stamp.
+        completed_at: input.isComplete ? new Date().toISOString() : null,
+      },
+      { onConflict: 'audit_id,clause_number' },
+    )
+    .select('*')
+    .single();
+  if (error) throw error;
+  return mapClauseAssessment(data);
+}
+
+/**
+ * Evidence rows point at private storage objects. `storage_path` is the
+ * durable reference; `file_url` is only populated for rows carried over from
+ * the Firebase era, where the URL was the reference.
+ */
+function mapEvidence(row: Record<string, unknown>): Evidence {
+  return {
+    id: row.id as string,
+    auditId: row.audit_id as string,
+    tenantId: row.tenant_id as string,
+    type: row.type as EvidenceType,
+    title: row.title as string,
+    description: (row.description as string | null) ?? '',
+    fileUrl: (row.file_url as string | null) ?? '',
+    fileName: row.file_name as string,
+    fileSize: Number(row.file_size ?? 0),
+    mimeType: row.mime_type as string,
+    thumbnailUrl: (row.thumbnail_url as string | null) ?? undefined,
+    capturedAt: timestampFromDate(new Date((row.captured_at as string | null) ?? Date.now())),
+    capturedByAuditorId: (row.captured_by_auditor_id as string | null) ?? '',
+    clauseNumbers: (row.clause_numbers as string[] | null) ?? [],
+    findingIds: (row.finding_ids as string[] | null) ?? [],
+    aiAnalysis: (row.ai_analysis as string | null) ?? undefined,
+    aiHazardsDetected: (row.ai_hazards_detected as string[] | null) ?? [],
+    isVerified: Boolean(row.is_verified),
+    verifiedAt: row.verified_at
+      ? timestampFromDate(new Date(row.verified_at as string))
+      : undefined,
+    verifiedByAuditorId: (row.verified_by_auditor_id as string | null) ?? undefined,
+  };
+}
+
+/** The storage location of an evidence row, for building a signed URL. */
+export interface EvidenceObjectRef {
+  bucket: StorageBucket;
+  path: string;
+}
+
+export async function listEvidence(tenantId: string, auditId: string): Promise<Evidence[]> {
+  const { data, error } = await createClient()
+    .from('evidence')
+    .select('*')
+    .eq('tenant_id', requireTenantId(tenantId))
+    .eq('audit_id', auditId)
+    .order('captured_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map((row) => mapEvidence(row));
+}
+
+/** Reads back where an evidence row's file actually lives. */
+export async function getEvidenceObjectRef(
+  tenantId: string,
+  evidenceId: string,
+): Promise<EvidenceObjectRef | null> {
+  const { data, error } = await createClient()
+    .from('evidence')
+    .select('storage_bucket,storage_path')
+    .eq('tenant_id', requireTenantId(tenantId))
+    .eq('id', evidenceId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data?.storage_path) return null;
+  return { bucket: data.storage_bucket as StorageBucket, path: data.storage_path };
+}
+
+export interface EvidenceInput {
+  auditId: string;
+  type: EvidenceType;
+  title: string;
+  description?: string;
+  clauseNumbers?: string[];
+  findingIds?: string[];
+  capturedByAuditorId?: string;
+}
+
+/**
+ * Records an uploaded object as audit evidence.
+ *
+ * Called after {@link uploadTenantFile} rather than doing the upload itself,
+ * so a failed row insert leaves an orphaned object rather than an evidence
+ * record pointing at a file that was never stored.
+ */
+export async function insertEvidence(
+  tenantId: string,
+  uploaded: UploadedObject,
+  input: EvidenceInput,
+): Promise<Evidence> {
+  const { data, error } = await createClient()
+    .from('evidence')
+    .insert({
+      tenant_id: requireTenantId(tenantId),
+      audit_id: input.auditId,
+      type: input.type,
+      title: input.title,
+      description: input.description ?? '',
+      storage_bucket: uploaded.bucket,
+      storage_path: uploaded.path,
+      file_name: uploaded.fileName,
+      file_size: uploaded.fileSize,
+      mime_type: uploaded.mimeType,
+      clause_numbers: input.clauseNumbers ?? [],
+      finding_ids: input.findingIds ?? [],
+      captured_by_auditor_id: input.capturedByAuditorId || null,
+    })
+    .select('*')
+    .single();
+  if (error) throw error;
+  return mapEvidence(data);
 }
 
 export async function insertAudit(tenantId: string, audit: Audit): Promise<void> {
