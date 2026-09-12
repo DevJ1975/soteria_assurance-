@@ -49,6 +49,18 @@ Created:
   `supabase/migrations/20260912031500_initial_soteria_schema.sql`
 - Superadmin migration:
   `supabase/migrations/20260912040000_superadmin_management.sql`
+- Audit log, clause columns, storage buckets:
+  `supabase/migrations/20260912050000_audit_clause_storage.sql`
+- Invitation onboarding, evidence storage columns:
+  `supabase/migrations/20260912060000_invitation_onboarding.sql`
+- Audit-log tenant-resolution fix:
+  `supabase/migrations/20260912070000_fix_audit_log_tenant_resolution.sql`
+- Web Supabase storage wrapper:
+  `apps/web/lib/supabase-storage.ts`
+- Edge Functions:
+  `supabase/functions/invite-auditor/`, `supabase/functions/_shared/auth.ts`
+- Local superadmin bootstrap:
+  `scripts/create-local-superadmin.mjs`
 - Browser/server/middleware Supabase helpers under `apps/web/utils/supabase/`
 - Web Supabase data access:
   `apps/web/lib/supabase-data.ts`
@@ -121,52 +133,61 @@ supabase db reset --local --yes
 
 The build uses Next.js middleware and therefore requires a runtime-capable deployment. Do not restore `output: 'export'` unless middleware/session refresh is removed and the deployment architecture is intentionally static.
 
+### Backend hardening, clause persistence, storage and invitations
+
+Completed and verified against the local Docker stack:
+
+- **Local superadmin bootstrap.** `pnpm superadmin:local --email <addr>` creates
+  or repairs a `super_admin` login. It refuses any non-loopback `SUPABASE_URL`,
+  reads the service-role key from the environment, and prints a generated
+  password once unless `$SUPERADMIN_PASSWORD` is set. No password is written to
+  a migration, seed, or committed file.
+- **Append-only audit log.** `public.audit_logs` records actor, tenant, table,
+  record id, operation, and before/after JSON for tenants, profiles, clients,
+  audits, findings, corrective actions, clause assessments, and evidence.
+  Tenant members can read their own tenant's log; an `UPDATE` or `DELETE`
+  raises `audit_logs is append-only`.
+- **Clause assessments.** `listClauseAssessments` / `upsertClauseAssessment` in
+  `apps/web/lib/supabase-data.ts`, `useClauseAssessments` /
+  `useSaveClauseAssessment` in `apps/web/lib/hooks.ts`, and a clause editor at
+  `apps/web/components/ClauseAssessmentEditor.tsx` wired into
+  `/audits/clauses`. The score is derived from the sub-clause verdicts via
+  `clauseScoreFromVerdicts`, not typed in.
+- **Private storage.** Buckets `evidence`, `signatures`, `reports`, and
+  `corrective-action-evidence` are private, with policies requiring the tenant
+  id as the first path segment. `apps/web/lib/supabase-storage.ts` builds those
+  paths, uploads, and issues short-lived signed URLs.
+- **Invitation onboarding.** The `invite-auditor` Edge Function verifies the
+  caller, rejects addresses that already have an account, records the
+  invitation, and sends the Auth invitation email with the service-role key —
+  server-side only. Provisioning happens in the database when the invited
+  address is *confirmed*, not when the auth row is created, so an unaccepted
+  invitation grants nothing.
+
+Verified end-to-end locally: superadmin sign-in, company creation under RLS,
+invitation send, no profile before acceptance, profile provisioned on
+acceptance with the invited tenant and role, invitation stamped accepted,
+single-tenant visibility, cross-tenant write rejected (`42501`), clause
+assessment insert/upsert/read, audit-log capture, and storage uploads accepted
+only under the caller's own tenant prefix.
+
 ## Immediate blockers and incomplete work
 
 Prioritize these in order:
 
-1. **Recreate local admin access after database resets**
-   - The prior local Auth user/profile was removed by a database reset.
-   - Create a local superadmin using a safe local-only script or documented CLI procedure.
-   - Do not place the password in a migration or seed file.
-
-2. **Finish backend hardening**
-   - Add append-only audit/event logging for changes to audits, findings, corrective actions, clause assessments, evidence, profiles, tenants, and invitations.
-   - Include actor ID, tenant ID, event type, entity ID, before/after JSON where appropriate, and timestamp.
-   - Prevent ordinary clients from updating/deleting audit-log rows.
-
-3. **Implement clause-assessment reads and writes**
-   - `apps/web/lib/hooks.ts` currently has a placeholder `useClauseAssessments` query returning `[]`.
-   - Add typed Supabase helpers and wire the clause assessment UI to persistence.
-
-4. **Configure Supabase Storage**
-   - Add private buckets for:
-     - evidence
-     - signatures
-     - reports
-     - corrective-action evidence
-     - recordings, if required by the product
-   - Add object-path conventions containing tenant/audit/entity IDs.
-   - Add storage RLS policies enforcing tenant isolation.
-   - Use signed URLs; do not expose private objects publicly.
-
-5. **Complete auditor invitation onboarding**
-   - Implement a server-side Edge Function using the service-role key only on the server.
-   - Send an Auth invitation email.
-   - Link the accepting Auth user to the pending invitation.
-   - Create/update the `profiles` row with the selected tenant and role.
-   - Validate invitation expiry, revocation, duplicate email, and tenant isolation.
-
-6. **Implement missing Edge Functions**
-   - NCR drafting
-   - Suggested audit questions
+1. **Implement the remaining Edge Functions**
+   - NCR drafting (`draft-ncr` — called by `apps/web/lib/supabase-functions.ts`)
+   - Suggested audit questions (`suggest-questions` — same)
    - Evidence analysis
    - Meeting summarization
    - Report generation/PDF creation
    - Corrective-action reminders and escalation
-   - Invitation email/onboarding
 
-7. **Finish mobile migration**
+   `supabase/functions/_shared/auth.ts` already provides the authentication,
+   authorization and error-shaping these need. Follow `invite-auditor`: verify
+   the caller, derive the tenant from their profile, never from the body.
+
+2. **Finish mobile migration**
    - Mobile still references Firebase in:
      - `apps/mobile/services/aiService.ts`
      - `apps/mobile/services/reportService.ts`
@@ -179,13 +200,13 @@ Prioritize these in order:
    - Replace Firebase Auth, Storage, callable Functions, and data synchronization with Supabase equivalents.
    - Preserve offline-first behavior and tenant scoping.
 
-8. **Complete corrective-action controls**
+3. **Complete corrective-action controls**
    - Add due-date reminders.
    - Add overdue escalation.
    - Add effectiveness-review workflow.
    - Record review decisions and evidence.
 
-9. **Add authenticated end-to-end tests**
+4. **Add authenticated end-to-end tests**
    Test at minimum:
 
    - Standard login

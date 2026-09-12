@@ -20,6 +20,7 @@
     "build:web": "turbo run build --filter=@soteria/web",
     "build:mobile": "turbo run build --filter=@soteria/mobile",
     "seed:demo": "node scripts/seed-demo.mjs",
+    "superadmin:local": "node scripts/create-local-superadmin.mjs",
     "deploy": "pnpm build:web",
     "deploy:web": "pnpm build:web"
   },
