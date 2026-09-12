@@ -389,3 +389,29 @@ export async function insertFinding(tenantId: string, finding: Finding): Promise
   });
   if (error) throw error;
 }
+
+/* ------------------------------------------------- effectiveness review */
+
+/**
+ * Records an auditor's effectiveness review of a corrective action.
+ *
+ * Goes through the `record_effectiveness_review` database function rather than
+ * updating columns directly, because closure is a guarded transition: only a
+ * submitted action can be reviewed, accepting it closes the finding behind it,
+ * and rejecting reopens the action and clears its escalation clock. Doing that
+ * from the client would mean four writes that can half-succeed.
+ */
+export async function recordEffectivenessReview(input: {
+  correctiveActionId: string;
+  effective: boolean;
+  result: string;
+  notes?: string;
+}): Promise<void> {
+  const { error } = await createClient().rpc('record_effectiveness_review', {
+    p_corrective_action_id: input.correctiveActionId,
+    p_effective: input.effective,
+    p_result: input.result,
+    p_notes: input.notes ?? null,
+  });
+  if (error) throw error;
+}

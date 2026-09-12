@@ -445,3 +445,9 @@ verify_jwt = true
 [functions.summarize-meeting]
 enabled = true
 verify_jwt = true
+
+# Scheduled, so there is no user JWT to verify — the function checks a shared
+# CRON_SECRET header itself.
+[functions.corrective-action-reminders]
+enabled = true
+verify_jwt = false

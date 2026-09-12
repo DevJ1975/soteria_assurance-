@@ -29,6 +29,7 @@ import {
   listClients,
   listCorrectiveActions,
   listFindings,
+  recordEffectivenessReview,
   upsertClauseAssessment,
   type ClauseAssessmentInput,
 } from './supabase-data';
@@ -119,5 +120,28 @@ export function useCorrectiveActions(): UseQueryResult<CorrectiveAction[]> {
     queryKey: ['correctiveActions', tenantId],
     queryFn: () => listCorrectiveActions(tenantId),
     enabled: tenantId !== '',
+  });
+}
+
+/**
+ * Reviews a corrective action's effectiveness.
+ *
+ * Invalidates findings as well as corrective actions: accepting a review
+ * closes the finding the action was raised against, so a list showing only
+ * corrective actions would leave a stale "open" finding on screen.
+ */
+export function useRecordEffectivenessReview(): UseMutationResult<
+  void,
+  Error,
+  { correctiveActionId: string; effective: boolean; result: string; notes?: string }
+> {
+  const queryClient = useQueryClient();
+  const tenantId = useTenantId();
+  return useMutation({
+    mutationFn: recordEffectivenessReview,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['corrective-actions', tenantId] });
+      void queryClient.invalidateQueries({ queryKey: ['findings'] });
+    },
   });
 }

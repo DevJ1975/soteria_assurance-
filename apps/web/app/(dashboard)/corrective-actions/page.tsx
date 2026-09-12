@@ -5,6 +5,7 @@ import { Card, CardBody } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { LoadingState, EmptyState, ErrorState } from '@/components/ui/States';
 import { useCorrectiveActions } from '@/lib/hooks';
+import { EffectivenessReview } from '@/components/EffectivenessReview';
 
 export default function CorrectiveActionsPage() {
   const { data, isLoading, isError } = useCorrectiveActions();
@@ -44,6 +45,7 @@ export default function CorrectiveActionsPage() {
                     {SoteriaStrings.correctiveActions.targetDateLabel}: {ca.targetDate} ·{' '}
                     {ca.responsiblePersonName}
                   </p>
+                  <EffectivenessReview correctiveAction={ca} />
                 </CardBody>
               </Card>
             );
