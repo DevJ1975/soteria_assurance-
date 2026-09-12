@@ -1,0 +1,2 @@
+-- Local development data is intentionally empty until an authenticated tenant
+-- exists. Add deterministic seed rows here once the Supabase Auth flow is wired.

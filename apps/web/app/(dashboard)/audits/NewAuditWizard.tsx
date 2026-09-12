@@ -1,16 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { Timestamp } from 'firebase/firestore';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { X } from 'lucide-react';
 import { SoteriaStrings, generateAuditNumber } from '@soteria/core';
 import type { Audit, AuditType } from '@soteria/core';
-import { auditsCol, setDocById } from '@soteria/firebase';
 import { useTenantId, useClients } from '@/lib/hooks';
 import { useAuth } from '@/lib/auth-context';
+import { insertAudit, timestampNow } from '@/lib/supabase-data';
 import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Input, Select, Textarea } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
@@ -81,9 +80,8 @@ export function NewAuditWizard({ open, onClose, onCreated }: NewAuditWizardProps
       return;
     }
     try {
-      const col = auditsCol(tenantId);
       const id = crypto.randomUUID();
-      const now = Timestamp.now();
+      const now = timestampNow();
       const year = new Date().getFullYear();
       // Sequence is approximated client-side; the backend reconciles canonical
       // numbering. Uses the core generator (RULE 4 — no ad-hoc formatting).
@@ -99,7 +97,7 @@ export function NewAuditWizard({ open, onClose, onCreated }: NewAuditWizardProps
         standard: 'ISO 45001:2018',
         scope: values.scope,
         status: 'planned',
-        leadAuditorId: user?.uid ?? '',
+        leadAuditorId: user?.id ?? '',
         auditTeam: [],
         managementRepresentativeName: values.managementRepresentativeName,
         plannedStartDate: values.plannedStartDate,
@@ -127,7 +125,7 @@ export function NewAuditWizard({ open, onClose, onCreated }: NewAuditWizardProps
         updatedAt: now,
       };
 
-      await setDocById(col, audit);
+      await insertAudit(tenantId, audit);
       reset();
       setStep(1);
       onCreated();

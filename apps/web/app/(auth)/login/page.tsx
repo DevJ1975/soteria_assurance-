@@ -112,6 +112,9 @@ export default function LoginPage() {
             {SoteriaStrings.common.next}
           </Link>
         </p>
+        <Link href="/superadmin/login" className="text-center text-xs text-text-muted hover:text-primary-500">
+          Superadmin console
+        </Link>
       </CardBody>
     </Card>
   );

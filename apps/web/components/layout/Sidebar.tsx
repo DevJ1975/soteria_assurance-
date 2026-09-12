@@ -17,6 +17,7 @@ import {
 import { SoteriaStrings } from '@soteria/core';
 import { Logo } from '@/components/brand/Logo';
 import { cn } from '@/lib/cn';
+import { useAuth } from '@/lib/auth-context';
 
 interface NavItem {
   href: string;
@@ -51,6 +52,7 @@ const NAV_ITEMS: NavItem[] = [
  */
 export function Sidebar() {
   const pathname = usePathname();
+  const { claims } = useAuth();
 
   return (
     <aside className="hidden w-64 shrink-0 flex-col bg-sidebar md:flex">
@@ -112,6 +114,20 @@ export function Sidebar() {
         />
         <span className="text-xs font-medium text-[#9DB2CE]">ISO 45001:2018</span>
       </div>
+      {claims?.role === 'super_admin' ? (
+        <Link
+          href="/superadmin"
+          className={cn(
+            'mx-sm mb-sm flex items-center gap-sm rounded-md px-md py-2.5 text-sm font-medium',
+            pathname.startsWith('/superadmin')
+              ? 'bg-white/10 text-white'
+              : 'text-[#A9B8CE] hover:bg-white/5 hover:text-white',
+          )}
+        >
+          <ShieldCheck className="h-[18px] w-[18px] text-gold-light" aria-hidden />
+          Superadmin
+        </Link>
+      ) : null}
     </aside>
   );
 }

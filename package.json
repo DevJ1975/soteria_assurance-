@@ -16,17 +16,12 @@
     "format": "prettier --write .",
     "dev:web": "turbo run dev --filter=@soteria/web",
     "dev:mobile": "turbo run dev --filter=@soteria/mobile",
-    "dev:functions": "turbo run dev --filter=soteria-functions",
     "test:core": "turbo run test --filter=@soteria/core",
-    "test:functions": "turbo run test --filter=soteria-functions",
     "build:web": "turbo run build --filter=@soteria/web",
     "build:mobile": "turbo run build --filter=@soteria/mobile",
     "seed:demo": "node scripts/seed-demo.mjs",
-    "deploy": "scripts/deploy.sh",
-    "deploy:functions": "scripts/deploy.sh --only functions",
-    "deploy:rules": "scripts/deploy.sh --only rules",
-    "deploy:web": "scripts/deploy.sh --only hosting",
-    "emulators": "firebase emulators:start"
+    "deploy": "pnpm build:web",
+    "deploy:web": "pnpm build:web"
   },
   "devDependencies": {
     "@eslint/js": "^9.13.0",

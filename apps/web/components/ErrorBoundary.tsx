@@ -15,7 +15,7 @@ interface ErrorBoundaryState {
   message: string;
   /**
    * `true` when the caught error is a missing-config error (e.g. the public
-   * Firebase env vars were not supplied to this build). These are not
+   * Supabase env vars were not supplied to this build). These are not
    * user-recoverable — a Retry would just throw the same error again — so the
    * fallback drops the Retry action and explains the fix to whoever deployed
    * the app, rather than white-screening with an opaque client exception.
@@ -23,15 +23,15 @@ interface ErrorBoundaryState {
   isConfigError: boolean;
 }
 
-/** Name set by `FirebaseConfigError` in `@soteria/firebase`. */
-const CONFIG_ERROR_NAME = 'FirebaseConfigError';
+/** Name used for missing public configuration errors. */
+const CONFIG_ERROR_NAME = 'SupabaseConfigError';
 
 /**
  * Class-based error boundary (RULE 8 — every major screen is wrapped so an
  * audit in progress never white-screens). On error it renders a recoverable
  * fallback with a Retry action that resets the boundary.
  *
- * A missing-config error (thrown when the public Firebase env vars are absent
+ * A missing-config error (thrown when the public Supabase env vars are absent
  * from the build) is treated specially: it is not user-recoverable, so the
  * fallback shows a deployment-oriented message and omits Retry.
  */

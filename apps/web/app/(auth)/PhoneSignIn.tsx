@@ -1,7 +1,7 @@
 'use client';
 
-import { useId, useState } from 'react';
-import type { ConfirmationResult } from '@soteria/firebase';
+import { useState } from 'react';
+import type { PhoneConfirmation } from '@/lib/auth-context';
 import { SoteriaStrings } from '@soteria/core';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/Button';
@@ -12,17 +12,14 @@ import { Input } from '@/components/ui/Input';
  *
  * The reCAPTCHA verifier is created against a stable per-instance div id, then
  * `startPhoneSignIn` sends the SMS and `confirmPhoneCode` verifies it — all via
- * the `@soteria/firebase` auth helpers (RULE 3). On success, onAuthStateChanged
+ * the Supabase Auth helpers (RULE 3). On success, the AuthProvider
  * (in AuthProvider) drives the redirect.
  */
 export function PhoneSignIn({ onAuthenticated }: { onAuthenticated: () => void }) {
   const { startPhone, confirmPhone } = useAuth();
-  // Unique, deterministic container id for the invisible reCAPTCHA.
-  const recaptchaId = `recaptcha-${useId().replace(/:/g, '')}`;
-
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
-  const [confirmation, setConfirmation] = useState<ConfirmationResult | null>(null);
+  const [confirmation, setConfirmation] = useState<PhoneConfirmation | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,7 +27,7 @@ export function PhoneSignIn({ onAuthenticated }: { onAuthenticated: () => void }
     setError(null);
     setLoading(true);
     try {
-      const result = await startPhone(phone.trim(), recaptchaId);
+      const result = await startPhone(phone.trim(), '');
       setConfirmation(result);
     } catch {
       setError(SoteriaStrings.errors.generic);
@@ -91,8 +88,6 @@ export function PhoneSignIn({ onAuthenticated }: { onAuthenticated: () => void }
 
       {error ? <p className="text-sm text-major-nc">{error}</p> : null}
 
-      {/* Invisible reCAPTCHA mounts here (required by Firebase phone auth). */}
-      <div id={recaptchaId} />
     </div>
   );
 }

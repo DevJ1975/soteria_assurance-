@@ -23,8 +23,6 @@
       "@soteria/core/*": ["../../packages/core/src/*"],
       "@soteria/ui": ["../../packages/ui/src/index.ts"],
       "@soteria/ui/*": ["../../packages/ui/src/*"],
-      "@soteria/firebase": ["../../packages/firebase/src/index.ts"],
-      "@soteria/firebase/*": ["../../packages/firebase/src/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

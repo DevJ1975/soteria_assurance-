@@ -22,7 +22,7 @@ export default function SettingsPage() {
           <CardTitle>Account</CardTitle>
         </CardHeader>
         <CardBody className="flex flex-col gap-sm text-sm">
-          <Row label="Name" value={user?.displayName ?? '—'} />
+          <Row label="Name" value={user?.user_metadata.display_name ?? '—'} />
           <Row label={SoteriaStrings.auth.emailLabel} value={user?.email ?? '—'} />
           <Row label="Tenant" value={claims?.tenantId ?? '—'} />
           <Row label="Role" value={claims ? claims.role.replace('_', ' ') : '—'} />

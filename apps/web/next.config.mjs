@@ -1,33 +1,29 @@
 // @ts-check
 
 /**
- * Build-time guard for the public Firebase config.
+ * Build-time guard for the public Supabase config.
  *
- * A static-export build SUCCEEDS without the `NEXT_PUBLIC_FIREBASE_*` values (they
+ * A static-export build SUCCEEDS without the `NEXT_PUBLIC_SUPABASE_*` values (they
  * inline as `undefined` and the runtime `ErrorBoundary` shows a readable
  * "not configured" message). That is correct for local dev, CI typecheck builds,
- * and Firebase-Hosting CI (which validates the vars separately). But a real
+ * and CI (which validates the vars separately). But a real
  * Vercel deploy that forgets these would only fail at *runtime*, in the browser.
  *
  * So: on a Vercel production/preview deploy we fail the build fast with the exact
  * missing keys; everywhere else we warn and continue (preserving the offline /
  * config-less build path). Set `SOTERIA_SKIP_ENV_CHECK=1` to bypass entirely.
  */
-const REQUIRED_FIREBASE_ENV = [
-  'NEXT_PUBLIC_FIREBASE_API_KEY',
-  'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN',
-  'NEXT_PUBLIC_FIREBASE_PROJECT_ID',
-  'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET',
-  'NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID',
-  'NEXT_PUBLIC_FIREBASE_APP_ID',
+const REQUIRED_SUPABASE_ENV = [
+  'NEXT_PUBLIC_SUPABASE_URL',
+  'NEXT_PUBLIC_SUPABASE_ANON_KEY',
 ];
 
-function assertFirebaseEnv() {
+function assertSupabaseEnv() {
   if (process.env.SOTERIA_SKIP_ENV_CHECK === '1') {
     return;
   }
 
-  const missing = REQUIRED_FIREBASE_ENV.filter((key) => {
+  const missing = REQUIRED_SUPABASE_ENV.filter((key) => {
     const value = process.env[key];
     return value === undefined || value.trim() === '';
   });
@@ -41,9 +37,8 @@ function assertFirebaseEnv() {
     (process.env.VERCEL_ENV === 'production' || process.env.VERCEL_ENV === 'preview');
 
   const detail =
-    `Missing required public Firebase config: ${missing.join(', ')}. ` +
-    'Set these in the Vercel project (Settings → Environment Variables) or in ' +
-    'apps/web/.env.local — they are public client keys (see docs/DEPLOYMENT.md).';
+    `Missing required public Supabase config: ${missing.join(', ')}. ` +
+    'Set these in the deployment environment or in apps/web/.env.local.';
 
   if (isVercelDeploy) {
     throw new Error(`[Soteria] ${detail}`);
@@ -52,21 +47,17 @@ function assertFirebaseEnv() {
   console.warn(`\n[Soteria] WARNING: ${detail}\n`);
 }
 
-assertFirebaseEnv();
+assertSupabaseEnv();
 
 /**
  * Next.js config for the Soteria Assurance web app.
  *
- * MUST be deployable to Firebase Hosting as a fully static export:
- *   - `output: 'export'` emits a static `out/` directory (firebase.json Hosting
- *     points at apps/web/out).
- *   - `images.unoptimized` is required because the Next Image Optimization
- *     server is unavailable in a static export.
+ * The app uses Supabase session-refresh middleware, so it must run on a
+ * runtime-capable host rather than a static-only export.
  *   - `transpilePackages` lets Next compile the workspace TS source of the
  *     shared Soteria packages directly (they ship `dist`, but we also support
  *     transpiling from source for local dev convenience).
- *   - `trailingSlash` makes every route emit `route/index.html`, which Firebase
- *     Hosting serves cleanly.
+ *   - `trailingSlash` makes every route emit `route/index.html`.
  *
  * Because static export cannot resolve unknown dynamic route params at build
  * time, NO `[id]` folder segments are used: every route is statically known and
@@ -75,9 +66,8 @@ assertFirebaseEnv();
  * @type {import('next').NextConfig}
  */
 const nextConfig = {
-  output: 'export',
   images: { unoptimized: true },
-  transpilePackages: ['@soteria/core', '@soteria/ui', '@soteria/firebase'],
+  transpilePackages: ['@soteria/core', '@soteria/ui'],
   trailingSlash: true,
   reactStrictMode: true,
 };

@@ -38,13 +38,13 @@ export default function RegisterPage() {
     formState: { errors, isSubmitting },
   } = useForm<RegisterForm>({ resolver: zodResolver(registerSchema) });
 
-  const goDashboard = () => router.replace('/dashboard');
+  const [registered, setRegistered] = useState(false);
 
   async function onSubmit(values: RegisterForm) {
     setAuthError(null);
     try {
       await registerEmail(values.email, values.password, values.displayName);
-      goDashboard();
+      setRegistered(true);
     } catch {
       setAuthError(SoteriaStrings.errors.generic);
     }
@@ -57,7 +57,13 @@ export default function RegisterPage() {
           Create your account
         </h2>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-md">
+        {registered ? (
+          <div className="rounded-md border border-conforming/30 bg-conforming/10 p-md text-sm text-text-primary">
+            Your account was created. A Soteria administrator must assign you to an organization
+            before you can access audit data.
+          </div>
+        ) : null}
+        {!registered ? <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-md">
           <Input
             id="register-name"
             label="Full name"
@@ -93,15 +99,15 @@ export default function RegisterPage() {
           <Button type="submit" loading={isSubmitting}>
             {SoteriaStrings.common.confirm}
           </Button>
-        </form>
+        </form> : null}
 
-        <div className="flex items-center gap-md">
+        {!registered ? <div className="flex items-center gap-md">
           <span className="h-px flex-1 bg-border" />
           <span className="text-xs text-text-muted">or</span>
           <span className="h-px flex-1 bg-border" />
-        </div>
+        </div> : null}
 
-        <GoogleButton onAuthenticated={goDashboard} />
+        {!registered ? <GoogleButton onAuthenticated={() => router.replace('/dashboard')} /> : null}
 
         <p className="text-center text-sm text-text-secondary">
           Already have an account?{' '}

@@ -2,7 +2,6 @@
 
 import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Timestamp } from 'firebase/firestore';
 import { Plus, Sparkles } from 'lucide-react';
 import {
   SoteriaStrings,
@@ -11,7 +10,6 @@ import {
   type Finding,
   type FindingType,
 } from '@soteria/core';
-import { findingsCol, setDocById } from '@soteria/firebase';
 import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input, Select, Textarea } from '@/components/ui/Input';
@@ -19,7 +17,8 @@ import { FindingTypeBadge } from '@/components/FindingTypeBadge';
 import { LoadingState, EmptyState, ErrorState } from '@/components/ui/States';
 import { useFindings, useTenantId } from '@/lib/hooks';
 import { useAuth } from '@/lib/auth-context';
-import { callDraftNCR } from '@/lib/firebase';
+import { callDraftNCR } from '@/lib/supabase-functions';
+import { insertFinding, timestampNow } from '@/lib/supabase-data';
 
 const FINDING_TYPES = Object.keys(FINDING_TYPE_META) as FindingType[];
 
@@ -86,9 +85,8 @@ function FindingsView() {
     setSaving(true);
     setError(null);
     try {
-      const col = findingsCol(tenantId, auditId);
       const id = crypto.randomUUID();
-      const now = Timestamp.now();
+      const now = timestampNow();
       const isNC = type === 'major_nc' || type === 'minor_nc';
       const finding: Finding = {
         id,
@@ -107,13 +105,13 @@ function FindingsView() {
         objectiveEvidence,
         nonconformityStatement: statement,
         evidenceIds: [],
-        raisedByAuditorId: user?.uid ?? '',
-        raisedByAuditorName: user?.displayName ?? user?.email ?? '',
+        raisedByAuditorId: user?.id ?? '',
+        raisedByAuditorName: user?.user_metadata.display_name ?? user?.email ?? '',
         raisedAt: now,
         status: 'open',
         updatedAt: now,
       };
-      await setDocById(col, finding);
+      await insertFinding(tenantId, finding);
       setShowForm(false);
       setTitle('');
       setObjectiveEvidence('');

@@ -3,9 +3,8 @@
 import { useState } from 'react';
 import { Download } from 'lucide-react';
 import { SoteriaStrings } from '@soteria/core';
-import { getDownloadUrlForPath } from '@soteria/firebase';
 import { Button } from '@/components/ui/Button';
-import { callGenerateReportPdf } from '@/lib/firebase';
+import { callGenerateReportPdf, getDownloadUrlForPath } from '@/lib/supabase-functions';
 import { useAuth } from '@/lib/auth-context';
 
 interface Props {

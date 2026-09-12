@@ -1,113 +1,148 @@
 'use client';
 
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode,
-} from 'react';
-import {
-  confirmPhoneCode,
-  createRecaptchaVerifier,
-  getCurrentClaims,
-  onAuthStateChangedTyped,
-  registerWithEmail,
-  signInWithEmail,
-  signInWithGooglePopup,
-  signOutUser,
-  startPhoneSignIn,
-  type ConfirmationResult,
-  type FirebaseUser,
-} from '@soteria/firebase';
-import type { FirebaseCustomClaims } from '@soteria/core';
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import type { User } from '@supabase/supabase-js';
+import { createClient } from '@/utils/supabase/client';
 
-/**
- * Auth state + actions exposed to the web app. Every Firebase call is routed
- * through the `@soteria/firebase` helpers (RULE 3 / RULE 10) — the AuthProvider
- * never touches the SDK directly. `onAuthStateChanged` is the single source of
- * truth for `user`/`claims`, so the action wrappers just kick off the flow and
- * let the subscription drive any redirect.
- */
+export interface TenantClaims {
+  tenantId: string;
+  tenantType: 'cb' | 'consultancy' | 'enterprise';
+  role: 'super_admin' | 'tenant_admin' | 'lead_auditor' | 'auditor' | 'auditee' | 'viewer';
+  permissions: string[];
+  clientIds?: string[];
+}
+
+export interface PhoneConfirmation {
+  phone: string;
+}
+
 export interface AuthContextValue {
-  /** Current Firebase user, or `null` when signed out. */
-  user: FirebaseUser | null;
-  /** Tenant-scoped custom claims, or `null` until provisioned server-side. */
-  claims: FirebaseCustomClaims | null;
-  /** `true` until the initial auth state (and its claims) have resolved. */
+  user: User | null;
+  claims: TenantClaims | null;
   loading: boolean;
   signInEmail: (email: string, password: string) => Promise<void>;
   registerEmail: (email: string, password: string, displayName: string) => Promise<void>;
   signInGoogle: () => Promise<void>;
-  /**
-   * Sends an SMS code to `phoneNumber`, mounting an invisible reCAPTCHA into the
-   * element with id `recaptchaContainerId`. Returns the confirmation handle that
-   * {@link AuthContextValue.confirmPhone} verifies.
-   */
-  startPhone: (phoneNumber: string, recaptchaContainerId: string) => Promise<ConfirmationResult>;
-  confirmPhone: (confirmation: ConfirmationResult, code: string) => Promise<void>;
+  startPhone: (phoneNumber: string, recaptchaContainerId: string) => Promise<PhoneConfirmation>;
+  confirmPhone: (confirmation: PhoneConfirmation, code: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<FirebaseUser | null>(null);
-  const [claims, setClaims] = useState<FirebaseCustomClaims | null>(null);
-  const [loading, setLoading] = useState(true);
+  const supabase = useMemo(() => createClient(), []);
+  const [user, setUser] = useState<User | null>(null);
+  const [claims, setClaims] = useState<TenantClaims | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [claimsLoading, setClaimsLoading] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChangedTyped((nextUser) => {
-      setUser(nextUser);
-      if (nextUser === null) {
-        setClaims(null);
-        setLoading(false);
+    void supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user);
+      setAuthLoading(false);
+    });
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setAuthLoading(false);
+    });
+    return () => data.subscription.unsubscribe();
+  }, [supabase]);
+
+  useEffect(() => {
+    if (!user) {
+      setClaims(null);
+      setClaimsLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setClaimsLoading(true);
+    void (async () => {
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('tenant_id, role')
+        .eq('id', user.id)
+        .maybeSingle();
+      if (profileError) throw profileError;
+      if (!profile) {
+        if (!cancelled) {
+          setClaims(null);
+          setClaimsLoading(false);
+        }
         return;
       }
-      // Pull the tenant/role claims from the fresh ID token.
-      void getCurrentClaims()
-        .then(setClaims)
-        .catch(() => setClaims(null))
-        .finally(() => setLoading(false));
+      const { data: tenant, error: tenantError } = await supabase
+        .from('tenants')
+        .select('type')
+        .eq('id', profile.tenant_id)
+        .maybeSingle();
+      if (tenantError) throw tenantError;
+      if (!cancelled) {
+        setClaims({
+          tenantId: profile.tenant_id,
+          tenantType: tenant?.type === 'certification_body' ? 'cb' : tenant?.type ?? 'enterprise',
+          role: profile.role,
+          permissions: [],
+        });
+        setClaimsLoading(false);
+      }
+    })().catch(() => {
+      if (!cancelled) {
+        setClaims(null);
+        setClaimsLoading(false);
+      }
     });
-    return unsubscribe;
-  }, []);
+    return () => {
+      cancelled = true;
+    };
+  }, [supabase, user]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
       claims,
-      loading,
+      loading: authLoading || claimsLoading,
       signInEmail: async (email, password) => {
-        await signInWithEmail(email, password);
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
       },
       registerEmail: async (email, password, displayName) => {
-        await registerWithEmail(email, password, displayName);
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { data: { display_name: displayName } },
+        });
+        if (error) throw error;
       },
       signInGoogle: async () => {
-        await signInWithGooglePopup();
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: { redirectTo: window.location.origin },
+        });
+        if (error) throw error;
       },
-      startPhone: (phoneNumber, recaptchaContainerId) =>
-        startPhoneSignIn(phoneNumber, createRecaptchaVerifier(recaptchaContainerId)),
-      confirmPhone: async (confirmation, code) => {
-        await confirmPhoneCode(confirmation, code);
+      startPhone: async (phone) => {
+        const { error } = await supabase.auth.signInWithOtp({ phone });
+        if (error) throw error;
+        return { phone };
+      },
+      confirmPhone: async ({ phone }, token) => {
+        const { error } = await supabase.auth.verifyOtp({ phone, token, type: 'sms' });
+        if (error) throw error;
       },
       signOut: async () => {
-        await signOutUser();
+        const { error } = await supabase.auth.signOut();
+        if (error) throw error;
       },
     }),
-    [user, claims, loading],
+    [authLoading, claims, claimsLoading, supabase, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-/** Access the auth context. Throws if used outside an `<AuthProvider>`. */
 export function useAuth(): AuthContextValue {
   const context = useContext(AuthContext);
-  if (context === null) {
-    throw new Error('useAuth must be used within an <AuthProvider>.');
-  }
+  if (!context) throw new Error('useAuth must be used within an <AuthProvider>.');
   return context;
 }

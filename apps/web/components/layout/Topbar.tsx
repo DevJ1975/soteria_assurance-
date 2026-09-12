@@ -37,7 +37,7 @@ export function Topbar({ onOpenCopilot }: TopbarProps) {
 
         <span className="hidden items-center gap-1 text-sm text-text-secondary sm:inline-flex">
           <UserIcon className="h-4 w-4" aria-hidden />
-          {user?.displayName ?? user?.email ?? ''}
+          {user?.user_metadata.display_name ?? user?.email ?? ''}
         </span>
 
         <Button

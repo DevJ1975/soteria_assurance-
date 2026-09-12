@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Sparkles, X, AlertTriangle } from 'lucide-react';
 import { SoteriaStrings } from '@soteria/core';
 import { useAuth } from '@/lib/auth-context';
-import { callSuggestQuestions } from '@/lib/firebase';
+import { callSuggestQuestions } from '@/lib/supabase-functions';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { cn } from '@/lib/cn';

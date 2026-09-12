@@ -2,7 +2,7 @@
  * Metro configuration tuned for the Soteria Turborepo monorepo.
  *
  * Metro must be able to (a) watch the shared `packages/*` workspaces so edits
- * to `@soteria/core` / `@soteria/ui` / `@soteria/firebase` hot-reload, and
+ * to `@soteria/core` / `@soteria/ui` hot-reload, and
  * (b) resolve hoisted dependencies from both the app-level and the root
  * `node_modules`.
  *
