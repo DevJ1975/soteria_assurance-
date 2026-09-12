@@ -12,6 +12,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@babel/runtime": "^8.0.5",
     "@expo/metro-runtime": "^57.0.15",
     "@expo/vector-icons": "^15.1.1",
     "@nozbe/watermelondb": "^0.27.0",

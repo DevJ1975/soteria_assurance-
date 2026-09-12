@@ -103,10 +103,22 @@ jobs:
       - name: Start Supabase
         run: supabase start
 
+      # `supabase status -o env` prints clean KEY="VALUE" lines on stdout (its
+      # human chatter goes to stderr). The keys are extracted, then asserted
+      # non-empty: the previous version grepped and, when it matched nothing,
+      # the suite failed with "set SUPABASE_ANON_KEY" — which says nothing
+      # about why. On failure this dumps what the CLI actually printed, so the
+      # next run diagnoses itself instead of needing another round trip.
       - name: Run integration tests
         run: |
-          export SUPABASE_ANON_KEY="$(supabase status -o env | grep '^ANON_KEY=' | cut -d= -f2- | tr -d '"')"
-          export SUPABASE_SERVICE_ROLE_KEY="$(supabase status -o env | grep '^SERVICE_ROLE_KEY=' | cut -d= -f2- | tr -d '"')"
+          supabase status -o env > "$RUNNER_TEMP/supabase.env" 2>/dev/null
+          export SUPABASE_ANON_KEY="$(sed -n 's/^ANON_KEY="\(.*\)"$/\1/p' "$RUNNER_TEMP/supabase.env")"
+          export SUPABASE_SERVICE_ROLE_KEY="$(sed -n 's/^SERVICE_ROLE_KEY="\(.*\)"$/\1/p' "$RUNNER_TEMP/supabase.env")"
+          if [ -z "$SUPABASE_ANON_KEY" ] || [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+            echo "::error::Could not read the Supabase keys. Raw output follows:"
+            sed -E 's/=".{8}.*/="<redacted>"/' "$RUNNER_TEMP/supabase.env"
+            exit 1
+          fi
           pnpm --filter @soteria/e2e run test:e2e
 
       - name: Supabase logs on failure
