@@ -20,7 +20,9 @@ module.exports = {
     '!src/**/index.ts',
     '!src/types/**',
     '!src/__tests__/**',
-    '!src/iso45001/**',
+    // Clause datasets are hand-authored data, not logic — the dataset-integrity
+    // suite validates them. The registry and helpers around them ARE covered.
+    '!src/standards/*/clauses.ts',
   ],
   coverageThreshold: {
     global: {

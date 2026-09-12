@@ -1,4 +1,5 @@
 import type { Finding } from './finding';
+import type { StandardId } from '../standards/types';
 import type { AuditType, AuditStage } from './audit';
 
 /**
@@ -7,7 +8,9 @@ import type { AuditType, AuditStage } from './audit';
  * See DESIGN_DOC §9.4.
  */
 export interface AIAuditContext {
-  /** ISO 45001 expert auditor persona. */
+  /** The standard the co-pilot should reason and cite against. */
+  standardId: StandardId;
+  /** Expert auditor persona for `standardId`, from `buildAuditorSystemPrompt`. */
   systemPrompt: string;
   auditContext: {
     clientName: string;
@@ -21,7 +24,7 @@ export interface AIAuditContext {
   };
   /** What the auditor is asking. */
   userRequest: string;
-  /** Cached ISO clause requirement text. */
+  /** Cached clause requirement text for the current clause. */
   relevantISOText?: string;
 }
 
@@ -31,6 +34,8 @@ export interface AIAuditContext {
  * See DESIGN_DOC §10.
  */
 export interface NCRDraftRequest {
+  /** The standard the clause and drafted NCR belong to. */
+  standardId: StandardId;
   clauseNumber: string;
   clauseTitle: string;
   requirementText: string;
@@ -61,6 +66,8 @@ export interface NCRDraftResponse {
  * this request turns that raw transcript into a structured meeting record.
  */
 export interface MeetingSummaryRequest {
+  /** The standard the audited meeting belongs to. */
+  standardId: StandardId;
   meetingType: 'opening' | 'closing';
   /** Full transcription of the recorded meeting. */
   transcription: string;

@@ -3,3 +3,4 @@ export * from './deadlines';
 export * from './validators';
 export * from './typeGuards';
 export * from './scoring';
+export * from './interpolate';

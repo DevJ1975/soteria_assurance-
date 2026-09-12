@@ -1,4 +1,5 @@
 import type { Timestamp } from './common';
+import type { StandardId } from '../standards/types';
 
 export type AuditType =
   | 'initial_certification'
@@ -88,8 +89,9 @@ export interface Audit {
   auditType: AuditType;
   /** Stage 1 or Stage 2 (for certification). */
   auditStage: AuditStage;
-  standard: 'ISO 45001:2018';
-  /** Scope of the OH&S management system. */
+  /** The management-system standard this audit is conducted against. */
+  standardId: StandardId;
+  /** Scope of the management system, in the standard's discipline. */
   scope: string;
   status: AuditStatus;
 

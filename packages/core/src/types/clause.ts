@@ -1,4 +1,5 @@
 import type { Timestamp } from './common';
+import type { StandardId } from '../standards/types';
 
 export type ConformityStatus =
   | 'conforming'
@@ -12,7 +13,7 @@ export type ConformityVerdict = 'yes' | 'no' | 'partial' | 'na';
 export interface SubClauseNote {
   /** e.g. "6.1.2.a". */
   subClauseNumber: string;
-  /** Actual ISO requirement text. */
+  /** Paraphrased requirement text for the sub-clause. */
   requirementText: string;
   /** Standard audit question. */
   auditQuestion: string;
@@ -23,12 +24,18 @@ export interface SubClauseNote {
 }
 
 /**
- * The assessment of a single ISO 45001 clause within an audit.
+ * The assessment of a single clause within an audit.
  */
 export interface ClauseAssessment {
   id: string;
   auditId: string;
   tenantId: string;
+  /**
+   * The standard the clause belongs to, denormalized from the parent audit so
+   * a clause number is never ambiguous on its own ("6.1.2" exists in every
+   * Annex SL standard).
+   */
+  standardId: StandardId;
   /** e.g. "4.1", "6.1.2", "9.2.1". */
   clauseNumber: string;
   clauseTitle: string;

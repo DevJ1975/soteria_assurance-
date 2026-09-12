@@ -2,7 +2,10 @@ import type { Finding, FindingType } from '../types/finding';
 import { FINDING_TYPE_META } from '../constants/findingTypes';
 
 /**
- * Matches ISO 45001 dotted clause numbers such as `4`, `6.1`, `8.1.4.2`.
+ * Matches dotted clause numbers such as `4`, `6.1`, `8.1.4.2`. The Annex SL
+ * numbering is shared by every standard the platform models, so this is
+ * format validation only — it does not prove the clause exists in a given
+ * standard (use `getClauseByNumber` for that).
  *
  * Each segment is a positive integer with no leading zeros; segments are
  * separated by single dots, with no leading/trailing dot.
@@ -17,7 +20,7 @@ const EMAIL_REGEX =
   /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 /**
- * Returns `true` when `value` is a well-formed ISO 45001 clause number.
+ * Returns `true` when `value` is a well-formed dotted clause number.
  */
 export function isValidClauseNumber(value: string): boolean {
   return CLAUSE_NUMBER_REGEX.test(value.trim());
@@ -67,7 +70,7 @@ export function validateFindingDraft(
   if (!draft.clauseNumber || !isValidClauseNumber(draft.clauseNumber)) {
     errors.push({
       field: 'clauseNumber',
-      message: 'A valid ISO 45001 clause number is required (e.g. "6.1.2").',
+      message: 'A valid clause number is required (e.g. "6.1.2").',
     });
   }
 

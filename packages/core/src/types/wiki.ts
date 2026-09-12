@@ -1,13 +1,14 @@
 import type { Timestamp } from './common';
+import type { StandardId } from '../standards/types';
 
 export type WikiCategory =
-  /** Clause-by-clause ISO 45001 guidance. */
+  /** Clause-by-clause guidance for the article's standard. */
   | 'clause_guide'
   /** How to audit effectively. */
   | 'audit_technique'
   /** How to write findings. */
   | 'finding_guidance'
-  /** OH&S legislation references. */
+  /** Legislation references for the article's discipline. */
   | 'legal_reference'
   /** Industry best practices. */
   | 'best_practice'
@@ -28,7 +29,12 @@ export interface WikiArticle {
 
   // Classification
   category: WikiCategory;
-  /** e.g. "6.1.2". */
+  /**
+   * The standard this article is guidance for. Required because clause
+   * references and legal/discipline content differ per standard.
+   */
+  standardId: StandardId;
+  /** e.g. "6.1.2". Resolved within `standardId`. */
   clauseReference?: string;
   tags: string[];
 

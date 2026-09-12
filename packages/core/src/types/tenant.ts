@@ -1,4 +1,5 @@
 import type { Timestamp } from './common';
+import type { StandardId } from '../standards/types';
 
 /**
  * A Soteria Assurance tenant (certification body, consultancy or enterprise).
@@ -13,6 +14,12 @@ export interface Tenant {
   subscriptionStatus: 'active' | 'trialing' | 'past_due' | 'canceled';
   maxAuditors: number;
   maxAuditsPerMonth: number;
+  /**
+   * Standards this tenant may run audits against. A standard listed here is
+   * still only selectable if it is `isAvailable` in the standards registry —
+   * entitlement and readiness are separate gates.
+   */
+  enabledStandards: StandardId[];
   settings: TenantSettings;
   createdAt: Timestamp;
   updatedAt: Timestamp;

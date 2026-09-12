@@ -44,7 +44,9 @@ export const SoteriaStrings = {
     listTitle: 'Audits',
     newAudit: 'New audit',
     auditNumberLabel: 'Audit number',
-    scopeLabel: 'Scope of the OH&S management system',
+    /** Template — resolve with `interpolate(…, { discipline })`. */
+    scopeLabel: 'Scope of the {discipline} management system',
+    standardLabel: 'Standard',
     leadAuditorLabel: 'Lead auditor',
     plannedDatesLabel: 'Planned dates',
     statusLabel: 'Status',
@@ -69,7 +71,8 @@ export const SoteriaStrings = {
     newFinding: 'New finding',
     typeLabel: 'Finding type',
     severityLabel: 'Severity',
-    clauseLabel: 'ISO 45001 clause',
+    /** Template — resolve with `interpolate(…, { standard })`. */
+    clauseLabel: '{standard} clause',
     titleLabel: 'Finding title',
     objectiveEvidenceLabel: 'Objective evidence',
     statementLabel: 'Nonconformity statement',
@@ -120,7 +123,8 @@ export const SoteriaStrings = {
   },
   ai: {
     copilotTitle: 'AI Co-Pilot',
-    askPlaceholder: 'Ask ARIA about ISO 45001, this clause, or this finding…',
+    /** Template — resolve with `interpolate(…, { standard })`. */
+    askPlaceholder: 'Ask ARIA about {standard}, this clause, or this finding…',
     draftNCR: 'Draft NCR statement',
     suggestQuestions: 'Suggest interview questions',
     analyzePhoto: 'Analyze photo',
@@ -128,6 +132,18 @@ export const SoteriaStrings = {
     generating: 'ARIA is thinking…',
     unavailable: 'The AI co-pilot is temporarily unavailable. You can continue without it.',
     reviewRequired: 'Review the AI draft and edit before saving.',
+  },
+  standards: {
+    pickerLabel: 'Standard',
+    comingSoonBadge: 'Coming soon',
+    /** Template — resolve with `interpolate(…, { standard })`. */
+    comingSoonTitle: '{standard} is coming soon',
+    /** Template — resolve with `interpolate(…, { standard, discipline })`. */
+    comingSoonBody:
+      'Support for {standard} ({discipline}) is on the roadmap. The clause ' +
+      'library for this standard is not available yet, so audits cannot be ' +
+      'run against it.',
+    notEnabled: 'Your organization is not enabled for this standard.',
   },
   errors: {
     generic: 'Something went wrong. Please try again.',

@@ -1,11 +1,12 @@
 import type { Timestamp } from './common';
+import type { StandardId } from '../standards/types';
 import type { AuditType } from './audit';
 import type { MeetingAgendaItem } from './meeting';
 
 export interface AuditQuestion {
   questionId: string;
   questionText: string;
-  /** ISO 45001 clause requirement text. */
+  /** Clause requirement text from the template's standard. */
   requirementReference: string;
   evidenceExpected: string;
   aiPromptHint?: string;
@@ -44,7 +45,8 @@ export interface AuditTemplate {
   tenantId: string;
   name: string;
   description: string;
-  standard: 'ISO 45001:2018';
+  /** The management-system standard this template audits against. */
+  standardId: StandardId;
   auditType: AuditType;
 
   // Template Content

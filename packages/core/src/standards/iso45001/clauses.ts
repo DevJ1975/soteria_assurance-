@@ -1,4 +1,4 @@
-import type { ISO45001Clause } from './types';
+import type { StandardClause } from '../types';
 
 /**
  * Canonical ISO 45001:2018 clause dataset.
@@ -11,10 +11,11 @@ import type { ISO45001Clause } from './types';
  * the audit-relevant intent of each requirement without reproducing the
  * copyrighted text of the published standard.
  *
- * This is the single source of truth for clause data across the platform.
- * Never hardcode clause numbers, titles, or requirement text elsewhere.
+ * This is the single source of truth for ISO 45001 clause data across the
+ * platform. Never hardcode clause numbers, titles, or requirement text
+ * elsewhere — read them through the standards registry helpers instead.
  */
-export const ISO45001_CLAUSES: ISO45001Clause[] = [
+export const ISO45001_CLAUSES: StandardClause[] = [
   // ==========================================================================
   // CLAUSE 4 — CONTEXT OF THE ORGANIZATION
   // ==========================================================================

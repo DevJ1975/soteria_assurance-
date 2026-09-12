@@ -1,4 +1,5 @@
 import type { Timestamp } from './common';
+import type { StandardId } from '../standards/types';
 
 /**
  * The fixed set of roles a user can hold within a tenant.
@@ -30,8 +31,8 @@ export interface FirebaseCustomClaims {
 }
 
 export interface AuditorQualification {
-  /** e.g. "ISO 45001:2018". */
-  standard: string;
+  /** The management-system standard this qualification covers. */
+  standardId: StandardId;
   level: 'lead_auditor' | 'auditor' | 'trainee';
   certBody: string;
   certNumber: string;
