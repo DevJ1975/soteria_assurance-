@@ -2,7 +2,7 @@
   "name": "soteria-assurance",
   "version": "1.0.0",
   "private": true,
-  "description": "ISO 45001:2018 AI-powered audit management platform — Turborepo monorepo",
+  "description": "ISO 45001:2018 AI-powered audit management platform \u2014 Turborepo monorepo",
   "packageManager": "pnpm@10.33.0",
   "engines": {
     "node": ">=20"
@@ -22,7 +22,8 @@
     "seed:demo": "node scripts/seed-demo.mjs",
     "superadmin:local": "node scripts/create-local-superadmin.mjs",
     "deploy": "pnpm build:web",
-    "deploy:web": "pnpm build:web"
+    "deploy:web": "pnpm build:web",
+    "test:e2e": "sh -c 'SUPABASE_ANON_KEY=$(supabase status -o env | grep ^ANON_KEY= | cut -d= -f2- | tr -d \\\") SUPABASE_SERVICE_ROLE_KEY=$(supabase status -o env | grep ^SERVICE_ROLE_KEY= | cut -d= -f2- | tr -d \\\") pnpm --filter @soteria/e2e run test:e2e'"
   },
   "devDependencies": {
     "@eslint/js": "^9.13.0",
