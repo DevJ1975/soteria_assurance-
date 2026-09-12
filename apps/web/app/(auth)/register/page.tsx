@@ -11,7 +11,6 @@ import { useAuth } from '@/lib/auth-context';
 import { Card, CardBody } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { GoogleButton } from '../GoogleButton';
 
 const registerSchema = z
   .object({
@@ -100,14 +99,6 @@ export default function RegisterPage() {
             {SoteriaStrings.common.confirm}
           </Button>
         </form> : null}
-
-        {!registered ? <div className="flex items-center gap-md">
-          <span className="h-px flex-1 bg-border" />
-          <span className="text-xs text-text-muted">or</span>
-          <span className="h-px flex-1 bg-border" />
-        </div> : null}
-
-        {!registered ? <GoogleButton onAuthenticated={() => router.replace('/dashboard')} /> : null}
 
         <p className="text-center text-sm text-text-secondary">
           Already have an account?{' '}

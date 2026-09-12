@@ -22,7 +22,6 @@ export interface AuthContextValue {
   loading: boolean;
   signInEmail: (email: string, password: string) => Promise<void>;
   registerEmail: (email: string, password: string, displayName: string) => Promise<void>;
-  signInGoogle: () => Promise<void>;
   startPhone: (phoneNumber: string, recaptchaContainerId: string) => Promise<PhoneConfirmation>;
   confirmPhone: (confirmation: PhoneConfirmation, code: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -111,13 +110,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           email,
           password,
           options: { data: { display_name: displayName } },
-        });
-        if (error) throw error;
-      },
-      signInGoogle: async () => {
-        const { error } = await supabase.auth.signInWithOAuth({
-          provider: 'google',
-          options: { redirectTo: window.location.origin },
         });
         if (error) throw error;
       },

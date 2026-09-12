@@ -1,5 +1,5 @@
 /**
- * Login screen — Email/Password, Google, and Phone sign-in.
+ * Login screen — Email/Password and Phone sign-in.
  *
  * All auth calls go through `@soteria/firebase` (RULE 3). Phone sign-in uses
  * the {@link PhoneAuthFlow} abstraction (RN needs `FirebaseRecaptchaVerifierModal`
@@ -13,7 +13,6 @@ import { Button, HelperText, SegmentedButtons, Text, TextInput } from 'react-nat
 import { SoteriaStrings } from '@soteria/core';
 import {
   signInWithEmail,
-  signInWithGoogleCredential,
   type ConfirmationResult,
 } from '@soteria/firebase';
 import { Screen } from '../../components/common/Screen';
@@ -55,21 +54,6 @@ export default function LoginScreen(): JSX.Element {
     }
   };
 
-  const handleGoogleSignIn = async (): Promise<void> => {
-    setBusy(true);
-    setError(null);
-    try {
-      // Mobile must obtain the Google idToken natively (e.g. expo-auth-session /
-      // @react-native-google-signin) and exchange it here. Until that native
-      // module is wired, surface a clear, actionable message rather than a crash.
-      const idToken = await obtainGoogleIdToken();
-      await signInWithGoogleCredential(idToken);
-    } catch {
-      setError(SoteriaStrings.ai.unavailable);
-    } finally {
-      setBusy(false);
-    }
-  };
 
   const handleSendCode = async (): Promise<void> => {
     if (phoneFlow === null) {
@@ -206,16 +190,6 @@ export default function LoginScreen(): JSX.Element {
           </View>
         )}
 
-        <Button
-          mode="outlined"
-          icon="google"
-          onPress={handleGoogleSignIn}
-          disabled={busy}
-          style={styles.google}
-        >
-          Continue with Google
-        </Button>
-
         {error !== null ? (
           <HelperText type="error" visible style={styles.error}>
             {error}
@@ -233,18 +207,6 @@ export default function LoginScreen(): JSX.Element {
   );
 }
 
-/**
- * Placeholder for the native Google sign-in token exchange. The real
- * implementation uses expo-auth-session / @react-native-google-signin to obtain
- * an idToken; until that module is configured this rejects with a clear error
- * so the UI shows the "AI/feature unavailable" message rather than crashing.
- */
-async function obtainGoogleIdToken(): Promise<string> {
-  return Promise.reject(
-    new Error('Native Google sign-in not configured (wire expo-auth-session).'),
-  );
-}
-
 const styles = StyleSheet.create({
   container: { gap: spacing.md },
   brand: { alignItems: 'center', marginVertical: spacing.lg, gap: spacing.xs },
@@ -257,7 +219,6 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: fontSize.md, color: colors.textSecondary },
   modeSwitch: { marginVertical: spacing.sm },
   form: { gap: spacing.md },
-  google: { marginTop: spacing.sm },
   error: { textAlign: 'center' },
   footer: { flexDirection: 'row', justifyContent: 'center', marginTop: spacing.lg },
   footerText: { color: colors.textSecondary, fontSize: fontSize.md },
