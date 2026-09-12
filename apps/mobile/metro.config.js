@@ -26,7 +26,16 @@ config.resolver.nodeModulesPaths = [
   path.resolve(monorepoRoot, 'node_modules'),
 ];
 
-// 3. Prefer a single copy of hoisted singletons (avoids duplicate React).
-config.resolver.disableHierarchicalLookup = true;
+// 3. Hierarchical lookup stays ON. It is tempting to disable it to force a
+// single copy of React, and that is right in a hoisted npm/yarn monorepo where
+// every dependency really is in one of the two paths above. Under pnpm it is
+// exactly wrong: each package's dependencies live beside it inside
+// node_modules/.pnpm, and Metro finds them only by walking up from the
+// importing file. With it disabled, bundling fails on the first transitive
+// dependency Metro cannot see — @react-navigation/native from expo-router,
+// whatwg-fetch from @expo/metro-runtime, and so on.
+//
+// pnpm already guarantees one React per app, so nothing is lost by leaving it
+// on. `config.resolver.disableHierarchicalLookup` is deliberately not set.
 
 module.exports = config;

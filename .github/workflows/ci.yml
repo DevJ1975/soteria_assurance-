@@ -57,6 +57,16 @@ jobs:
       - name: Build
         run: pnpm turbo run build
 
+      # The mobile app was unbundleable from its first commit and nothing
+      # noticed, because typechecking it is not the same as building it. This
+      # step is the only thing that would catch that happening again.
+      - name: Bundle mobile
+        working-directory: apps/mobile
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+        run: npx expo export --platform ios --output-dir "$RUNNER_TEMP/expo-export"
+
   e2e:
     name: Integration tests (Supabase)
     runs-on: ubuntu-latest
