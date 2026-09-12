@@ -19,10 +19,21 @@ import {
   createCompany,
   inviteAuditor,
   listAdminTenants,
+  listAuditLogs,
   listAuditorInvitations,
+  listPlatformUsers,
+  listTenantUsage,
   revokeInvitation,
+  setUserActive,
+  setUserRole,
+  type ActivityQuery,
   type AdminTenant,
+  type AuditLogEntry,
   type AuditorInvitation,
+  type Page,
+  type PlatformUser,
+  type TenantUsage,
+  type UserQuery,
 } from './supabase-admin-data';
 
 const TENANTS_KEY = ['admin', 'tenants'] as const;
@@ -83,4 +94,70 @@ export type InvitationState = 'pending' | 'expired' | 'accepted' | 'revoked';
 export function invitationState(invitation: AuditorInvitation): InvitationState {
   if (invitation.status !== 'pending') return invitation.status;
   return Date.parse(invitation.expiresAt) < Date.now() ? 'expired' : 'pending';
+}
+
+/* ------------------------------------------------------------------ users */
+
+const USERS_KEY = ['admin', 'users'] as const;
+const ACTIVITY_KEY = ['admin', 'activity'] as const;
+const USAGE_KEY = ['admin', 'usage'] as const;
+
+/**
+ * A page of platform users. The query object is part of the key, so paging or
+ * searching caches each page separately instead of thrashing one entry.
+ * `placeholderData` keeps the previous page on screen while the next loads,
+ * which stops the table collapsing to a skeleton on every keystroke.
+ */
+export function usePlatformUsers(query: UserQuery): UseQueryResult<Page<PlatformUser>> {
+  return useQuery({
+    queryKey: [...USERS_KEY, query],
+    queryFn: () => listPlatformUsers(query),
+    placeholderData: (previous) => previous,
+  });
+}
+
+export function useSetUserActive(): UseMutationResult<
+  void,
+  Error,
+  { userId: string; isActive: boolean }
+> {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ userId, isActive }) => setUserActive(userId, isActive),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: USERS_KEY });
+      void queryClient.invalidateQueries({ queryKey: USAGE_KEY });
+    },
+  });
+}
+
+export function useSetUserRole(): UseMutationResult<
+  void,
+  Error,
+  { userId: string; role: PlatformUser['role'] }
+> {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ userId, role }) => setUserRole(userId, role),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: USERS_KEY });
+      void queryClient.invalidateQueries({ queryKey: USAGE_KEY });
+    },
+  });
+}
+
+/* --------------------------------------------------------------- activity */
+
+export function useAuditLogs(query: ActivityQuery): UseQueryResult<Page<AuditLogEntry>> {
+  return useQuery({
+    queryKey: [...ACTIVITY_KEY, query],
+    queryFn: () => listAuditLogs(query),
+    placeholderData: (previous) => previous,
+  });
+}
+
+/* ------------------------------------------------------------------ usage */
+
+export function useTenantUsage(): UseQueryResult<TenantUsage[]> {
+  return useQuery({ queryKey: USAGE_KEY, queryFn: listTenantUsage });
 }

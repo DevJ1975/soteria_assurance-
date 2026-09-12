@@ -1,3 +1,4 @@
+import { DEFAULT_STANDARD_ID, type StandardId } from '@soteria/core';
 import type {
   Audit,
   ClauseAssessment,
@@ -140,6 +141,7 @@ function mapClauseAssessment(row: Record<string, unknown>): ClauseAssessment {
     id: row.id as string,
     auditId: row.audit_id as string,
     tenantId: row.tenant_id as string,
+    standardId: (row.standard_id as StandardId | null) ?? DEFAULT_STANDARD_ID,
     clauseNumber: row.clause_number as string,
     clauseTitle: row.clause_title as string,
     assignedAuditorId: (row.assigned_auditor_id as string | null) ?? '',
@@ -174,6 +176,8 @@ export async function listClauseAssessments(
 
 /** The fields a clause assessment screen can actually change. */
 export interface ClauseAssessmentInput {
+  /** Which standard's clause this is — "6.1.2" alone is ambiguous. */
+  standardId: StandardId;
   clauseNumber: string;
   clauseTitle: string;
   conformityStatus: ConformityStatus;
@@ -203,6 +207,7 @@ export async function upsertClauseAssessment(
       {
         tenant_id: requireTenantId(tenantId),
         audit_id: auditId,
+        standard_id: input.standardId,
         clause_number: input.clauseNumber,
         clause_title: input.clauseTitle,
         conformity_status: input.conformityStatus,
@@ -343,7 +348,7 @@ export async function insertAudit(tenantId: string, audit: Audit): Promise<void>
     audit_number: audit.auditNumber,
     audit_type: audit.auditType,
     audit_stage: audit.auditStage,
-    standard: audit.standard,
+    standard_id: audit.standardId,
     scope: audit.scope,
     status: audit.status,
     lead_auditor_id: audit.leadAuditorId || null,

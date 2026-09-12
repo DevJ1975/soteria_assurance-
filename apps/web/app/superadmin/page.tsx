@@ -25,7 +25,6 @@ import {
   Input,
   Label,
   Select,
-  Separator,
   Skeleton,
   Table,
   TableBody,
@@ -33,8 +32,14 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
 } from '@/components/shadcn';
 import { SuperadminGuard } from '@/components/SuperadminGuard';
+import { ActivityPanel } from '@/components/superadmin/ActivityPanel';
+import { UsersPanel } from '@/components/superadmin/UsersPanel';
 import { useAuth } from '@/lib/auth-context';
 import {
   invitationState,
@@ -42,10 +47,12 @@ import {
   useAuditorInvitations,
   useCreateCompany,
   useInviteAuditor,
+  usePlatformUsers,
   useRevokeInvitation,
+  useTenantUsage,
   type InvitationState,
 } from '@/lib/admin-hooks';
-import type { AdminTenant, AuditorInvitation } from '@/lib/supabase-admin-data';
+import type { AdminTenant, AuditorInvitation, TenantUsage } from '@/lib/supabase-admin-data';
 
 const TENANT_TYPE_LABELS: Record<AdminTenant['type'], string> = {
   enterprise: 'Enterprise',
@@ -82,10 +89,15 @@ function SuperadminContent() {
   const createCompany = useCreateCompany();
   const inviteAuditor = useInviteAuditor();
   const revoke = useRevokeInvitation();
+  const usage = useTenantUsage();
+  // One directory page, purely to resolve actor ids to names in the activity
+  // log. Cached under its own key, so the Users tab's paging never disturbs it.
+  const directory = usePlatformUsers({ limit: 200 });
 
   const tenantList = tenants.data ?? [];
   const invitationList = invitations.data ?? [];
   const pendingCount = invitationList.filter((item) => invitationState(item) === 'pending').length;
+  const activeUsers = (usage.data ?? []).reduce((sum, row) => sum + row.activeMembers, 0);
 
   return (
     <main className="min-h-screen bg-background">
@@ -120,12 +132,18 @@ function SuperadminContent() {
         <QueryError label="companies" error={tenants.error} />
         <QueryError label="invitations" error={invitations.error} />
 
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-4">
           <StatCard
             icon={<Building2 className="size-4" aria-hidden />}
             label="Companies"
             value={tenantList.length}
             loading={tenants.isPending}
+          />
+          <StatCard
+            icon={<Users className="size-4" aria-hidden />}
+            label="Active users"
+            value={activeUsers}
+            loading={usage.isPending}
           />
           <StatCard
             icon={<MailPlus className="size-4" aria-hidden />}
@@ -134,33 +152,50 @@ function SuperadminContent() {
             loading={invitations.isPending}
           />
           <StatCard
-            icon={<Users className="size-4" aria-hidden />}
+            icon={<Clock className="size-4" aria-hidden />}
             label="Awaiting sign-in"
             value={pendingCount}
             loading={invitations.isPending}
           />
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-2">
-          <CreateCompanyCard mutation={createCompany} />
-          <InviteAuditorCard mutation={inviteAuditor} tenants={tenantList} />
-        </div>
+        <Tabs defaultValue="companies">
+          <TabsList>
+            <TabsTrigger value="companies">Companies</TabsTrigger>
+            <TabsTrigger value="invitations">Invitations</TabsTrigger>
+            <TabsTrigger value="users">Users</TabsTrigger>
+            <TabsTrigger value="activity">Activity</TabsTrigger>
+          </TabsList>
 
-        <CompaniesCard query={tenants} tenants={tenantList} />
-        <InvitationsCard
-          query={invitations}
-          invitations={invitationList}
-          tenants={tenantList}
-          revoke={revoke}
-        />
+          <TabsContent value="companies">
+            <CreateCompanyCard mutation={createCompany} />
+            <CompaniesCard query={tenants} tenants={tenantList} usage={usage.data ?? []} />
+          </TabsContent>
 
-        <Separator />
-        <p className="pb-4 text-xs text-text-muted">
-          The tenant and role on an invitation are applied by the{' '}
-          <code className="font-mono">handle_invited_user</code> trigger when the invitee first
-          signs in. Revoking one takes effect immediately, including for a link already sitting in
-          an inbox.
-        </p>
+          <TabsContent value="invitations">
+            <InviteAuditorCard mutation={inviteAuditor} tenants={tenantList} />
+            <InvitationsCard
+              query={invitations}
+              invitations={invitationList}
+              tenants={tenantList}
+              revoke={revoke}
+            />
+            <p className="text-xs text-text-muted">
+              The tenant and role on an invitation are applied by the{' '}
+              <code className="font-mono">handle_invited_user</code> trigger when the invitee first
+              signs in. Revoking one takes effect immediately, including for a link already sitting
+              in an inbox.
+            </p>
+          </TabsContent>
+
+          <TabsContent value="users">
+            <UsersPanel tenants={tenantList} currentUserId={user?.id} />
+          </TabsContent>
+
+          <TabsContent value="activity">
+            <ActivityPanel tenants={tenantList} users={directory.data?.rows ?? []} />
+          </TabsContent>
+        </Tabs>
       </div>
     </main>
   );
@@ -247,10 +282,13 @@ function CreateCompanyCard({
 function CompaniesCard({
   query,
   tenants,
+  usage,
 }: {
   query: ReturnType<typeof useAdminTenants>;
   tenants: AdminTenant[];
+  usage: TenantUsage[];
 }) {
+  const usageByTenant = new Map(usage.map((row) => [row.tenantId, row]));
   return (
     <Card>
       <CardHeader>
@@ -272,6 +310,7 @@ function CompaniesCard({
                 <TableHead>Name</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Subscription</TableHead>
+                <TableHead>Auditor seats</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -282,6 +321,9 @@ function CompaniesCard({
                     <Badge variant="outline">{TENANT_TYPE_LABELS[tenant.type]}</Badge>
                   </TableCell>
                   <TableCell className="text-text-secondary">{tenant.subscriptionStatus}</TableCell>
+                  <TableCell>
+                    <SeatUsage usage={usageByTenant.get(tenant.id)} />
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -609,4 +651,22 @@ function TableSkeleton({ columns }: { columns: number }) {
 
 function EmptyRow({ message }: { message: string }) {
   return <p className="px-6 pb-6 text-sm text-muted-foreground">{message}</p>;
+}
+
+/**
+ * Auditor seats against the tenant's limit.
+ *
+ * `max_auditors` is stored but enforced nowhere — nothing blocks an invitation
+ * that takes a tenant over its limit. Surfacing the number is the honest half
+ * of that: an operator can at least see the overage before enforcement exists.
+ */
+function SeatUsage({ usage }: { usage: TenantUsage | undefined }) {
+  if (!usage) return <span className="text-text-faint">—</span>;
+  const over = usage.activeAuditors > usage.maxAuditors;
+  return (
+    <span className={over ? 'font-medium text-destructive' : 'text-text-secondary'}>
+      {usage.activeAuditors} / {usage.maxAuditors}
+      {over ? ' (over)' : ''}
+    </span>
+  );
 }

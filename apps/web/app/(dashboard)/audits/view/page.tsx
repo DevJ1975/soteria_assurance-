@@ -3,7 +3,7 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { SoteriaStrings } from '@soteria/core';
+import { SoteriaStrings, getStandard } from '@soteria/core';
 import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { LoadingState, EmptyState, ErrorState } from '@/components/ui/States';
@@ -34,7 +34,7 @@ function AuditView() {
       <div className="flex flex-wrap items-center justify-between gap-md">
         <div>
           <h1 className="font-mono text-2xl font-bold text-primary-700">{audit.auditNumber}</h1>
-          <p className="text-sm text-text-secondary">{audit.standard}</p>
+          <p className="text-sm text-text-secondary">{getStandard(audit.standardId).name}</p>
         </div>
         <Badge tone="primary">{audit.status.replace('_', ' ')}</Badge>
       </div>

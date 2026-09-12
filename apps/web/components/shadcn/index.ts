@@ -28,3 +28,4 @@ export {
   TableCaption,
 } from './table';
 export { Select } from './select';
+export { Tabs, TabsList, TabsTrigger, TabsContent } from './tabs';

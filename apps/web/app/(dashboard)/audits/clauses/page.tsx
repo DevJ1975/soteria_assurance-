@@ -5,16 +5,18 @@ import { useSearchParams } from 'next/navigation';
 import {
   SoteriaStrings,
   CONFORMITY_STATUS_META,
+  DEFAULT_STANDARD_ID,
   getClauseTree,
+  getStandard,
   type ClauseAssessment,
   type ConformityStatus,
-  type ISO45001ClauseTreeNode,
+  type StandardClauseTreeNode,
 } from '@soteria/core';
 import { getConformityColor } from '@soteria/ui';
 import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card';
 import { LoadingState, EmptyState, ErrorState } from '@/components/ui/States';
 import { ClauseAssessmentEditor } from '@/components/ClauseAssessmentEditor';
-import { useClauseAssessments } from '@/lib/hooks';
+import { useAudit, useClauseAssessments } from '@/lib/hooks';
 
 /** Renders a single clause node and its children recursively. */
 function ClauseRow({
@@ -24,7 +26,7 @@ function ClauseRow({
   selectedClauseNumber,
   onSelect,
 }: {
-  node: ISO45001ClauseTreeNode;
+  node: StandardClauseTreeNode;
   statusByNumber: ReadonlyMap<string, ConformityStatus>;
   depth: number;
   selectedClauseNumber: string;
@@ -76,12 +78,16 @@ function ClauseRow({
 function ClauseNavigator() {
   const params = useSearchParams();
   const auditId = params.get('id') ?? '';
+  const auditQuery = useAudit(auditId);
   const assessmentsQuery = useClauseAssessments(auditId);
+  // The clause tree belongs to the audit's standard, not to the app: "6.1.2"
+  // exists in every Annex SL standard and means something different in each.
+  const standardId = auditQuery.data?.standardId ?? DEFAULT_STANDARD_ID;
   const [selectedClauseNumber, setSelectedClauseNumber] = useState('');
 
   // The ISO 45001 clause tree is canonical, static data (RULE 4 — never
   // hardcode clause text). Built once.
-  const tree = useMemo(() => getClauseTree(), []);
+  const tree = useMemo(() => getClauseTree(standardId), [standardId]);
 
   const assessmentByNumber = useMemo(() => {
     const map = new Map<string, ClauseAssessment>();
@@ -138,6 +144,7 @@ function ClauseNavigator() {
           <ClauseAssessmentEditor
             key={selectedClauseNumber}
             auditId={auditId}
+            standardId={standardId}
             clauseNumber={selectedClauseNumber}
             assessment={assessmentByNumber.get(selectedClauseNumber)}
           />

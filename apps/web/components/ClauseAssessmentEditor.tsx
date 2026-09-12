@@ -10,6 +10,7 @@ import {
   type ClauseAssessment,
   type ConformityStatus,
   type ConformityVerdict,
+  type StandardId,
   type SubClauseNote,
 } from '@soteria/core';
 import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -33,8 +34,8 @@ const VERDICT_LABELS: Record<ConformityVerdict, string> = {
  * never hardcoded in the UI). An existing assessment keeps its own notes so an
  * auditor's wording is never overwritten by the template.
  */
-function seedSubClauseNotes(clauseNumber: string): SubClauseNote[] {
-  const clause = getClauseByNumber(clauseNumber);
+function seedSubClauseNotes(standardId: StandardId, clauseNumber: string): SubClauseNote[] {
+  const clause = getClauseByNumber(standardId, clauseNumber);
   if (!clause) return [];
   return clause.typicalAuditQuestions.map((auditQuestion) => ({
     subClauseNumber: clause.number,
@@ -47,6 +48,8 @@ function seedSubClauseNotes(clauseNumber: string): SubClauseNote[] {
 
 export interface ClauseAssessmentEditorProps {
   auditId: string;
+  /** The audit's standard — a clause number is ambiguous without it. */
+  standardId: StandardId;
   clauseNumber: string;
   /** The saved assessment for this clause, or `undefined` if never assessed. */
   assessment: ClauseAssessment | undefined;
@@ -61,10 +64,11 @@ export interface ClauseAssessmentEditorProps {
  */
 export function ClauseAssessmentEditor({
   auditId,
+  standardId,
   clauseNumber,
   assessment,
 }: ClauseAssessmentEditorProps) {
-  const clause = getClauseByNumber(clauseNumber);
+  const clause = getClauseByNumber(standardId, clauseNumber);
   const save = useSaveClauseAssessment(auditId);
 
   const [notes, setNotes] = useState<SubClauseNote[]>([]);
@@ -78,12 +82,12 @@ export function ClauseAssessmentEditor({
     setNotes(
       assessment?.subClauseNotes.length
         ? assessment.subClauseNotes
-        : seedSubClauseNotes(clauseNumber),
+        : seedSubClauseNotes(standardId, clauseNumber),
     );
     setStatus(assessment?.conformityStatus ?? 'not_audited');
     setAuditorNotes(assessment?.auditorNotes ?? '');
     setIsComplete(assessment?.isComplete ?? false);
-  }, [assessment, clauseNumber]);
+  }, [assessment, clauseNumber, standardId]);
 
   const score = useMemo(() => clauseScoreFromVerdicts(notes), [notes]);
 
@@ -96,6 +100,7 @@ export function ClauseAssessmentEditor({
   function handleSave() {
     if (!clause) return;
     save.mutate({
+      standardId,
       clauseNumber: clause.number,
       clauseTitle: clause.title,
       conformityStatus: status,

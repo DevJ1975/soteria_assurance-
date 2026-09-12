@@ -5,8 +5,13 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { X } from 'lucide-react';
-import { SoteriaStrings, generateAuditNumber } from '@soteria/core';
-import type { Audit, AuditType } from '@soteria/core';
+import {
+  DEFAULT_STANDARD_ID,
+  SoteriaStrings,
+  generateAuditNumber,
+  listAvailableStandards,
+} from '@soteria/core';
+import type { Audit, AuditType, StandardId } from '@soteria/core';
 import { useTenantId, useClients } from '@/lib/hooks';
 import { useAuth } from '@/lib/auth-context';
 import { insertAudit, timestampNow } from '@/lib/supabase-data';
@@ -23,8 +28,15 @@ const AUDIT_TYPES: ReadonlyArray<{ value: AuditType; label: string }> = [
   { value: 'special', label: 'Special' },
 ];
 
+/**
+ * Only standards with an authored clause dataset can be audited — a roadmap
+ * placeholder has no clauses to assess against, so it is not offered here.
+ */
+const AVAILABLE_STANDARDS = listAvailableStandards();
+
 const wizardSchema = z.object({
   clientId: z.string().min(1, SoteriaStrings.errors.validation),
+  standardId: z.string().min(1, SoteriaStrings.errors.validation),
   auditType: z.enum([
     'initial_certification',
     'surveillance',
@@ -60,14 +72,17 @@ export function NewAuditWizard({ open, onClose, onCreated }: NewAuditWizardProps
     trigger,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm<WizardForm>({ resolver: zodResolver(wizardSchema) });
+  } = useForm<WizardForm>({
+    resolver: zodResolver(wizardSchema),
+    defaultValues: { standardId: DEFAULT_STANDARD_ID },
+  });
 
   if (!open) {
     return null;
   }
 
   async function goNext() {
-    const ok = await trigger(['clientId', 'auditType', 'scope']);
+    const ok = await trigger(['clientId', 'standardId', 'auditType', 'scope']);
     if (ok) {
       setStep(2);
     }
@@ -94,7 +109,7 @@ export function NewAuditWizard({ open, onClose, onCreated }: NewAuditWizardProps
         auditNumber,
         auditType: values.auditType,
         auditStage: 'not_applicable',
-        standard: 'ISO 45001:2018',
+        standardId: values.standardId as StandardId,
         scope: values.scope,
         status: 'planned',
         leadAuditorId: user?.id ?? '',
@@ -163,6 +178,18 @@ export function NewAuditWizard({ open, onClose, onCreated }: NewAuditWizardProps
                   {clients.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.organizationName}
+                    </option>
+                  ))}
+                </Select>
+                <Select
+                  id="wizard-standard"
+                  label="Standard"
+                  error={errors.standardId?.message}
+                  {...register('standardId')}
+                >
+                  {AVAILABLE_STANDARDS.map((standard) => (
+                    <option key={standard.id} value={standard.id}>
+                      {standard.name} — {standard.discipline}
                     </option>
                   ))}
                 </Select>
