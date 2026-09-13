@@ -79,7 +79,7 @@ Deno.serve(
       throw new HttpError(409, 'That email address already belongs to an account.');
     }
 
-    // Captured before the upsert so a failed send can restore exactly what was
+    // Captured before the write so a failed send can restore exactly what was
     // there, rather than deleting an invitation that predates this request.
     const { data: priorInvitation } = await admin
       .from('auditor_invitations')
@@ -88,32 +88,29 @@ Deno.serve(
       .eq('email', email)
       .maybeSingle();
 
-    // `(tenant_id, email)` is unique, so a repeat invitation reopens the
-    // existing row and extends its expiry rather than failing on the
-    // constraint. A revoked invitation is deliberately reopened only by an
-    // explicit re-invite like this one.
+    // `create_or_renew_invitation` does what the direct upsert used to, plus
+    // one thing a plain upsert cannot: it checks tenants.max_auditors and the
+    // write in the SAME transaction, under a row lock on the tenant. Doing
+    // the seat check as a separate query first would leave a window where two
+    // concurrent invites for the last seat could both read "one free".
     const { data: invitation, error: invitationError } = await admin
-      .from('auditor_invitations')
-      .upsert(
-        {
-          tenant_id: tenantId,
-          email,
-          display_name: displayName,
-          role,
-          status: 'pending',
-          invited_by: caller.userId,
-          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-          accepted_at: null,
-          accepted_by: null,
-          revoked_at: null,
-        },
-        { onConflict: 'tenant_id,email' },
-      )
-      .select('id, tenant_id, email, display_name, role, status, expires_at')
+      .rpc('create_or_renew_invitation', {
+        p_tenant_id: tenantId,
+        p_email: email,
+        p_display_name: displayName,
+        p_role: role,
+        p_invited_by: caller.userId,
+        p_expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      })
       .single();
-    if (invitationError || !invitation) {
+    if (invitationError) {
+      if (invitationError.code === 'SA001') {
+        throw new HttpError(409, invitationError.message);
+      }
+      console.error(invitationError);
       throw new HttpError(500, 'Could not record the invitation.');
     }
+    if (!invitation) throw new HttpError(500, 'Could not record the invitation.');
     const invitationId: string = invitation.id;
 
     /** Puts the invitation row back the way it was before this request. */
