@@ -13,6 +13,7 @@
 import {
   HttpError,
   anonClient,
+  findAuthUserByEmail,
   handleRequest,
   jsonResponse,
   requireCaller,
@@ -61,13 +62,45 @@ Deno.serve(
         .select('id, tenant_id, email, display_name, role, status')
         .eq('id', invitationId)
         .maybeSingle();
-      if (error) throw new HttpError(500, 'Could not load the invitation.');
+      if (error) {
+        console.error(error);
+        throw new HttpError(500, 'Could not load the invitation.');
+      }
       if (!invitation) throw new HttpError(404, 'That invitation does not exist.');
       if (!isSuperAdmin && invitation.tenant_id !== caller.tenantId) {
         throw new HttpError(403, 'That invitation belongs to another organization.');
       }
       if (invitation.status !== 'pending') {
         throw new HttpError(409, `That invitation is already ${invitation.status}.`);
+      }
+
+      // Someone may already hold an account without a profile in this
+      // tenant — `inviteUserByEmail` refuses an address that already exists,
+      // so that case is handled directly here (mirrors invite-auditor).
+      const existingUser = await findAuthUserByEmail(admin, invitation.email);
+      if (existingUser) {
+        if (!existingUser.confirmed) {
+          // The confirmation trigger will pick the invitation up when they
+          // finish verifying their address. Nothing more to send.
+          return jsonResponse({ ok: true, emailSent: false, awaitingConfirmation: true });
+        }
+
+        const { error: profileError } = await admin.from('profiles').insert({
+          id: existingUser.id,
+          tenant_id: invitation.tenant_id,
+          email: existingUser.email,
+          display_name: invitation.display_name || existingUser.email.split('@')[0],
+          role: invitation.role,
+        });
+        if (profileError) {
+          console.error(profileError);
+          throw new HttpError(500, 'Could not add that account to the organization.');
+        }
+        await admin
+          .from('auditor_invitations')
+          .update({ status: 'accepted', accepted_at: new Date().toISOString(), accepted_by: existingUser.id })
+          .eq('id', invitationId);
+        return jsonResponse({ ok: true, emailSent: false, provisioned: true });
       }
 
       const redirectTo = typeof body.redirectTo === 'string' ? body.redirectTo : undefined;
@@ -101,7 +134,10 @@ Deno.serve(
       .select('id, email, tenant_id, role')
       .eq('id', userId)
       .maybeSingle();
-    if (targetError) throw new HttpError(500, 'Could not load that user.');
+    if (targetError) {
+      console.error(targetError);
+      throw new HttpError(500, 'Could not load that user.');
+    }
     if (!target) throw new HttpError(404, 'That user does not exist.');
 
     if (!isSuperAdmin) {

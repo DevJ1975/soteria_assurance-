@@ -68,7 +68,10 @@ Deno.serve(
       .eq('id', evidenceId)
       .eq('tenant_id', context.tenantId)
       .maybeSingle();
-    if (error) throw new HttpError(500, 'Could not load that evidence.');
+    if (error) {
+      console.error(error);
+      throw new HttpError(500, 'Could not load that evidence.');
+    }
     if (!evidence) throw new HttpError(404, 'That evidence does not exist.');
     if (!evidence.storage_path) {
       throw new HttpError(409, 'That evidence has no stored file to analyse.');

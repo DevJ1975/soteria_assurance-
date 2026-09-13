@@ -125,10 +125,15 @@ export async function inviteAuditor(input: {
  * invitation email already sitting in an inbox stops working immediately.
  */
 export async function revokeInvitation(invitationId: string): Promise<void> {
+  // Scoped to a still-pending row: `handle_invited_user` now locks and
+  // re-checks the invitation before accepting it, so a revoke that lands
+  // after acceptance should leave the accepted record alone rather than
+  // relabel it revoked out from under a person who already got access.
   const { error } = await createClient()
     .from('auditor_invitations')
     .update({ status: 'revoked' })
-    .eq('id', invitationId);
+    .eq('id', invitationId)
+    .eq('status', 'pending');
   if (error) throw error;
 }
 

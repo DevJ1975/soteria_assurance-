@@ -64,7 +64,10 @@ Deno.serve(
       .select('id')
       .eq('id', tenantId)
       .maybeSingle();
-    if (tenantError) throw new HttpError(500, 'Could not verify the tenant.');
+    if (tenantError) {
+      console.error(tenantError);
+      throw new HttpError(500, 'Could not verify the tenant.');
+    }
     if (!tenant) throw new HttpError(404, 'That organization does not exist.');
 
     // An address that already belongs to a profile cannot be re-invited:
@@ -137,7 +140,14 @@ Deno.serve(
     // they registered before anyone invited them. `inviteUserByEmail` refuses
     // an address that already exists, so those two cases are handled here
     // rather than left to fail with a misleading "could not send" error.
-    const existingUser = await findAuthUserByEmail(admin, email);
+    let existingUser: Awaited<ReturnType<typeof findAuthUserByEmail>>;
+    try {
+      existingUser = await findAuthUserByEmail(admin, email);
+    } catch (err) {
+      await revertInvitation();
+      console.error(err);
+      throw err;
+    }
     if (existingUser) {
       if (!existingUser.confirmed) {
         // The confirmation trigger will pick the invitation up when they

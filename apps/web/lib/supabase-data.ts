@@ -42,44 +42,65 @@ function requireTenantId(tenantId: string): string {
   return tenantId;
 }
 
-function mapRow<T>(row: Record<string, unknown>): T {
+/**
+ * A single generic mapper covering both audits and findings used to leave
+ * every field it didn't explicitly alias as `undefined` on the mapped
+ * object — missing `standardId` crashed the audit-detail page outright, and
+ * every timestamp field (`createdAt`, `raisedAt`, `closedAt`, ...) came back
+ * as a raw ISO string instead of the structural {@link Timestamp} the domain
+ * types declare, safe only because nothing had yet called `.toMillis()` on
+ * one read back from the database. Split into dedicated mappers, the same
+ * fix already applied to clients and corrective actions.
+ */
+function mapAudit(row: Record<string, unknown>): Audit {
   return {
-    ...row,
-    tenantId: row.tenant_id,
-    clientId: row.client_id,
-    auditId: row.audit_id,
-    findingId: row.finding_id,
-    auditNumber: row.audit_number,
-    auditType: row.audit_type,
-    auditStage: row.audit_stage,
-    leadAuditorId: row.lead_auditor_id,
-    auditTeam: row.audit_team,
-    managementRepresentativeName: row.management_representative_name,
-    plannedStartDate: row.planned_start_date,
-    plannedEndDate: row.planned_end_date,
-    auditDays: row.audit_days,
-    sitesInScope: row.sites_in_scope,
-    auditPlan: row.audit_plan,
-    aiCertificationReadinessScore: row.ai_certification_readiness_score,
-    aiRiskFlags: row.ai_risk_flags,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-    findingNumber: row.finding_number,
-    clauseNumber: row.clause_number,
-    clauseTitle: row.clause_title,
-    objectiveEvidence: row.objective_evidence,
-    nonconformityStatement: row.nonconformity_statement,
-    evidenceIds: row.evidence_ids,
-    raisedByAuditorId: row.raised_by_auditor_id,
-    raisedByAuditorName: row.raised_by_auditor_name,
-    raisedAt: row.raised_at,
-    correctiveActionId: row.corrective_action_id,
-    correctiveActionStatus: row.corrective_action_status,
-    targetClosureDate: row.target_closure_date,
-    actualClosureDate: row.actual_closure_date,
-    closedAt: row.closed_at,
-    closedByAuditorId: row.closed_by_auditor_id,
-  } as T;
+    id: row.id as string,
+    tenantId: row.tenant_id as string,
+    clientId: row.client_id as string,
+    auditNumber: row.audit_number as string,
+    auditType: row.audit_type as Audit['auditType'],
+    auditStage: row.audit_stage as Audit['auditStage'],
+    standardId: (row.standard_id as StandardId | null) ?? DEFAULT_STANDARD_ID,
+    scope: row.scope as string,
+    status: row.status as Audit['status'],
+    leadAuditorId: row.lead_auditor_id as string,
+    auditTeam: (row.audit_team as Audit['auditTeam'] | null) ?? [],
+    managementRepresentativeId: (row.management_representative_id as string | null) ?? undefined,
+    managementRepresentativeName: row.management_representative_name as string,
+    plannedStartDate: row.planned_start_date as string,
+    plannedEndDate: row.planned_end_date as string,
+    actualStartDate: (row.actual_start_date as string | null) ?? undefined,
+    actualEndDate: (row.actual_end_date as string | null) ?? undefined,
+    auditDays: Number(row.audit_days ?? 0),
+    sitesInScope: (row.sites_in_scope as string[] | null) ?? [],
+    auditPlan: (row.audit_plan as Audit['auditPlan'] | null) ?? {
+      activities: [],
+      documentReviewList: [],
+      intervieweeList: [],
+      areaInspectionList: [],
+    },
+    findings: (row.findings as Audit['findings'] | null) ?? {
+      totalFindings: 0,
+      majorNCs: 0,
+      minorNCs: 0,
+      ofis: 0,
+      strongPoints: 0,
+      observations: 0,
+      closedNCs: 0,
+      openNCs: 0,
+    },
+    aiCertificationReadinessScore: (row.ai_certification_readiness_score as number | null) ?? undefined,
+    aiRiskFlags: (row.ai_risk_flags as string[] | null) ?? [],
+    confidentiality: row.confidentiality as Audit['confidentiality'],
+    createdAt: timestampFromDate(new Date((row.created_at as string | null) ?? Date.now())),
+    updatedAt: timestampFromDate(new Date((row.updated_at as string | null) ?? Date.now())),
+    completedAt: row.completed_at
+      ? timestampFromDate(new Date(row.completed_at as string))
+      : undefined,
+    reportIssuedAt: row.report_issued_at
+      ? timestampFromDate(new Date(row.report_issued_at as string))
+      : undefined,
+  };
 }
 
 export async function listAudits(tenantId: string): Promise<Audit[]> {
@@ -89,7 +110,7 @@ export async function listAudits(tenantId: string): Promise<Audit[]> {
     .eq('tenant_id', requireTenantId(tenantId))
     .order('planned_start_date', { ascending: false });
   if (error) throw error;
-  return (data ?? []).map((row) => mapRow<Audit>(row));
+  return (data ?? []).map((row) => mapAudit(row));
 }
 
 export async function getAudit(tenantId: string, auditId: string): Promise<Audit | null> {
@@ -100,7 +121,46 @@ export async function getAudit(tenantId: string, auditId: string): Promise<Audit
     .eq('id', auditId)
     .maybeSingle();
   if (error) throw error;
-  return data ? mapRow<Audit>(data) : null;
+  return data ? mapAudit(data) : null;
+}
+
+function mapFinding(row: Record<string, unknown>): Finding {
+  return {
+    id: row.id as string,
+    auditId: row.audit_id as string,
+    tenantId: row.tenant_id as string,
+    clientId: row.client_id as string,
+    findingNumber: row.finding_number as string,
+    type: row.type as Finding['type'],
+    severity: (row.severity as Finding['severity'] | null) ?? undefined,
+    clauseNumber: row.clause_number as string,
+    clauseTitle: row.clause_title as string,
+    requirement: row.requirement as string,
+    title: row.title as string,
+    objectiveEvidence: row.objective_evidence as string,
+    nonconformityStatement: row.nonconformity_statement as string,
+    aiDraftStatement: (row.ai_draft_statement as string | null) ?? undefined,
+    siteId: (row.site_id as string | null) ?? undefined,
+    department: (row.department as string | null) ?? undefined,
+    area: (row.area as string | null) ?? undefined,
+    evidenceIds: (row.evidence_ids as string[] | null) ?? [],
+    raisedByAuditorId: row.raised_by_auditor_id as string,
+    raisedByAuditorName: row.raised_by_auditor_name as string,
+    raisedAt: timestampFromDate(new Date((row.raised_at as string | null) ?? Date.now())),
+    acknowledgedByName: (row.acknowledged_by_name as string | null) ?? undefined,
+    acknowledgedBySignatureUrl: (row.acknowledged_by_signature_url as string | null) ?? undefined,
+    acknowledgedAt: row.acknowledged_at
+      ? timestampFromDate(new Date(row.acknowledged_at as string))
+      : undefined,
+    correctiveActionId: (row.corrective_action_id as string | null) ?? undefined,
+    correctiveActionStatus: (row.corrective_action_status as Finding['correctiveActionStatus']) ?? undefined,
+    targetClosureDate: (row.target_closure_date as string | null) ?? undefined,
+    actualClosureDate: (row.actual_closure_date as string | null) ?? undefined,
+    status: row.status as Finding['status'],
+    closedAt: row.closed_at ? timestampFromDate(new Date(row.closed_at as string)) : undefined,
+    closedByAuditorId: (row.closed_by_auditor_id as string | null) ?? undefined,
+    updatedAt: timestampFromDate(new Date((row.updated_at as string | null) ?? Date.now())),
+  };
 }
 
 /**
@@ -153,7 +213,23 @@ export async function listFindings(tenantId: string, auditId: string): Promise<F
     .eq('audit_id', auditId)
     .order('raised_at', { ascending: false });
   if (error) throw error;
-  return (data ?? []).map((row) => mapRow<Finding>(row));
+  return (data ?? []).map((row) => mapFinding(row));
+}
+
+/**
+ * Every finding across the tenant, not just one audit's. The dashboard's
+ * open-nonconformity counts and severity breakdown need this: `audits.findings`
+ * is a denormalized summary nothing ever recomputes after an audit is
+ * created, so it reads all-zero forever once a real finding exists — this
+ * gives the dashboard a live source to compute those counts from instead.
+ */
+export async function listAllFindings(tenantId: string): Promise<Finding[]> {
+  const { data, error } = await createClient()
+    .from('findings')
+    .select('*')
+    .eq('tenant_id', requireTenantId(tenantId));
+  if (error) throw error;
+  return (data ?? []).map((row) => mapFinding(row));
 }
 
 /**
@@ -354,6 +430,7 @@ function mapEvidence(row: Record<string, unknown>): Evidence {
       ? timestampFromDate(new Date(row.verified_at as string))
       : undefined,
     verifiedByAuditorId: (row.verified_by_auditor_id as string | null) ?? undefined,
+    geoLocation: (row.geo_location as Evidence['geoLocation'] | null) ?? undefined,
   };
 }
 

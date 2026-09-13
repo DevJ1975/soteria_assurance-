@@ -28,6 +28,7 @@ import {
   listClauseAssessments,
   listClients,
   listCorrectiveActions,
+  listAllFindings,
   listFindings,
   recordEffectivenessReview,
   upsertClauseAssessment,
@@ -77,6 +78,16 @@ export function useFindings(auditId: string): UseQueryResult<Finding[]> {
     queryKey: ['findings', tenantId, auditId],
     queryFn: () => listFindings(tenantId, auditId),
     enabled: tenantId !== '' && auditId !== '',
+  });
+}
+
+/** Every finding across the current tenant — for dashboard-wide counts. */
+export function useAllFindings(): UseQueryResult<Finding[]> {
+  const tenantId = useTenantId();
+  return useQuery({
+    queryKey: ['findings', tenantId],
+    queryFn: () => listAllFindings(tenantId),
+    enabled: tenantId !== '',
   });
 }
 
@@ -140,7 +151,7 @@ export function useRecordEffectivenessReview(): UseMutationResult<
   return useMutation({
     mutationFn: recordEffectivenessReview,
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['corrective-actions', tenantId] });
+      void queryClient.invalidateQueries({ queryKey: ['correctiveActions', tenantId] });
       void queryClient.invalidateQueries({ queryKey: ['findings'] });
     },
   });

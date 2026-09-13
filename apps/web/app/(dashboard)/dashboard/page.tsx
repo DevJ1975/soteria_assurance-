@@ -7,7 +7,7 @@ import { SoteriaStrings } from '@soteria/core';
 import type { Audit } from '@soteria/core';
 import { Card } from '@/components/ui/Card';
 import { LoadingState, ErrorState } from '@/components/ui/States';
-import { useAudits, useCorrectiveActions } from '@/lib/hooks';
+import { useAllFindings, useAudits, useCorrectiveActions } from '@/lib/hooks';
 import { cn } from '@/lib/cn';
 
 const ACTIVE_STATUSES: ReadonlyArray<Audit['status']> = [
@@ -125,8 +125,9 @@ function ReadinessGauge({ value }: { value: number | null }) {
 export default function DashboardPage() {
   const auditsQuery = useAudits();
   const caQuery = useCorrectiveActions();
+  const findingsQuery = useAllFindings();
 
-  if (auditsQuery.isLoading || caQuery.isLoading) {
+  if (auditsQuery.isLoading || caQuery.isLoading || findingsQuery.isLoading) {
     return <LoadingState />;
   }
   if (auditsQuery.isError) {
@@ -135,25 +136,38 @@ export default function DashboardPage() {
 
   const audits = auditsQuery.data ?? [];
   const correctiveActions = caQuery.data ?? [];
+  // audits.findings is a denormalized summary nothing ever recomputes after
+  // an audit is created — it reads all-zero forever once a real finding
+  // exists. Computed live from the tenant's actual findings instead.
+  const findings = findingsQuery.data ?? [];
 
   const activeAudits = audits.filter((a) => ACTIVE_STATUSES.includes(a.status));
 
-  // Aggregate open NCs by severity from each audit's findings summary.
-  let openMajor = 0;
-  let openMinor = 0;
-  for (const audit of audits) {
-    openMajor += audit.findings.majorNCs;
-    openMinor += audit.findings.minorNCs;
-  }
-  const openNCs = audits.reduce((sum, a) => sum + a.findings.openNCs, 0);
+  const openFindings = findings.filter((f) => f.status !== 'closed');
+  const openMajor = openFindings.filter((f) => f.type === 'major_nc').length;
+  const openMinor = openFindings.filter((f) => f.type === 'minor_nc').length;
+  const openNCs = openFindings.length;
 
-  // Overdue corrective actions: target date in the past and not closed.
-  const now = Date.now();
+  const findingsByAudit = new Map<string, typeof findings>();
+  for (const finding of findings) {
+    const forAudit = findingsByAudit.get(finding.auditId) ?? [];
+    forAudit.push(finding);
+    findingsByAudit.set(finding.auditId, forAudit);
+  }
+
+  // Overdue corrective actions: target date has passed and the action is
+  // still open — 'accepted' and 'closed' are both terminal (matching
+  // public.ca_is_open() on the database side), not just 'closed'. targetDate
+  // is a date-only column; parsed as local midnight rather than UTC so the
+  // badge doesn't flip up to a day early for any tenant west of UTC.
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const now = today.getTime();
   const overdueCAList = correctiveActions.filter((ca) => {
-    if (ca.status === 'closed') {
+    if (ca.status === 'accepted' || ca.status === 'closed') {
       return false;
     }
-    const target = new Date(ca.targetDate).getTime();
+    const target = new Date(`${ca.targetDate}T00:00:00`).getTime();
     return Number.isFinite(target) && target < now;
   });
   const overdueCAs = overdueCAList.length;
@@ -273,8 +287,10 @@ export default function DashboardPage() {
           ) : (
             <ul>
               {activeAudits.slice(0, 5).map((audit) => {
-                const total = audit.findings.totalFindings || 1;
-                const pct = Math.round((audit.findings.closedNCs / total) * 100);
+                const auditFindings = findingsByAudit.get(audit.id) ?? [];
+                const total = auditFindings.length || 1;
+                const closed = auditFindings.filter((f) => f.status === 'closed').length;
+                const pct = Math.round((closed / total) * 100);
                 return (
                   <li key={audit.id} className="border-t border-[#EEF1F6]">
                     <Link
@@ -323,7 +339,7 @@ export default function DashboardPage() {
               {overdueCAList.slice(0, 6).map((ca) => {
                 const daysOver = Math.max(
                   0,
-                  Math.round((now - new Date(ca.targetDate).getTime()) / 86_400_000),
+                  Math.round((now - new Date(`${ca.targetDate}T00:00:00`).getTime()) / 86_400_000),
                 );
                 return (
                   <li key={ca.id} className="border-t border-[#EEF1F6]">

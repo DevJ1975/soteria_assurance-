@@ -23,12 +23,11 @@ export function EffectivenessReview({ correctiveAction }: { correctiveAction: Co
   const [open, setOpen] = useState(false);
   const [result, setResult] = useState('');
 
-  // Only a submitted action can be reviewed — the database enforces this too,
-  // so the UI simply does not offer it rather than failing on submit.
+  // A submitted or previously-rejected action can be reviewed; an accepted
+  // one is closed and stays closed — the database enforces this too, so the
+  // UI simply does not offer it rather than failing on submit.
   const reviewable =
-    correctiveAction.status === 'submitted' ||
-    correctiveAction.status === 'rejected' ||
-    correctiveAction.status === 'accepted';
+    correctiveAction.status === 'submitted' || correctiveAction.status === 'rejected';
   if (!reviewable) return null;
 
   function submit(effective: boolean) {

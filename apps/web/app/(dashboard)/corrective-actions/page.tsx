@@ -9,7 +9,13 @@ import { EffectivenessReview } from '@/components/EffectivenessReview';
 
 export default function CorrectiveActionsPage() {
   const { data, isLoading, isError } = useCorrectiveActions();
-  const now = Date.now();
+  // targetDate is a date-only column; parsed as local midnight rather than
+  // UTC so the badge doesn't flip up to a day early for any tenant west of
+  // UTC, and compared against local midnight "today" rather than the exact
+  // current instant.
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const now = today.getTime();
 
   return (
     <div className="flex flex-col gap-lg">
@@ -26,9 +32,15 @@ export default function CorrectiveActionsPage() {
       ) : (
         <div className="flex flex-col gap-md">
           {(data ?? []).map((ca) => {
-            const target = new Date(ca.targetDate).getTime();
+            const target = new Date(`${ca.targetDate}T00:00:00`).getTime();
+            // 'accepted' is terminal too, matching public.ca_is_open() on
+            // the database side — not just 'closed', which nothing ever
+            // actually writes.
             const overdue =
-              ca.status !== 'closed' && Number.isFinite(target) && target < now;
+              ca.status !== 'accepted' &&
+              ca.status !== 'closed' &&
+              Number.isFinite(target) &&
+              target < now;
             return (
               <Card key={ca.id}>
                 <CardBody className="flex flex-col gap-sm">

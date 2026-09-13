@@ -10,6 +10,11 @@
 import { HttpError, handleRequest, jsonResponse, requireCaller, serviceClient } from '../_shared/auth.ts';
 import { renderReportPdf, type AuditReportData } from './pdfRenderer.ts';
 
+// Same set of roles that can read/manage audit data day to day. A `viewer` or
+// `auditee` (the organization being audited) can read what they're scoped to,
+// but must not be able to mint the official report themselves.
+const ALLOWED_ROLES = new Set(['super_admin', 'tenant_admin', 'lead_auditor', 'auditor']);
+
 interface GenerateReportPdfRequest {
   tenantId?: unknown;
   auditId?: unknown;
@@ -27,6 +32,9 @@ Deno.serve(
     if (request.method !== 'POST') throw new HttpError(405, 'Method not allowed.');
 
     const caller = await requireCaller(request);
+    if (!ALLOWED_ROLES.has(caller.role)) {
+      throw new HttpError(403, 'You do not have permission to generate audit reports.');
+    }
     const body = (await request.json().catch(() => ({}))) as GenerateReportPdfRequest;
 
     const auditId = requireString(body.auditId, 'auditId');
@@ -43,20 +51,28 @@ Deno.serve(
       .eq('id', auditId)
       .eq('tenant_id', tenantId)
       .maybeSingle();
-    if (auditError) throw new HttpError(500, 'Could not load the audit.');
+    if (auditError) {
+      console.error(auditError);
+      throw new HttpError(500, 'Could not load the audit.');
+    }
     if (!audit) throw new HttpError(404, 'That audit does not exist.');
 
     let client: { organizationName: string } | null = null;
     if (audit.client_id) {
-      const { data: clientRow } = await admin
+      const { data: clientRow, error: clientError } = await admin
         .from('clients')
         .select('organization_name')
         .eq('id', audit.client_id)
         .maybeSingle();
+      if (clientError) console.error(clientError);
       client = clientRow ? { organizationName: clientRow.organization_name } : null;
     }
 
-    const [{ data: findings }, { data: clauses }, { data: correctiveActions }] = await Promise.all([
+    const [
+      { data: findings, error: findingsError },
+      { data: clauses, error: clausesError },
+      { data: correctiveActions, error: correctiveActionsError },
+    ] = await Promise.all([
       admin
         .from('findings')
         .select('finding_number, clause_number, title, type, status')
@@ -76,6 +92,29 @@ Deno.serve(
         .eq('audit_id', auditId)
         .order('target_date'),
     ]);
+    // A failed query here must not silently render a report with an emptied
+    // section — that would look indistinguishable from a clean audit.
+    if (findingsError || clausesError || correctiveActionsError) {
+      console.error(findingsError, clausesError, correctiveActionsError);
+      throw new HttpError(500, "Could not load the audit's findings, clauses, or corrective actions.");
+    }
+
+    // audits.findings is a denormalized summary nothing ever recomputes after
+    // the audit is created — it is permanently all-zero the moment a real
+    // finding is raised. Computed live from the findings this function
+    // already fetched instead, so the summary block above the findings table
+    // can never disagree with the table itself.
+    const findingRows = findings ?? [];
+    const findingsSummary = {
+      totalFindings: findingRows.length,
+      majorNCs: findingRows.filter((f) => f.type === 'major_nc').length,
+      minorNCs: findingRows.filter((f) => f.type === 'minor_nc').length,
+      ofis: findingRows.filter((f) => f.type === 'ofi').length,
+      strongPoints: findingRows.filter((f) => f.type === 'strong_point').length,
+      observations: findingRows.filter((f) => f.type === 'observation').length,
+      closedNCs: findingRows.filter((f) => f.status === 'closed').length,
+      openNCs: findingRows.filter((f) => f.status !== 'closed').length,
+    };
 
     const reportData: AuditReportData = {
       audit: {
@@ -83,19 +122,7 @@ Deno.serve(
         standardId: audit.standard_id,
         scope: audit.scope ?? '',
         status: audit.status,
-        // audits.findings is the same jsonb summary the dashboard reads; a
-        // row created without one defaults to '{}', so every field is
-        // defaulted here rather than trusting the shape.
-        findings: {
-          totalFindings: audit.findings?.totalFindings ?? 0,
-          majorNCs: audit.findings?.majorNCs ?? 0,
-          minorNCs: audit.findings?.minorNCs ?? 0,
-          ofis: audit.findings?.ofis ?? 0,
-          strongPoints: audit.findings?.strongPoints ?? 0,
-          observations: audit.findings?.observations ?? 0,
-          closedNCs: audit.findings?.closedNCs ?? 0,
-          openNCs: audit.findings?.openNCs ?? 0,
-        },
+        findings: findingsSummary,
       },
       client,
       findings: (findings ?? []).map((f) => ({

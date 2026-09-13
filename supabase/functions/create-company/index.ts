@@ -12,6 +12,7 @@
  */
 import {
   HttpError,
+  findAuthUserByEmail,
   handleRequest,
   jsonResponse,
   requireCaller,
@@ -66,7 +67,10 @@ Deno.serve(
         .select('id')
         .eq('email', adminEmail)
         .maybeSingle();
-      if (error) throw new HttpError(500, 'Could not check existing users.');
+      if (error) {
+        console.error(error);
+        throw new HttpError(500, 'Could not check existing users.');
+      }
       if (existing) {
         throw new HttpError(409, 'That email address already belongs to an account.');
       }
@@ -106,6 +110,46 @@ Deno.serve(
         { tenant, invited: false, emailSent: false, warning: 'The administrator invitation could not be recorded.' },
         207,
       );
+    }
+
+    // Someone may already hold an account without a profile in any tenant —
+    // `inviteUserByEmail` refuses an address that already exists, so that
+    // case is handled directly here (mirrors invite-auditor's own handling).
+    const existingUser = await findAuthUserByEmail(admin, adminEmail);
+    if (existingUser) {
+      if (!existingUser.confirmed) {
+        // The confirmation trigger will pick the invitation up when they
+        // finish verifying their address. Nothing more to send.
+        return jsonResponse({ tenant, invitation, invited: true, emailSent: false, awaitingConfirmation: true });
+      }
+
+      // A confirmed address has already passed the point where the trigger
+      // fires, so the invitation is applied directly.
+      const { error: profileError } = await admin.from('profiles').insert({
+        id: existingUser.id,
+        tenant_id: tenant.id,
+        email: existingUser.email,
+        display_name: adminName || existingUser.email.split('@')[0],
+        role: 'tenant_admin',
+      });
+      if (profileError) {
+        console.error(profileError);
+        return jsonResponse(
+          {
+            tenant,
+            invitation,
+            invited: true,
+            emailSent: false,
+            warning: 'The company was created, but the administrator could not be added to it. Resend it from the Invitations tab.',
+          },
+          207,
+        );
+      }
+      await admin
+        .from('auditor_invitations')
+        .update({ status: 'accepted', accepted_at: new Date().toISOString(), accepted_by: existingUser.id })
+        .eq('id', invitation.id);
+      return jsonResponse({ tenant, invitation, invited: true, emailSent: false, provisioned: true });
     }
 
     const { error: sendError } = await admin.auth.admin.inviteUserByEmail(adminEmail, {

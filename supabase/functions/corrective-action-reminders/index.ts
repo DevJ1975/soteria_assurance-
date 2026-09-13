@@ -102,7 +102,8 @@ Deno.serve(
 
     // Run escalation first so a newly-overdue action is chased as overdue in
     // the same pass rather than a day later.
-    const { data: escalated } = await admin.rpc('escalate_overdue_corrective_actions');
+    const { data: escalated, error: escalateError } = await admin.rpc('escalate_overdue_corrective_actions');
+    if (escalateError) console.error(escalateError);
 
     const { data, error } = await admin
       .from('corrective_actions_due')
@@ -134,15 +135,26 @@ Deno.serve(
       }
 
       // Stamped only after a successful send, so a provider outage means the
-      // next run retries rather than silently skipping a day.
-      await admin
+      // next run retries rather than silently skipping a day. The cutoff is
+      // re-checked here, at write time, so two overlapping runs can't both
+      // win the update and double-count (or under-increment) the same row.
+      const { data: updatedRows, error: updateError } = await admin
         .from('corrective_actions')
         .update({
           last_reminder_sent_at: new Date().toISOString(),
           reminder_count: row.reminder_count + 1,
         })
-        .eq('id', row.id);
-      sent += 1;
+        .eq('id', row.id)
+        // The value is quoted because it contains a "." (millisecond
+        // separator), which `or()` would otherwise parse as part of its own
+        // column.operator.value delimiters.
+        .or(`last_reminder_sent_at.is.null,last_reminder_sent_at.lt."${new Date(cutoff).toISOString()}"`)
+        .select('id');
+      if (updateError) {
+        console.error(updateError);
+      } else if (updatedRows && updatedRows.length > 0) {
+        sent += 1;
+      }
     }
 
     return jsonResponse({
