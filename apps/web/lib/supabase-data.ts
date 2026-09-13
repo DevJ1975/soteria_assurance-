@@ -1,8 +1,11 @@
 import { DEFAULT_STANDARD_ID, type StandardId } from '@soteria/core';
 import type {
   Audit,
+  CAHistoryEntry,
   ClauseAssessment,
   Client,
+  ClientAddress,
+  ClientSite,
   ConformityStatus,
   CorrectiveAction,
   Evidence,
@@ -100,6 +103,38 @@ export async function getAudit(tenantId: string, auditId: string): Promise<Audit
   return data ? mapRow<Audit>(data) : null;
 }
 
+/**
+ * Clients carry two nested JSON structures (address, sites) and a plain
+ * uuid[] of audit ids, none of which the generic row mapper handles — and
+ * without a dedicated mapper this table's rows were returned bare, so every
+ * screen reading `client.organizationName` / `.certificationStatus` /
+ * `.numberOfEmployees` silently read `undefined`. Nested JSON is stored
+ * already shaped like its domain type (the same convention `audit_plan` and
+ * `audit_team` use on audits), so it is cast through rather than re-mapped
+ * key by key.
+ */
+function mapClient(row: Record<string, unknown>): Client {
+  return {
+    id: row.id as string,
+    tenantId: row.tenant_id as string,
+    organizationName: row.organization_name as string,
+    industry: (row.industry as string | null) ?? '',
+    address: (row.address as ClientAddress | null) ?? ({} as ClientAddress),
+    contactName: (row.contact_name as string | null) ?? '',
+    contactEmail: (row.contact_email as string | null) ?? '',
+    contactPhone: (row.contact_phone as string | null) ?? '',
+    numberOfEmployees: Number(row.number_of_employees ?? 0),
+    numberOfSites: Number(row.number_of_sites ?? 0),
+    sites: (row.sites as ClientSite[] | null) ?? [],
+    certificationStatus: row.certification_status as Client['certificationStatus'],
+    certificationBody: (row.certification_body as string | null) ?? undefined,
+    certificationExpiry: (row.certification_expiry as string | null) ?? undefined,
+    auditHistory: (row.audit_history as string[] | null) ?? [],
+    createdAt: timestampFromDate(new Date((row.created_at as string | null) ?? Date.now())),
+    updatedAt: timestampFromDate(new Date((row.updated_at as string | null) ?? Date.now())),
+  };
+}
+
 export async function listClients(tenantId: string): Promise<Client[]> {
   const { data, error } = await createClient()
     .from('clients')
@@ -107,7 +142,7 @@ export async function listClients(tenantId: string): Promise<Client[]> {
     .eq('tenant_id', requireTenantId(tenantId))
     .order('organization_name');
   if (error) throw error;
-  return (data ?? []).map((row) => mapRow<Client>(row));
+  return (data ?? []).map((row) => mapClient(row));
 }
 
 export async function listFindings(tenantId: string, auditId: string): Promise<Finding[]> {
@@ -121,13 +156,60 @@ export async function listFindings(tenantId: string, auditId: string): Promise<F
   return (data ?? []).map((row) => mapRow<Finding>(row));
 }
 
+/**
+ * Corrective actions have the same problem as clients: nothing aliased their
+ * columns, so `ca.caNumber`, `.responsiblePersonName` and `.targetDate` — what
+ * the corrective-actions screen actually reads — were all `undefined`.
+ *
+ * `history` is cast through rather than validated: the escalation and
+ * effectiveness-review database functions (see
+ * 20260912130000_corrective_action_controls.sql) append entries shaped
+ * `{at, event, by, detail}`, not this type's `{timestamp, action,
+ * performedBy, notes}`. Nothing reads `history` today, so this mapper does
+ * not paper over that — reconciling the two shapes is a separate change.
+ */
+function mapCorrectiveAction(row: Record<string, unknown>): CorrectiveAction {
+  return {
+    id: row.id as string,
+    tenantId: row.tenant_id as string,
+    clientId: row.client_id as string,
+    auditId: row.audit_id as string,
+    findingId: row.finding_id as string,
+    caNumber: row.ca_number as string,
+    title: row.title as string,
+    rootCauseMethod: row.root_cause_method as CorrectiveAction['rootCauseMethod'],
+    rootCauseAnalysis: (row.root_cause_analysis as string | null) ?? '',
+    immediateAction: (row.immediate_action as string | null) ?? '',
+    correctiveAction: (row.corrective_action as string | null) ?? '',
+    preventiveAction: (row.preventive_action as string | null) ?? '',
+    effectivenessCheck: (row.effectiveness_check as string | null) ?? '',
+    effectivenessCheckDate: (row.effectiveness_check_date as string | null) ?? undefined,
+    effectivenessResult: (row.effectiveness_result as CorrectiveAction['effectivenessResult']) ?? undefined,
+    responsiblePersonName: (row.responsible_person_name as string | null) ?? '',
+    responsiblePersonEmail: (row.responsible_person_email as string | null) ?? '',
+    targetDate: row.target_date as string,
+    submittedDate: (row.submitted_date as string | null) ?? undefined,
+    reviewedDate: (row.reviewed_date as string | null) ?? undefined,
+    closedDate: (row.closed_date as string | null) ?? undefined,
+    closureEvidenceIds: (row.closure_evidence_ids as string[] | null) ?? [],
+    closureNotes: (row.closure_notes as string | null) ?? undefined,
+    reviewedByAuditorId: (row.reviewed_by_auditor_id as string | null) ?? undefined,
+    reviewNotes: (row.review_notes as string | null) ?? undefined,
+    status: row.status as CorrectiveAction['status'],
+    aiRootCauseSuggestion: (row.ai_root_cause_suggestion as string | null) ?? undefined,
+    history: (row.history as CAHistoryEntry[] | null) ?? [],
+    createdAt: timestampFromDate(new Date((row.created_at as string | null) ?? Date.now())),
+    updatedAt: timestampFromDate(new Date((row.updated_at as string | null) ?? Date.now())),
+  };
+}
+
 export async function listCorrectiveActions(tenantId: string): Promise<CorrectiveAction[]> {
   const { data, error } = await createClient()
     .from('corrective_actions')
     .select('*')
     .eq('tenant_id', requireTenantId(tenantId));
   if (error) throw error;
-  return (data ?? []).map((row) => mapRow<CorrectiveAction>(row));
+  return (data ?? []).map((row) => mapCorrectiveAction(row));
 }
 
 /**
