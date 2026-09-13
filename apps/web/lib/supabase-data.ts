@@ -161,13 +161,26 @@ export async function listFindings(tenantId: string, auditId: string): Promise<F
  * columns, so `ca.caNumber`, `.responsiblePersonName` and `.targetDate` — what
  * the corrective-actions screen actually reads — were all `undefined`.
  *
- * `history` is cast through rather than validated: the escalation and
- * effectiveness-review database functions (see
- * 20260912130000_corrective_action_controls.sql) append entries shaped
- * `{at, event, by, detail}`, not this type's `{timestamp, action,
- * performedBy, notes}`. Nothing reads `history` today, so this mapper does
- * not paper over that — reconciling the two shapes is a separate change.
+ * `history` entries are stored as `{timestamp, action, performedBy, notes}`
+ * (see 20260913020000_fix_ca_history_shape.sql), matching this type field for
+ * field, except `timestamp` is a raw ISO string in the jsonb — it still needs
+ * converting to a structural {@link Timestamp} the way `completedAt` and
+ * `updatedAt` are below.
  */
+interface RawCAHistoryEntry {
+  timestamp: string;
+  action: string;
+  performedBy: string;
+  notes?: string;
+}
+
+function mapCAHistory(rawHistory: RawCAHistoryEntry[] | null): CAHistoryEntry[] {
+  return (rawHistory ?? []).map((entry) => ({
+    ...entry,
+    timestamp: timestampFromDate(new Date(entry.timestamp)),
+  }));
+}
+
 function mapCorrectiveAction(row: Record<string, unknown>): CorrectiveAction {
   return {
     id: row.id as string,
@@ -197,7 +210,7 @@ function mapCorrectiveAction(row: Record<string, unknown>): CorrectiveAction {
     reviewNotes: (row.review_notes as string | null) ?? undefined,
     status: row.status as CorrectiveAction['status'],
     aiRootCauseSuggestion: (row.ai_root_cause_suggestion as string | null) ?? undefined,
-    history: (row.history as CAHistoryEntry[] | null) ?? [],
+    history: mapCAHistory(row.history as RawCAHistoryEntry[] | null),
     createdAt: timestampFromDate(new Date((row.created_at as string | null) ?? Date.now())),
     updatedAt: timestampFromDate(new Date((row.updated_at as string | null) ?? Date.now())),
   };

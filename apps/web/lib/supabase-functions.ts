@@ -110,23 +110,34 @@ export async function callSummarizeMeeting(
   return data as SummarizeMeetingResult;
 }
 
+export interface GenerateReportPdfResult {
+  storagePath: string;
+  reportId: string | null;
+  size: number;
+  generatedAt: string;
+}
+
 /**
- * Report PDF generation.
+ * Renders the audit report to PDF server-side and stores it in the private
+ * `reports` bucket.
  *
- * Deliberately still unimplemented. The Firebase version rendered HTML with
- * Puppeteer, and Chromium cannot run in a Supabase Edge Function — the Deno
- * runtime has no browser and no way to ship one. This needs a different home
- * (a Node runtime that can carry Chromium, or a PDF service) rather than a
- * fifth Edge Function, so it is left as an explicit gap instead of a stub that
- * looks like it might work.
+ * The earlier assumption here was that this needed a Chromium-capable
+ * runtime, because the Firebase-era README documented Puppeteer. That
+ * documentation described an aspiration the Firebase codebase itself never
+ * built: the code that actually shipped
+ * (functions/src/audit/{pdfRenderer,generateReportPdf}.ts, recovered from git
+ * history) rendered with pdf-lib — pure JavaScript, no browser — which is
+ * exactly why it runs as an Edge Function here.
  */
-export async function callGenerateReportPdf(_request: {
+export async function callGenerateReportPdf(request: {
   tenantId: string;
   auditId: string;
-}): Promise<{ storagePath: string }> {
-  throw new Error(
-    'Report generation is not available yet: PDF rendering needs a runtime that can run Chromium, which Edge Functions cannot.',
-  );
+}): Promise<GenerateReportPdfResult> {
+  const { data, error } = await createClient().functions.invoke('generate-report-pdf', {
+    body: request,
+  });
+  if (error) throw error;
+  return data as GenerateReportPdfResult;
 }
 
 /**

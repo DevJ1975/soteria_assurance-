@@ -451,3 +451,7 @@ verify_jwt = true
 [functions.corrective-action-reminders]
 enabled = true
 verify_jwt = false
+
+[functions.generate-report-pdf]
+enabled = true
+verify_jwt = true
