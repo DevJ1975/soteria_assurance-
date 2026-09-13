@@ -415,3 +415,30 @@ export async function recordEffectivenessReview(input: {
   });
   if (error) throw error;
 }
+
+/* ------------------------------------------------------- document numbers */
+
+/**
+ * Allocates the next sequence number for a tenant-scoped document series
+ * (audit numbers, finding numbers, ...) for the given prefix and year.
+ *
+ * Goes through the `next_document_seq` database function rather than a
+ * client-generated random number: audits and findings are each constrained
+ * `UNIQUE (tenant_id, number)`, and a random 1-900 pick collides routinely at
+ * real usage volumes. The function's upsert takes a row lock, so concurrent
+ * callers in the same tenant get distinct, gapless sequence values rather than
+ * racing on a value each computed independently.
+ */
+export async function nextDocumentSeq(
+  tenantId: string,
+  prefix: string,
+  year: number,
+): Promise<number> {
+  const { data, error } = await createClient().rpc('next_document_seq', {
+    p_tenant_id: requireTenantId(tenantId),
+    p_prefix: prefix,
+    p_year: year,
+  });
+  if (error) throw error;
+  return data as number;
+}

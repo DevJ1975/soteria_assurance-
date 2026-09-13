@@ -20,7 +20,7 @@ import { LoadingState, EmptyState, ErrorState } from '@/components/ui/States';
 import { useAudit, useFindings, useTenantId } from '@/lib/hooks';
 import { useAuth } from '@/lib/auth-context';
 import { callDraftNCR } from '@/lib/supabase-functions';
-import { insertFinding, timestampNow } from '@/lib/supabase-data';
+import { insertFinding, nextDocumentSeq, timestampNow } from '@/lib/supabase-data';
 
 const FINDING_TYPES = Object.keys(FINDING_TYPE_META) as FindingType[];
 
@@ -96,15 +96,27 @@ function FindingsView() {
     try {
       const id = crypto.randomUUID();
       const now = timestampNow();
+      const year = new Date().getFullYear();
+      // The finding's clientId comes from the audit it belongs to — every
+      // finding is raised within an audit, and an audit is always against one
+      // client. Left as '' this violated findings.client_id's NOT NULL
+      // constraint and silently failed every save.
+      const clientId = auditQuery.data?.clientId ?? '';
+      if (clientId === '') {
+        setError(SoteriaStrings.errors.notFound);
+        setSaving(false);
+        return;
+      }
+      // See NewAuditWizard.tsx for why this is a database sequence rather
+      // than a random guess: findings are UNIQUE (tenant_id, finding_number).
+      const seq = await nextDocumentSeq(tenantId, 'NCR', year);
       const isNC = type === 'major_nc' || type === 'minor_nc';
       const finding: Finding = {
         id,
         auditId,
         tenantId,
-        clientId: '',
-        findingNumber: `NCR-${new Date().getFullYear()}-${String(
-          Math.floor(Math.random() * 900) + 1,
-        ).padStart(3, '0')}`,
+        clientId,
+        findingNumber: `NCR-${year}-${String(seq).padStart(3, '0')}`,
         type,
         ...(isNC ? { severity: type === 'major_nc' ? 'major' : 'minor' } : {}),
         clauseNumber,

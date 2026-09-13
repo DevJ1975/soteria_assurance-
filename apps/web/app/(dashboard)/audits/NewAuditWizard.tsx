@@ -14,7 +14,7 @@ import {
 import type { Audit, AuditType, StandardId } from '@soteria/core';
 import { useTenantId, useClients } from '@/lib/hooks';
 import { useAuth } from '@/lib/auth-context';
-import { insertAudit, timestampNow } from '@/lib/supabase-data';
+import { insertAudit, nextDocumentSeq, timestampNow } from '@/lib/supabase-data';
 import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Input, Select, Textarea } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
@@ -98,9 +98,12 @@ export function NewAuditWizard({ open, onClose, onCreated }: NewAuditWizardProps
       const id = crypto.randomUUID();
       const now = timestampNow();
       const year = new Date().getFullYear();
-      // Sequence is approximated client-side; the backend reconciles canonical
-      // numbering. Uses the core generator (RULE 4 — no ad-hoc formatting).
-      const auditNumber = generateAuditNumber(year, Math.floor(Math.random() * 900) + 1);
+      // The sequence comes from the database, not a client guess: audits are
+      // UNIQUE (tenant_id, audit_number), and a random 1-900 pick collides
+      // routinely at real usage volumes. next_document_seq() takes a row lock,
+      // so two auditors creating an audit at once still get distinct numbers.
+      const seq = await nextDocumentSeq(tenantId, 'AUD', year);
+      const auditNumber = generateAuditNumber(year, seq);
 
       const audit: Audit = {
         id,
