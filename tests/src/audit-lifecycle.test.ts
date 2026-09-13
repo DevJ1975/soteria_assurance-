@@ -104,7 +104,7 @@ describe('audit lifecycle', () => {
         finding_id: chain.findingId,
         ca_number: `CA-${Date.now()}`,
         title: 'Fit the guard',
-        root_cause_method: '5why',
+        root_cause_method: 'five_why',
         target_date: '2026-03-01',
         status: 'submitted',
       })
@@ -138,7 +138,7 @@ describe('audit lifecycle', () => {
         finding_id: chain.findingId,
         ca_number: `CA-PENDING-${Date.now()}`,
         title: 'Not submitted',
-        root_cause_method: '5why',
+        root_cause_method: 'five_why',
         target_date: '2026-03-01',
         status: 'pending',
       })
