@@ -3,16 +3,22 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { SoteriaStrings, getStandard } from '@soteria/core';
+import { SoteriaStrings, computeFindingsSummary, getStandard } from '@soteria/core';
 import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { LoadingState, EmptyState, ErrorState } from '@/components/ui/States';
-import { useAudit } from '@/lib/hooks';
+import { useAudit, useFindings } from '@/lib/hooks';
+import { AuditLifecycleControls } from './AuditLifecycleControls';
+import { MeetingRecord } from './MeetingRecord';
+import { AuditPlanBuilder } from './AuditPlanBuilder';
+import { EvidencePanel } from './EvidencePanel';
+import { GovernancePanel } from './GovernancePanel';
 
 function AuditView() {
   const params = useSearchParams();
   const auditId = params.get('id') ?? '';
   const { data: audit, isLoading, isError } = useAudit(auditId);
+  const { data: findings } = useFindings(auditId);
 
   if (auditId === '') {
     return <EmptyState message={SoteriaStrings.errors.notFound} />;
@@ -27,7 +33,12 @@ function AuditView() {
     return <EmptyState message={SoteriaStrings.errors.notFound} />;
   }
 
-  const summary = audit.findings;
+  // Computed live from the findings, NOT read from `audits.findings`.
+  // That denormalized jsonb column is written as all-zeros when the audit is
+  // created and nothing ever recomputes it, so this card showed "Major: 0"
+  // for an audit carrying twelve nonconformities. The report generator and the
+  // dashboard already compute live; this screen and its mobile twin did not.
+  const summary = computeFindingsSummary(findings ?? []);
 
   return (
     <div className="flex flex-col gap-lg">
@@ -38,6 +49,8 @@ function AuditView() {
         </div>
         <Badge tone="primary">{audit.status.replace('_', ' ')}</Badge>
       </div>
+
+      <AuditLifecycleControls audit={audit} openNCs={summary.openNCs} />
 
       <div className="flex flex-wrap gap-sm">
         <Link href={`/audits/clauses?id=${encodeURIComponent(audit.id)}`}>
@@ -64,6 +77,14 @@ function AuditView() {
             <Row label="Confidentiality" value={audit.confidentiality} />
           </CardBody>
         </Card>
+
+        <GovernancePanel audit={audit} />
+
+        <AuditPlanBuilder audit={audit} />
+
+        <MeetingRecord auditId={audit.id} findings={findings ?? []} />
+
+        <EvidencePanel auditId={audit.id} />
 
         <Card>
           <CardHeader>

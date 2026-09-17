@@ -14,10 +14,14 @@ import type React from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Button, Divider, Text, TextInput } from 'react-native-paper';
-import type { ConformityStatus } from '@soteria/core';
+import { Button, Divider, SegmentedButtons, Text, TextInput } from 'react-native-paper';
+import type { ConformityStatus, ConformityVerdict, SubClauseNote } from '@soteria/core';
 import {
-  DEFAULT_STANDARD_ID, SoteriaStrings, clauseScoreFromVerdicts } from '@soteria/core';
+  DEFAULT_STANDARD_ID,
+  SoteriaStrings,
+  clauseScoreFromVerdicts,
+  seedSubClauseNotes,
+} from '@soteria/core';
 import { getClauseByNumber } from '@soteria/core';
 import { Screen } from '../../../../../components/common/Screen';
 import { EmptyState, LoadingState, SectionHeading } from '../../../../../components/common/StateViews';
@@ -57,6 +61,7 @@ export default function ClauseAssessmentScreen(): React.JSX.Element {
 
   const [status, setStatus] = useState<ConformityStatus>('not_audited');
   const [notes, setNotes] = useState('');
+  const [subNotes, setSubNotes] = useState<SubClauseNote[]>([]);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -69,7 +74,21 @@ export default function ClauseAssessmentScreen(): React.JSX.Element {
       setStatus(assessment.conformityStatus);
       setNotes(assessment.auditorNotes);
     }
-  }, [assessment]);
+    // Seed the checklist from the clause dataset when no verdicts have been
+    // recorded yet — the same seeder the web editor uses, so both platforms
+    // score from identical questions with identical weights.
+    const existing = assessment?.subClauseNotes ?? [];
+    setSubNotes(existing.length > 0 ? existing : seedSubClauseNotes(DEFAULT_STANDARD_ID, clauseId));
+  }, [assessment, clauseId]);
+
+  const derivedScore = useMemo(() => clauseScoreFromVerdicts(subNotes), [subNotes]);
+  const hasVerdicts = subNotes.some((note) => note.conformityVerdict !== 'na');
+
+  const setVerdict = (index: number, verdict: ConformityVerdict): void => {
+    setSubNotes((current) =>
+      current.map((note, i) => (i === index ? { ...note, conformityVerdict: verdict } : note)),
+    );
+  };
 
   if (clause === undefined) {
     return (
@@ -90,11 +109,10 @@ export default function ClauseAssessmentScreen(): React.JSX.Element {
   const handleSave = async (markComplete: boolean): Promise<void> => {
     setSaving(true);
     try {
-      const existingNotes = assessment?.subClauseNotes ?? [];
-      // Prefer a verdict-derived score when sub-clause notes exist; otherwise
-      // fall back to the status-representative score.
-      const score =
-        existingNotes.length > 0 ? clauseScoreFromVerdicts(existingNotes) : scoreForStatus(status);
+      // Verdict-derived whenever the auditor recorded any verdict — identical
+      // to the web editor. The fixed per-status mapping is only a fallback
+      // for a clause assessed without working the checklist at all.
+      const score = hasVerdicts ? derivedScore : scoreForStatus(status);
       await upsertClauseAssessment({
         auditId,
         tenantId,
@@ -104,7 +122,7 @@ export default function ClauseAssessmentScreen(): React.JSX.Element {
         conformityStatus: status,
         score,
         auditorNotes: notes,
-        subClauseNotes: existingNotes,
+        subClauseNotes: subNotes,
         isComplete: markComplete,
       });
       if (markComplete) {
@@ -130,10 +148,26 @@ export default function ClauseAssessmentScreen(): React.JSX.Element {
         <Bullet key={`focus-${i}`} text={focus} />
       ))}
 
-      <SectionHeading title="Typical questions" />
-      {clause.typicalAuditQuestions.map((q, i) => (
-        <Bullet key={`q-${i}`} text={q} />
+      <SectionHeading title="Checklist" />
+      {subNotes.map((note, i) => (
+        <View key={`q-${i}`} style={styles.checkItem}>
+          <Text style={styles.body}>{note.auditQuestion}</Text>
+          <SegmentedButtons
+            density="small"
+            value={note.conformityVerdict}
+            onValueChange={(value): void => setVerdict(i, value as ConformityVerdict)}
+            buttons={[
+              { value: 'yes', label: 'Yes' },
+              { value: 'partial', label: 'Partial' },
+              { value: 'no', label: 'No' },
+              { value: 'na', label: 'N/A' },
+            ]}
+          />
+        </View>
       ))}
+      {hasVerdicts ? (
+        <Text style={styles.scoreLine}>{`Derived score: ${derivedScore}%`}</Text>
+      ) : null}
 
       <SectionHeading title="Common nonconformities" />
       {clause.commonNonconformities.map((nc, i) => (
@@ -208,6 +242,13 @@ const styles = StyleSheet.create({
   bulletRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.xs },
   bulletDot: { color: colors.primary[500], fontSize: fontSize.md },
   bulletText: { flex: 1, fontSize: fontSize.sm, color: colors.textSecondary },
+  checkItem: { gap: spacing.xs, marginBottom: spacing.sm },
+  scoreLine: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
+    color: colors.primary[600],
+    marginTop: spacing.xs,
+  },
   divider: { marginVertical: spacing.lg },
   actions: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.md, marginTop: spacing.lg },
 });

@@ -91,11 +91,20 @@ export function auditToRow(model: Audit): Record<string, unknown> {
   };
 }
 
-export function clauseToRow(model: ClauseAssessment): Record<string, unknown> {
+/**
+ * `auditRemoteId` is the PARENT AUDIT'S SERVER UUID, resolved by the sync
+ * manager. It is not `model.auditId`: that is the local WatermelonDB id, and
+ * sending it into the `uuid` foreign-key column is what made every child push
+ * fail permanently.
+ */
+export function clauseToRow(
+  model: ClauseAssessment,
+  auditRemoteId: string,
+): Record<string, unknown> {
   return {
     ...baseRow(model),
     ...(model.remoteId ? { id: model.remoteId } : {}),
-    audit_id: model.auditId,
+    audit_id: auditRemoteId,
     standard_id: 'iso45001',
     clause_number: model.clauseNumber,
     clause_title: model.clauseTitle,
@@ -111,11 +120,15 @@ export function clauseToRow(model: ClauseAssessment): Record<string, unknown> {
   };
 }
 
-export function findingToRow(model: Finding): Record<string, unknown> {
+/** See {@link clauseToRow} on why `auditRemoteId` is passed in. */
+export function findingToRow(
+  model: Finding,
+  auditRemoteId: string,
+): Record<string, unknown> {
   return {
     ...baseRow(model),
     ...(model.remoteId ? { id: model.remoteId } : {}),
-    audit_id: model.auditId,
+    audit_id: auditRemoteId,
     client_id: model.clientId,
     finding_number: model.findingNumber,
     type: model.type,
@@ -138,11 +151,15 @@ export function findingToRow(model: Finding): Record<string, unknown> {
   };
 }
 
-export function evidenceToRow(model: Evidence): Record<string, unknown> {
+/** See {@link clauseToRow} on why `auditRemoteId` is passed in. */
+export function evidenceToRow(
+  model: Evidence,
+  auditRemoteId: string,
+): Record<string, unknown> {
   return {
     ...baseRow(model),
     ...(model.remoteId ? { id: model.remoteId } : {}),
-    audit_id: model.auditId,
+    audit_id: auditRemoteId,
     type: model.type,
     title: model.title,
     description: model.description,

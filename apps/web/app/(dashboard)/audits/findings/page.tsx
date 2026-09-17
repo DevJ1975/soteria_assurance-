@@ -9,6 +9,7 @@ import {
   SoteriaStrings,
   FINDING_TYPE_META,
   AI_DISCLAIMER,
+  calculateTargetClosureDate,
   type Finding,
   type FindingType,
 } from '@soteria/core';
@@ -18,6 +19,8 @@ import { Input, Select, Textarea } from '@/components/ui/Input';
 import { FindingTypeBadge } from '@/components/FindingTypeBadge';
 import { LoadingState, EmptyState, ErrorState } from '@/components/ui/States';
 import { useAudit, useFindings, useTenantId } from '@/lib/hooks';
+import { useRealtimeAudit } from '@/lib/realtime';
+import { LiveIndicator } from '@/components/LiveIndicator';
 import { useAuth } from '@/lib/auth-context';
 import { callDraftNCR } from '@/lib/supabase-functions';
 import { insertFinding, nextDocumentSeq, timestampNow } from '@/lib/supabase-data';
@@ -31,6 +34,9 @@ function FindingsView() {
   const auditQuery = useAudit(auditId);
   const { user } = useAuth();
   const findingsQuery = useFindings(auditId);
+  // Called before the early return below so the hook order stays stable; it
+  // no-ops on an empty audit id.
+  const liveStatus = useRealtimeAudit(auditId);
 
   const [showForm, setShowForm] = useState(false);
   const [type, setType] = useState<FindingType>('minor_nc');
@@ -129,6 +135,21 @@ function FindingsView() {
         raisedByAuditorId: user?.id ?? '',
         raisedByAuditorName: user?.user_metadata.display_name ?? user?.email ?? '',
         raisedAt: now,
+        // Anchored to the audit's end date, so every finding in one audit
+        // shares a deadline, rather than to the moment this form happened to
+        // be submitted. Falls back to the planned end date, then to today,
+        // when fieldwork has not closed yet.
+        targetClosureDate:
+          calculateTargetClosureDate(
+            type,
+            new Date(
+              auditQuery.data?.actualEndDate ??
+                auditQuery.data?.plannedEndDate ??
+                Date.now(),
+            ),
+          )
+            ?.toISOString()
+            .slice(0, 10) ?? undefined,
         status: 'open',
         updatedAt: now,
       };
@@ -149,9 +170,14 @@ function FindingsView() {
   return (
     <div className="flex flex-col gap-lg">
       <div className="flex items-center justify-between">
-        <h1 className="font-display text-2xl font-bold tracking-tight text-primary-800">
-          {SoteriaStrings.findings.listTitle}
-        </h1>
+        <div className="flex items-baseline gap-md">
+          <h1 className="font-display text-2xl font-bold tracking-tight text-primary-800">
+            {SoteriaStrings.findings.listTitle}
+          </h1>
+          {/* Findings are raised concurrently by a team across a site, so this
+              list is the one most likely to be stale on someone else's screen. */}
+          <LiveIndicator status={liveStatus} />
+        </div>
         <Button onClick={() => setShowForm((s) => !s)}>
           <Plus className="h-4 w-4" aria-hidden />
           {SoteriaStrings.findings.newFinding}

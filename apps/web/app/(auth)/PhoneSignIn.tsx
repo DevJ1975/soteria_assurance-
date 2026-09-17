@@ -8,12 +8,15 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 
 /**
- * Phone sign-in flow: phone input → invisible reCAPTCHA → OTP input.
+ * Phone sign-in: number → SMS code → session.
  *
- * The reCAPTCHA verifier is created against a stable per-instance div id, then
- * `startPhoneSignIn` sends the SMS and `confirmPhoneCode` verifies it — all via
- * the Supabase Auth helpers (RULE 3). On success, the AuthProvider
- * (in AuthProvider) drives the redirect.
+ * Supabase sends and verifies the code server-side, so there is no reCAPTCHA
+ * verifier and no native module — the Firebase flow needed both, and this
+ * component's previous version still passed an empty container id to prove it.
+ *
+ * This signs in to an existing account only. A number has to be attached from
+ * Settings first, because access here is invitation-gated on an email address
+ * and a phone-created account could never be matched to an invitation.
  */
 export function PhoneSignIn({ onAuthenticated }: { onAuthenticated: () => void }) {
   const { startPhone, confirmPhone } = useAuth();
@@ -27,10 +30,18 @@ export function PhoneSignIn({ onAuthenticated }: { onAuthenticated: () => void }
     setError(null);
     setLoading(true);
     try {
-      const result = await startPhone(phone.trim(), '');
+      const result = await startPhone(phone.trim());
       setConfirmation(result);
-    } catch {
-      setError(SoteriaStrings.errors.generic);
+    } catch (caught) {
+      // The common failure is a number nobody has attached to an account, and
+      // GoTrue reports it as "Signups not allowed for otp" — which describes
+      // the setting, not what the person should do about it.
+      const message = caught instanceof Error ? caught.message : '';
+      setError(
+        /signup|not allowed|user not found/i.test(message)
+          ? 'No account uses that number. Sign in with your email, then add it under Settings.'
+          : SoteriaStrings.errors.generic,
+      );
     } finally {
       setLoading(false);
     }

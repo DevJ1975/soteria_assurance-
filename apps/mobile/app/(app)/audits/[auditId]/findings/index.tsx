@@ -18,7 +18,7 @@ import { Screen } from '../../../../../components/common/Screen';
 import { EmptyState, LoadingState } from '../../../../../components/common/StateViews';
 import { FindingForm, type FindingFormValues } from '../../../../../components/findings/FindingForm';
 import { FindingTypeBadge } from '../../../../../components/findings/FindingTypeBadge';
-import { supabase } from '../../../../../lib/supabase';
+import { useNumberingStore } from '../../../../../stores/numberingStore';
 import { cardSurface, colors, fontSize, fontWeight, spacing } from '../../../../../theme';
 import { useAudit, useFindings } from '../../../../../lib/useLocalData';
 import { createFinding } from '../../../../../services/auditRepository';
@@ -32,6 +32,7 @@ export default function FindingsScreen(): React.JSX.Element {
   const activeClause = useAuditStore((s) => s.activeClauseNumber);
   const user = useAuthStore((s) => s.user);
   const tenantId = useAuthStore((s) => s.claims?.tenantId ?? '');
+  const takeNumber = useNumberingStore((state) => state.take);
 
   const [formOpen, setFormOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -44,28 +45,12 @@ export default function FindingsScreen(): React.JSX.Element {
     }
     setSubmitting(true);
     try {
-      // Two auditors on the same team, each offline-first on their own
-      // device, can independently compute the same local count and collide
-      // on the server's unique (tenant_id, finding_number) constraint. When
-      // online, request a real sequence number from the same atomic
-      // tenant-locked allocator the web app uses — falling back to the local
-      // count only when the device genuinely has no connectivity, which is
-      // the one case a network round-trip cannot help with anyway.
+      // Numbers come from a block this device reserved while it was online
+      // (see stores/numberingStore.ts). A local count would collide with a
+      // second device offline on the same audit; this cannot.
       const prefix = FINDING_TYPE_META[values.type].code;
       const year = new Date().getFullYear();
-      let sequence = findings.length + 1;
-      try {
-        const { data, error } = await supabase.rpc('next_document_seq', {
-          p_tenant_id: tenantId,
-          p_prefix: prefix,
-          p_year: year,
-        });
-        if (!error && typeof data === 'number') {
-          sequence = data;
-        }
-      } catch {
-        // Offline or unreachable — fall back to the local count above.
-      }
+      const findingNumber = takeNumber(tenantId, prefix, year);
 
       await createFinding({
         auditId,
@@ -81,7 +66,7 @@ export default function FindingsScreen(): React.JSX.Element {
         aiDraftStatement: values.aiDraftStatement,
         raisedByAuditorId: user.uid,
         raisedByAuditorName: user.displayName ?? user.email ?? 'Auditor',
-        sequence,
+        findingNumber,
       });
       setFormOpen(false);
     } finally {

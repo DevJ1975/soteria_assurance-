@@ -47,7 +47,12 @@ Deno.serve(
 
     const { data: audit, error: auditError } = await admin
       .from('audits')
-      .select('id, audit_number, standard_id, client_id, scope, status, findings')
+      .select(
+        'id, audit_number, standard_id, client_id, scope, status, findings, audit_type, '
+          + 'audit_stage, planned_start_date, planned_end_date, actual_start_date, '
+          + 'actual_end_date, audit_days, lead_auditor_id, audit_team, '
+          + 'management_representative_name, confidentiality, report_issued_at',
+      )
       .eq('id', auditId)
       .eq('tenant_id', tenantId)
       .maybeSingle();
@@ -57,15 +62,35 @@ Deno.serve(
     }
     if (!audit) throw new HttpError(404, 'That audit does not exist.');
 
-    let client: { organizationName: string } | null = null;
+    let client: AuditReportData['client'] = null;
     if (audit.client_id) {
       const { data: clientRow, error: clientError } = await admin
         .from('clients')
-        .select('organization_name')
+        .select('organization_name, industry, address, contact_name, sites')
         .eq('id', audit.client_id)
         .maybeSingle();
       if (clientError) console.error(clientError);
-      client = clientRow ? { organizationName: clientRow.organization_name } : null;
+      client = clientRow
+        ? {
+            organizationName: clientRow.organization_name,
+            industry: clientRow.industry ?? '',
+            address: clientRow.address ?? null,
+            contactName: clientRow.contact_name ?? '',
+            sites: Array.isArray(clientRow.sites) ? clientRow.sites : [],
+          }
+        : null;
+    }
+
+    // The lead auditor's NAME, not their uuid: the report identifies the audit
+    // team (ISO 19011 6.5.1 e) and a uuid identifies nobody.
+    let leadAuditorName = '';
+    if (audit.lead_auditor_id) {
+      const { data: leadRow } = await admin
+        .from('profiles')
+        .select('display_name, email')
+        .eq('id', audit.lead_auditor_id)
+        .maybeSingle();
+      leadAuditorName = leadRow?.display_name || leadRow?.email || '';
     }
 
     const [
@@ -75,10 +100,17 @@ Deno.serve(
     ] = await Promise.all([
       admin
         .from('findings')
-        .select('finding_number, clause_number, title, type, status')
+        .select(
+          'finding_number, clause_number, clause_title, title, type, status, severity, '
+            + 'requirement, objective_evidence, nonconformity_statement, '
+            + 'raised_by_auditor_name, raised_at, target_closure_date',
+        )
         .eq('tenant_id', tenantId)
         .eq('audit_id', auditId)
-        .order('clause_number'),
+        // By finding number, which sorts MNC- then NC- then OFI- then SP- —
+        // worst first, the order an audit report is read in. Ordering by
+        // clause_number sorted it as a STRING, putting 10.2 before 5.4.
+        .order('finding_number'),
       admin
         .from('clause_assessments')
         .select('clause_number, clause_title, conformity_status, score')
@@ -122,15 +154,40 @@ Deno.serve(
         standardId: audit.standard_id,
         scope: audit.scope ?? '',
         status: audit.status,
+        auditType: audit.audit_type ?? '',
+        auditStage: audit.audit_stage ?? '',
+        plannedStartDate: audit.planned_start_date ?? '',
+        plannedEndDate: audit.planned_end_date ?? '',
+        actualStartDate: audit.actual_start_date ?? null,
+        actualEndDate: audit.actual_end_date ?? null,
+        auditDays: Number(audit.audit_days ?? 0),
+        leadAuditorName,
+        auditTeam: Array.isArray(audit.audit_team)
+          ? (audit.audit_team as Array<Record<string, unknown>>).map((member) => ({
+              displayName: String(member.displayName ?? member.display_name ?? 'Unknown'),
+              role: String(member.role ?? ''),
+            }))
+          : [],
+        managementRepresentativeName: audit.management_representative_name ?? '',
+        confidentiality: audit.confidentiality ?? 'standard',
+        reportIssuedAt: audit.report_issued_at ?? null,
         findings: findingsSummary,
       },
       client,
       findings: (findings ?? []).map((f) => ({
         findingNumber: f.finding_number,
         clauseNumber: f.clause_number,
+        clauseTitle: f.clause_title ?? '',
         title: f.title,
         type: f.type,
         status: f.status,
+        severity: f.severity ?? null,
+        requirement: f.requirement ?? '',
+        objectiveEvidence: f.objective_evidence ?? '',
+        nonconformityStatement: f.nonconformity_statement ?? '',
+        raisedByAuditorName: f.raised_by_auditor_name ?? '',
+        raisedAt: f.raised_at ?? '',
+        targetClosureDate: f.target_closure_date ?? null,
       })),
       clauseAssessments: (clauses ?? []).map((c) => ({
         clauseNumber: c.clause_number,

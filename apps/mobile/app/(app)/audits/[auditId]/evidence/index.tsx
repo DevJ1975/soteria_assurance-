@@ -69,7 +69,12 @@ export default function EvidenceScreen(): React.JSX.Element {
           columnWrapperStyle={styles.column}
           contentContainerStyle={styles.list}
           renderItem={({ item }): React.JSX.Element => {
-            const uri = item.fileUrl !== '' ? item.fileUrl : item.localUri;
+            // Prefer the LOCAL file. `fileUrl` holds the private storage
+            // PATH, not a URL — deliberately, so nothing caches a signed link
+            // — and feeding a bare path to <Image> renders nothing. The tile
+            // used to work right up until the upload succeeded, then went
+            // blank: an auditor reviewing what they captured saw empty tiles.
+            const uri = item.localUri ?? (item.fileUrl !== '' ? item.fileUrl : null);
             return (
               <View style={styles.tile}>
                 {uri !== null ? (

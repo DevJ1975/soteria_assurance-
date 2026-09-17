@@ -62,20 +62,59 @@ const UNSYNCED = (): Q.Clause => Q.where('sync_status', Q.notEq('synced'));
  * from reaching the server, and each row's own sync state records what
  * happened to it.
  */
+/**
+ * Resolves the server-side uuid for the audit a child row belongs to.
+ *
+ * WHY THIS IS NECESSARY
+ * Route params carry the LOCAL WatermelonDB id (a 16-character alphanumeric),
+ * and that value flowed unchanged into `audit_id` — a `uuid NOT NULL REFERENCES
+ * public.audits(id)`. Postgres rejected every such insert, `pushTable` caught
+ * the error and marked the row failed, and it retried forever. A full day of
+ * site work stayed on one device with a bare failure count as the only signal.
+ *
+ * Returns null when the parent audit has not itself synced yet, which is not
+ * an error: the child simply waits for the next pass.
+ */
+async function resolveAuditRemoteId(localAuditId: string): Promise<string | null> {
+  if (localAuditId === '') return null;
+  // Already a server uuid (e.g. the row came from a pull) — nothing to map.
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(localAuditId)) {
+    return localAuditId;
+  }
+  const parent = await database.collections
+    .get<Audit>(TABLE_AUDITS)
+    .query(Q.where('id', localAuditId))
+    .fetch();
+  return parent[0]?.remoteId ?? null;
+}
+
 async function pushTable<T extends Model & SyncableRow>(
   table: string,
   remoteTable: string,
-  toRow: (model: T) => Record<string, unknown>,
-  options: { only?: (model: T) => boolean } = {},
-): Promise<{ pushed: number; failed: number }> {
+  toRow: (model: T, auditRemoteId: string) => Record<string, unknown>,
+  options: { only?: (model: T) => boolean; auditIdOf?: (model: T) => string } = {},
+): Promise<{ pushed: number; failed: number; deferred: number }> {
   const rows = await database.collections.get<T>(table).query(UNSYNCED()).fetch();
   let pushed = 0;
   let failed = 0;
+  let deferred = 0;
 
   for (const row of rows) {
     if (options.only && !options.only(row)) continue;
     try {
-      const payload = toRow(row);
+      // A child row whose parent audit has not synced has no valid foreign key
+      // to send. Leave it pending rather than pushing a value Postgres will
+      // reject — a deferred row is recoverable, a failed one accrues retries.
+      let auditRemoteId = '';
+      if (options.auditIdOf !== undefined) {
+        const resolved = await resolveAuditRemoteId(options.auditIdOf(row));
+        if (resolved === null) {
+          deferred += 1;
+          continue;
+        }
+        auditRemoteId = resolved;
+      }
+      const payload = toRow(row, auditRemoteId);
       const { data, error } = await supabase
         .from(remoteTable)
         .upsert(payload, { onConflict: 'id' })
@@ -84,32 +123,40 @@ async function pushTable<T extends Model & SyncableRow>(
       if (error) throw error;
       await markRowSynced(row, data.id as string);
       pushed += 1;
-    } catch {
-      await markRowFailed(row);
+    } catch (error) {
+      await markRowFailed(row, error);
       failed += 1;
     }
   }
-  return { pushed, failed };
+  return { pushed, failed, deferred };
 }
 
-async function pushAudits(): Promise<{ pushed: number; failed: number }> {
+async function pushAudits(): Promise<{ pushed: number; failed: number; deferred: number }> {
   return pushTable<Audit>(TABLE_AUDITS, 'audits', auditToRow);
 }
 
-async function pushClauses(): Promise<{ pushed: number; failed: number }> {
-  return pushTable<ClauseAssessment>(TABLE_CLAUSE_ASSESSMENTS, 'clause_assessments', clauseToRow);
+async function pushClauses(): Promise<{ pushed: number; failed: number; deferred: number }> {
+  return pushTable<ClauseAssessment>(
+    TABLE_CLAUSE_ASSESSMENTS,
+    'clause_assessments',
+    clauseToRow,
+    { auditIdOf: (row) => row.auditId },
+  );
 }
 
-async function pushFindings(): Promise<{ pushed: number; failed: number }> {
-  return pushTable<Finding>(TABLE_FINDINGS, 'findings', findingToRow);
+async function pushFindings(): Promise<{ pushed: number; failed: number; deferred: number }> {
+  return pushTable<Finding>(TABLE_FINDINGS, 'findings', findingToRow, {
+    auditIdOf: (row) => row.auditId,
+  });
 }
 
-async function pushEvidence(): Promise<{ pushed: number; failed: number }> {
+async function pushEvidence(): Promise<{ pushed: number; failed: number; deferred: number }> {
   // Metadata only syncs once the binary is in the bucket; until then
   // `storage_path` would point at nothing. The evidence service flips
   // `uploadStatus` to 'uploaded' when the background upload finishes.
   return pushTable<Evidence>(TABLE_EVIDENCE, 'evidence', evidenceToRow, {
     only: (row) => row.uploadStatus === 'uploaded',
+    auditIdOf: (row) => row.auditId,
   });
 }
 
@@ -124,7 +171,16 @@ async function markRowSynced(row: SyncableRow, remoteId: string): Promise<void> 
   });
 }
 
-async function markRowFailed(row: SyncableRow): Promise<void> {
+async function markRowFailed(row: SyncableRow, error?: unknown): Promise<void> {
+  // The reason is logged rather than discarded: a bare failure count gives an
+  // auditor whose whole day failed to sync no way to identify or diagnose it.
+  if (error !== undefined) {
+    console.warn('[sync] row failed to push', {
+      table: row.table,
+      id: row.id,
+      message: error instanceof Error ? error.message : String(error),
+    });
+  }
   await database.write(async () => {
     await row.update((draft) => {
       draft.uploadState = 'failed';
@@ -167,21 +223,27 @@ export async function runSync(): Promise<SyncResult> {
 
   store.setSyncIndicator('syncing');
 
-  const results = await Promise.all([
-    pushAudits(),
-    pushClauses(),
-    pushFindings(),
-    pushEvidence(),
-  ]);
+  // Audits FIRST, and awaited, so their server ids exist before any child row
+  // tries to resolve its foreign key. Running these in parallel would defer
+  // every child on a first sync.
+  const auditResult = await pushAudits();
+  const childResults = await Promise.all([pushClauses(), pushFindings(), pushEvidence()]);
+  const results = [auditResult, ...childResults];
 
   const pushed = results.reduce((sum, r) => sum + r.pushed, 0);
   const failed = results.reduce((sum, r) => sum + r.failed, 0);
+  const deferred = results.reduce((sum, r) => sum + r.deferred, 0);
 
   const remaining = await countPendingChanges();
   store.setPendingChanges(remaining);
 
   if (failed > 0) {
-    store.setSyncError(`${failed} change(s) failed to sync.`);
+    store.setSyncError(`${failed} change(s) failed to sync. See the log for the reason.`);
+  } else if (deferred > 0) {
+    // Not an error: these are waiting on their parent audit and will go on the
+    // next pass. Saying "failed" here would send an auditor hunting a problem
+    // that resolves itself.
+    store.setSyncError(`${deferred} change(s) waiting for their audit to sync.`);
   } else {
     store.markSynced(Date.now());
   }
@@ -226,6 +288,14 @@ export async function pullAudits(tenantId: string, leadAuditorId?: string): Prom
       const existing = await collection.query(Q.where('remote_id', row.id as string)).fetch();
       const first = existing[0];
       if (first !== undefined) {
+        // A row the auditor has changed is still pending push. Overwriting it
+        // here and then setting uploadState = 'synced' (which applyAuditRow
+        // does) would discard the edit AND clear the flag that would have sent
+        // it, so the work would be unrecoverable. Field capture wins; the
+        // pending push carries it to the server on the next pass.
+        if (first.uploadState !== 'synced') {
+          continue;
+        }
         await first.update((draft) => {
           applyAuditRow(draft, row);
         });

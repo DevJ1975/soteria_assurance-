@@ -6,6 +6,7 @@ import {
   SoteriaStrings,
   CONFORMITY_STATUS_META,
   clauseScoreFromVerdicts,
+  seedSubClauseNotes,
   getClauseByNumber,
   type ClauseAssessment,
   type ConformityStatus,
@@ -27,24 +28,6 @@ const VERDICT_LABELS: Record<ConformityVerdict, string> = {
   no: 'Does not conform',
   na: 'Not applicable',
 };
-
-/**
- * Builds the starting sub-clause notes for a clause that has never been
- * assessed, from the canonical ISO 45001 dataset (RULE 4 — clause text is
- * never hardcoded in the UI). An existing assessment keeps its own notes so an
- * auditor's wording is never overwritten by the template.
- */
-function seedSubClauseNotes(standardId: StandardId, clauseNumber: string): SubClauseNote[] {
-  const clause = getClauseByNumber(standardId, clauseNumber);
-  if (!clause) return [];
-  return clause.typicalAuditQuestions.map((auditQuestion) => ({
-    subClauseNumber: clause.number,
-    requirementText: clause.requirementText,
-    auditQuestion,
-    auditorResponse: '',
-    conformityVerdict: 'na' as ConformityVerdict,
-  }));
-}
 
 export interface ClauseAssessmentEditorProps {
   auditId: string;

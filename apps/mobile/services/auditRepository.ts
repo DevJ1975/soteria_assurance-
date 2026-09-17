@@ -11,7 +11,7 @@ import type {
   FindingType,
   SubClauseNote,
 } from '@soteria/core';
-import { FINDING_TYPE_META, generateFindingNumber } from '@soteria/core';
+import { FINDING_TYPE_META } from '@soteria/core';
 import { database } from '../db';
 import type { Audit } from '../db/models/Audit';
 import type { ClauseAssessment } from '../db/models/ClauseAssessment';
@@ -108,8 +108,14 @@ export interface CreateFindingInput {
   area?: string;
   raisedByAuditorId: string;
   raisedByAuditorName: string;
-  /** Used to build the sequential finding number (e.g. NCR-2026-007). */
-  sequence: number;
+  /**
+   * The finding number, already allocated by `useNumberingStore.take` — from
+   * a block reserved while online, or a device-scoped provisional number if
+   * the block ran dry offline. Never computed from a local count: two devices
+   * offline on the same audit would mint the same number and one finding
+   * would be silently lost on push.
+   */
+  findingNumber: string;
   /** Used to compute the mandatory target closure date for NCs. */
   ncrPrefix?: string;
 }
@@ -134,10 +140,7 @@ function targetClosureFor(type: FindingType, raisedAt: Date): string | null {
 export async function createFinding(input: CreateFindingInput): Promise<Finding> {
   const collection = database.collections.get<Finding>(TABLE_FINDINGS);
   const now = new Date();
-  const year = now.getFullYear();
-  // Prefix from the type's audit code (e.g. MNC/NC/OFI), overridable per-tenant.
-  const prefix = input.ncrPrefix ?? FINDING_TYPE_META[input.type].code;
-  const findingNumber = generateFindingNumber(prefix, year, input.sequence);
+  const findingNumber = input.findingNumber;
 
   let row!: Finding;
   await database.write(async () => {
