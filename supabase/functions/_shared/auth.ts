@@ -56,6 +56,26 @@ export function serviceClient(): SupabaseClient {
   });
 }
 
+/**
+ * A client that acts AS THE CALLER, carrying their JWT.
+ *
+ * For the reads where RLS is meant to do the filtering rather than the function
+ * doing it by hand. The service-role client is the wrong tool there twice over:
+ * it bypasses RLS, so a policy written to constrain the read is silently not
+ * consulted, and it holds no grant on functions deliberately restricted to
+ * `authenticated` — which surfaces as "permission denied for function", not as
+ * the security hole it is really warning about.
+ *
+ * Use {@link requireCaller} first: this does not itself verify the token, it
+ * only forwards it, and PostgREST will reject an invalid one.
+ */
+export function callerClient(request: Request): SupabaseClient {
+  return createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_ANON_KEY'), {
+    global: { headers: { Authorization: request.headers.get('Authorization') ?? '' } },
+    auth: { persistSession: false },
+  });
+}
+
 export interface CallerProfile {
   userId: string;
   email: string;

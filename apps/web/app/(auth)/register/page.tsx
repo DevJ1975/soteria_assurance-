@@ -12,12 +12,26 @@ import { Card, CardBody } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 
+/**
+ * 12 characters with mixed case and a digit, matching
+ * `minimum_password_length` / `password_requirements` in supabase/config.toml.
+ * Kept in step deliberately: a form that accepts less just moves the rejection
+ * from a field-level message to an opaque API error.
+ */
+const PASSWORD_MIN = 12;
+const PASSWORD_RULE = /(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/;
+const PASSWORD_MESSAGE =
+  'Use at least 12 characters, with an uppercase letter, a lowercase letter and a number.';
+
 const registerSchema = z
   .object({
     displayName: z.string().min(2, SoteriaStrings.errors.validation),
     email: z.string().email(SoteriaStrings.errors.validation),
-    password: z.string().min(8, SoteriaStrings.errors.validation),
-    confirmPassword: z.string().min(8, SoteriaStrings.errors.validation),
+    password: z
+      .string()
+      .min(PASSWORD_MIN, PASSWORD_MESSAGE)
+      .regex(PASSWORD_RULE, PASSWORD_MESSAGE),
+    confirmPassword: z.string().min(PASSWORD_MIN, PASSWORD_MESSAGE),
   })
   .refine((data) => data.password === data.confirmPassword, {
     path: ['confirmPassword'],
@@ -58,8 +72,9 @@ export default function RegisterPage() {
 
         {registered ? (
           <div className="rounded-md border border-conforming/30 bg-conforming/10 p-md text-sm text-text-primary">
-            Your account was created. A Soteria administrator must assign you to an organization
-            before you can access audit data.
+            Check your inbox — we sent a confirmation link to verify your address. You must open it
+            before you can sign in. After that, a Soteria administrator assigns you to an
+            organization before you can access audit data.
           </div>
         ) : null}
         {!registered ? <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-md">

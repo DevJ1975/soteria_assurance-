@@ -10,7 +10,17 @@
  */
 import { createClient, type SupabaseClient, type User } from '@supabase/supabase-js';
 
-export const SUPABASE_URL = process.env.SUPABASE_URL ?? 'http://127.0.0.1:54321';
+/**
+ * Defaults to the API port `supabase/config.toml` actually pins (54521), not
+ * the Supabase CLI's stock 54321.
+ *
+ * This bit: the stock default silently pointed the whole suite at whatever
+ * other Supabase project happened to be running on 54321 — a real possibility
+ * on a machine with more than one — and the failure surfaced as
+ * "Could not find the table 'public.tenants' in the schema cache", which reads
+ * like a broken migration rather than a wrong address.
+ */
+export const SUPABASE_URL = process.env.SUPABASE_URL ?? 'http://127.0.0.1:54521';
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
 const ANON_KEY = process.env.SUPABASE_ANON_KEY ?? '';
 

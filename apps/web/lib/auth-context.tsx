@@ -20,14 +20,40 @@ export interface PhoneConfirmation {
   phone: string;
 }
 
+/**
+ * Normalises a typed number to the digits-only E.164 form GoTrue stores.
+ *
+ * Users type `+1 (415) 555-0123`; GoTrue keys on `14155550123`. Without this,
+ * the same number entered two different ways is two different accounts to the
+ * OTP lookup, and sign-in fails for a number that is demonstrably on file.
+ */
+export function normalizePhone(input: string): string {
+  return input.replace(/\D/g, '');
+}
+
 export interface AuthContextValue {
   user: User | null;
   claims: TenantClaims | null;
   loading: boolean;
   signInEmail: (email: string, password: string) => Promise<void>;
   registerEmail: (email: string, password: string, displayName: string) => Promise<void>;
-  startPhone: (phoneNumber: string, recaptchaContainerId: string) => Promise<PhoneConfirmation>;
+  /**
+   * Sends a sign-in code to a number already attached to an account.
+   *
+   * `[auth.sms] enable_signup` is false, so an unrecognised number is rejected
+   * rather than silently creating an account that no invitation could ever
+   * match. Attaching a number is {@link startPhoneEnrollment}, which requires
+   * an authenticated session.
+   */
+  startPhone: (phoneNumber: string) => Promise<PhoneConfirmation>;
   confirmPhone: (confirmation: PhoneConfirmation, code: string) => Promise<void>;
+  /** Attaches a phone number to the signed-in account and texts a code to it. */
+  startPhoneEnrollment: (phoneNumber: string) => Promise<PhoneConfirmation>;
+  /** Verifies the enrolment code, completing the attachment. */
+  confirmPhoneEnrollment: (
+    confirmation: PhoneConfirmation,
+    code: string,
+  ) => Promise<void>;
   signOut: () => Promise<void>;
   /** Marks the first-run welcome complete and updates claims in place. */
   completeOnboarding: () => Promise<void>;
@@ -121,13 +147,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
         if (error) throw error;
       },
-      startPhone: async (phone) => {
-        const { error } = await supabase.auth.signInWithOtp({ phone });
+      startPhone: async (phoneNumber) => {
+        const phone = normalizePhone(phoneNumber);
+        const { error } = await supabase.auth.signInWithOtp({
+          phone,
+          // Belt and braces with the project setting: even if SMS signup were
+          // turned on later, this call must never mint an account.
+          options: { shouldCreateUser: false },
+        });
         if (error) throw error;
         return { phone };
       },
       confirmPhone: async ({ phone }, token) => {
         const { error } = await supabase.auth.verifyOtp({ phone, token, type: 'sms' });
+        if (error) throw error;
+      },
+      startPhoneEnrollment: async (phoneNumber) => {
+        const phone = normalizePhone(phoneNumber);
+        // updateUser is the enrolment path rather than signInWithOtp: it
+        // attaches the number to the CURRENT account and texts a code to prove
+        // the person asking actually holds it.
+        const { error } = await supabase.auth.updateUser({ phone });
+        if (error) throw error;
+        return { phone };
+      },
+      confirmPhoneEnrollment: async ({ phone }, token) => {
+        const { error } = await supabase.auth.verifyOtp({
+          phone,
+          token,
+          // 'phone_change' is the type GoTrue issues for updateUser({ phone }).
+          // Verifying it as 'sms' fails with an opaque "Token has expired or is
+          // invalid", which is the wrong diagnosis entirely.
+          type: 'phone_change',
+        });
         if (error) throw error;
       },
       completeOnboarding: async () => {

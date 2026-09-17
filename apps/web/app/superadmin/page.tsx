@@ -41,6 +41,7 @@ import {
 import { SuperadminGuard } from '@/components/SuperadminGuard';
 import { ActivityPanel } from '@/components/superadmin/ActivityPanel';
 import { UsersPanel } from '@/components/superadmin/UsersPanel';
+import { PlatformPanel } from '@/components/superadmin/PlatformPanel';
 import { useAuth } from '@/lib/auth-context';
 import {
   invitationState,
@@ -168,6 +169,7 @@ function SuperadminContent() {
             <TabsTrigger value="invitations">Invitations</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="activity">Activity</TabsTrigger>
+            <TabsTrigger value="platform">Platform</TabsTrigger>
           </TabsList>
 
           <TabsContent value="companies">
@@ -198,6 +200,10 @@ function SuperadminContent() {
 
           <TabsContent value="activity">
             <ActivityPanel tenants={tenantList} users={directory.data?.rows ?? []} />
+          </TabsContent>
+
+          <TabsContent value="platform">
+            <PlatformPanel />
           </TabsContent>
         </Tabs>
       </div>

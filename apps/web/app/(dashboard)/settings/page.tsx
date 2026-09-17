@@ -3,6 +3,8 @@
 import { SoteriaStrings, ROLE_PERMISSIONS } from '@soteria/core';
 import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
+import { MfaEnrollment } from '@/components/MfaEnrollment';
+import { PhoneEnrollment } from '@/components/PhoneEnrollment';
 import { useAuth } from '@/lib/auth-context';
 
 /**
@@ -28,6 +30,10 @@ export default function SettingsPage() {
           <Row label="Role" value={claims ? claims.role.replace('_', ' ') : '—'} />
         </CardBody>
       </Card>
+
+      <MfaEnrollment />
+
+      <PhoneEnrollment />
 
       <Card>
         <CardHeader>

@@ -14,6 +14,11 @@ import {
 import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Input, Select } from '@/components/ui/Input';
+import { ClauseSemanticSearch } from '@/components/ClauseSemanticSearch';
+import { cn } from '@/lib/cn';
+
+/** How the clause list is being narrowed. See the tab strip below. */
+type BrowseMode = 'filter' | 'semantic';
 
 /**
  * Clause wiki for any management-system standard the platform knows about.
@@ -30,6 +35,10 @@ export default function WikiPage() {
   const [standardId, setStandardId] = useState<StandardId>(DEFAULT_STANDARD_ID);
   const [filter, setFilter] = useState('');
   const [selected, setSelected] = useState('');
+  // Filter is the default: it is instant, works offline and costs nothing,
+  // which is the right behaviour for the common case of looking up a clause
+  // you can already name.
+  const [mode, setMode] = useState<BrowseMode>('filter');
 
   const standard = getStandard(standardId);
   const allClauses = useMemo(() => flattenClauses(standardId), [standardId]);
@@ -98,6 +107,31 @@ export default function WikiPage() {
         <div className="grid grid-cols-1 gap-lg lg:grid-cols-[20rem_1fr]">
           <Card className="max-h-[70vh] overflow-y-auto">
             <CardBody className="flex flex-col gap-sm">
+              <div className="flex rounded-md border border-border p-1">
+                {(
+                  [
+                    ['filter', 'Filter'],
+                    ['semantic', 'Describe it'],
+                  ] as Array<[BrowseMode, string]>
+                ).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setMode(value)}
+                    className={cn(
+                      'flex-1 rounded px-sm py-1.5 text-sm font-medium transition-colors',
+                      mode === value ? 'bg-primary-500 text-white' : 'text-text-secondary',
+                    )}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              {mode === 'semantic' ? (
+                <ClauseSemanticSearch standardId={standardId} onSelect={setSelected} />
+              ) : (
+                <>
               <Input
                 id="wiki-filter"
                 placeholder="Filter clauses…"
@@ -127,6 +161,8 @@ export default function WikiPage() {
                     </li>
                   ))}
                 </ul>
+              )}
+                </>
               )}
             </CardBody>
           </Card>
