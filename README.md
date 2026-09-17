@@ -1,14 +1,13 @@
 # Soteria Assurance
 
-> ISO 45001:2018 AI-powered audit management platform — built by Trainovate Technologies.
+> ISO 45001:2018 AI-assisted audit management platform — built by Trainovate Technologies.
 
 Soteria Assurance is a mobile-first, offline-capable platform for occupational
 health & safety (OH&S) auditors. It guides a lead auditor clause-by-clause
-through the full ISO 45001:2018 standard, captures photo/audio evidence in the
-field, records findings (MNC / NC / OFI / SP), and uses an AI Co-Pilot (powered
-by the Anthropic Claude API) to draft nonconformity reports and suggest
-interview questions. Multi-tenant by design, it serves certification bodies,
-consultancies, and in-house audit teams.
+through ISO 45001:2018, captures photo/audio evidence in the field, records
+findings (MNC / NC / OFI / SP), and uses an AI Co-Pilot (Anthropic Claude API)
+to draft nonconformity reports and suggest interview questions. Multi-tenant by
+design, it serves certification bodies, consultancies, and in-house audit teams.
 
 ---
 
@@ -21,164 +20,164 @@ soteria-assurance/
 ├── turbo.json                  ← Turborepo task graph
 ├── tsconfig.base.json          ← Shared strict TS compiler options + path aliases
 ├── eslint.config.mjs           ← Flat ESLint config (no-explicit-any: error)
-├── .prettierrc.json
-├── .env.example                ← Public env var KEYS only (no secrets)
 │
 ├── packages/
 │   ├── core/                   ← @soteria/core — dependency-free business logic
 │   │   └── src/
-│   │       ├── types/          ← All TypeScript interfaces (DESIGN_DOC §8)
-│   │       ├── constants/      ← strings.ts + finding/enum constants
-│   │       ├── utils/          ← Date helpers, validators
-│   │       ├── hooks/          ← Shared React hooks
-│   │       └── iso45001/       ← Canonical ISO 45001 clause data
-│   ├── ui/                     ← @soteria/ui — shared component library + tokens
-│   └── firebase/               ← @soteria/firebase — Firebase config & helpers
+│   │       ├── types/          ← All TypeScript interfaces
+│   │       ├── constants/      ← strings, finding types, RBAC matrix, AI prompts
+│   │       ├── utils/          ← scoring, deadlines, validators, numbering
+│   │       └── standards/      ← Canonical ISO 45001 clause dataset + registry
+│   └── ui/                     ← @soteria/ui — shared tokens + component library
 │
 ├── apps/
 │   ├── mobile/                 ← @soteria/mobile — React Native (Expo SDK 52)
 │   └── web/                    ← @soteria/web — Next.js 15 (App Router)
 │
-├── functions/                  ← soteria-functions — Firebase Functions v2
+├── supabase/
+│   ├── migrations/             ← Postgres schema, RLS policies, triggers
+│   ├── functions/              ← Edge Functions (Deno): AI, reports, admin
+│   └── config.toml             ← Local stack config (ports 545xx)
 │
-├── firestore.rules             ← Firestore security rules (tenant isolation)
-├── storage.rules               ← Firebase Storage rules
-├── firebase.json               ← Firebase project config
-│
+├── tests/                      ← @soteria/e2e — integration tests against a real stack
+├── docker/ + docker-compose.yml ← Local review stack (see docs/DOCKER_REVIEW.md)
 └── docs/
-    ├── DESIGN_DOC.md           ← Comprehensive product design document
-    └── multi-agent-guide.md    ← Claude Code multi-agent contributor guide
+    ├── DOCKER_REVIEW.md        ← Run the whole thing locally, with demo data
+    ├── DESIGN_DOC.md           ← Product design document
+    └── DEPLOYMENT.md           ← Deployment notes
 ```
 
 ---
 
 ## Tech stack
 
-| Layer                | Technology                                            |
-| -------------------- | ----------------------------------------------------- |
-| Language             | TypeScript 5.x (strict mode everywhere)               |
-| Mobile               | React Native 0.76+ with Expo SDK 52, Expo Router      |
-| Web                  | Next.js 15 (App Router)                               |
-| Mobile UI            | React Native Paper + custom components                |
-| Web UI               | shadcn/ui + Tailwind CSS 3                            |
-| State                | Zustand + TanStack Query v5                            |
-| Forms / validation   | React Hook Form + Zod                                  |
-| Offline sync         | WatermelonDB (SQLite, offline-first)                  |
-| Database             | Cloud Firestore                                       |
-| Auth                 | Firebase Auth (multi-tenant, JWT custom claims)       |
-| Storage              | Firebase Storage                                      |
-| Serverless           | Firebase Functions v2 (Node.js)                       |
-| AI                   | Anthropic Claude API (claude-sonnet-4-6)              |
-| Email                | SendGrid                                              |
-| PDF generation       | Puppeteer (via Cloud Functions)                       |
-| Monorepo / tooling   | Turborepo, pnpm, ESLint, Prettier                     |
-| Testing              | Jest + Testing Library, Detox (mobile E2E), Playwright |
-| CI/CD                | GitHub Actions                                        |
+| Layer              | Technology                                             |
+| ------------------ | ------------------------------------------------------ |
+| Language           | TypeScript 5.x (strict mode everywhere)                |
+| Mobile             | React Native 0.76+ with Expo SDK 52, Expo Router       |
+| Web                | Next.js 15 (App Router)                                |
+| Mobile UI          | React Native Paper + custom components                 |
+| Web UI             | shadcn/ui + Tailwind CSS 3                             |
+| State              | Zustand + TanStack Query v5                            |
+| Forms / validation | React Hook Form + Zod                                  |
+| Offline sync       | WatermelonDB (SQLite, offline-first)                   |
+| Database           | **Supabase Postgres** (RLS-enforced multi-tenancy)     |
+| Auth               | **Supabase Auth (GoTrue)**                             |
+| Storage            | **Supabase Storage** (private, tenant-prefixed buckets)|
+| Serverless         | **Supabase Edge Functions (Deno)**                     |
+| AI                 | Anthropic Claude API                                   |
+| PDF generation     | **pdf-lib**, inside an Edge Function                   |
+| Monorepo / tooling | Turborepo, pnpm, ESLint, Prettier                      |
+| Testing            | Jest + Testing Library; integration suite in `tests/`  |
+| CI/CD              | GitHub Actions                                         |
+
+> **Note for anyone reading older docs:** this project previously targeted
+> Firebase/Firestore/Puppeteer. It does not any more. `docs/DESIGN_DOC.md` §§6–8
+> and `docs/DEPLOYMENT.md` still describe that stack and are stale; the schema
+> in `supabase/migrations/` is the source of truth. The RBAC matrix is
+> authoritative in `packages/core/src/constants/rbac.ts`, and as of
+> `20260914010000_enforce_roles_in_rls.sql` it is enforced by RLS.
 
 ---
 
 ## Prerequisites
 
-| Tool    | Version              |
-| ------- | -------------------- |
-| Node.js | `>=22` (see `.nvmrc`) — @supabase/supabase-js needs the native WebSocket that landed in 22 |
-| pnpm    | `10.33.0`            |
-
-```bash
-# Use the pinned Node version
-nvm use            # reads .nvmrc
-
-# Enable the pinned pnpm via Corepack
-corepack enable
-corepack prepare pnpm@10.33.0 --activate
-```
+- Node.js 22 (`.nvmrc`)
+- pnpm 9+
+- Docker (for the local Supabase stack)
+- [Supabase CLI](https://supabase.com/docs/guides/cli)
 
 ---
 
 ## Getting started
 
-```bash
-# 1. Install all workspace dependencies
-pnpm install
+The fastest path to a running system with realistic data:
 
-# 2. Configure environment variables
-cp .env.example apps/mobile/.env.local   # fill EXPO_PUBLIC_FIREBASE_* values
-cp .env.example apps/web/.env.local      # fill NEXT_PUBLIC_FIREBASE_* values
-# Secrets (ANTHROPIC_API_KEY, SENDGRID_API_KEY) live in Firebase Secret Manager.
+```bash
+./scripts/docker-review.sh
 ```
+
+That starts Supabase, applies every migration, seeds a demo tenant, and builds
+and runs the web app at <http://127.0.0.1:3000>. See
+[docs/DOCKER_REVIEW.md](docs/DOCKER_REVIEW.md) for logins, what to look at, and
+what is deliberately not built yet.
+
+To work on the code directly instead:
+
+```bash
+pnpm install
+supabase start                    # applies supabase/migrations
+pnpm dev:web                      # or: pnpm dev:mobile
+```
+
+The web app needs `apps/web/.env.local`:
+
+```
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54521
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<from `supabase status`>
+```
+
+Server-only secrets (`ANTHROPIC_API_KEY`, `SENDGRID_API_KEY`) go in
+`supabase/functions/.env` locally, or `supabase secrets set` for a hosted
+project. They never reach the browser; without `ANTHROPIC_API_KEY` the AI
+endpoints return a clear 503 and every other check still runs.
 
 ### Common commands
 
-| Command               | What it does                                         |
-| --------------------- | ---------------------------------------------------- |
-| `pnpm build`          | Build all packages and apps (`turbo run build`)      |
-| `pnpm test`           | Run all test suites (`turbo run test`)               |
-| `pnpm lint`           | Lint the whole monorepo                              |
-| `pnpm typecheck`      | Type-check every package                             |
-| `pnpm format`         | Format the repo with Prettier                        |
-| `pnpm clean`          | Remove build output across the workspace             |
-| `pnpm dev:web`        | Run the Next.js web app in dev mode                  |
-| `pnpm dev:mobile`     | Run the Expo mobile app in dev mode                  |
-| `pnpm dev:functions`  | Run Firebase Functions in dev/watch mode             |
-| `pnpm test:core`      | Run only `@soteria/core` tests                       |
-| `pnpm test:functions` | Run only the Functions tests                         |
-| `pnpm build:web`      | Build only the web app                               |
-| `pnpm build:mobile`   | Build only the mobile app                            |
+| Command                | What it does                                            |
+| ---------------------- | ------------------------------------------------------- |
+| `pnpm build`           | Build all packages and apps                             |
+| `pnpm test`            | Unit tests (`@soteria/core`, `@soteria/ui`)             |
+| `pnpm test:e2e`        | Integration tests against a running local Supabase stack |
+| `pnpm lint`            | Lint the whole monorepo                                 |
+| `pnpm typecheck`       | Type-check every package                                |
+| `pnpm format`          | Format with Prettier                                    |
+| `pnpm dev:web`         | Next.js dev server                                      |
+| `pnpm dev:mobile`      | Expo dev server                                         |
+| `pnpm superadmin:local`| Create a superadmin against the local stack             |
 
-> `deploy:functions`, `deploy:rules`, `deploy:web`, and `emulators` are
-> placeholder scripts until the Firebase project and hosting targets are wired up.
+> `pnpm test` does **not** run the integration suite — it needs a live
+> database. CI runs it as a separate job that applies every migration to a
+> clean Postgres first.
 
 ---
 
 ## Packages
 
-| Package               | Path                 | Description                                                                                          |
-| --------------------- | -------------------- | -------------------------------------------------------------------------------------------------- |
-| `@soteria/core`       | `packages/core`      | Dependency-free shared business logic: types, constants/strings, utils, and canonical ISO 45001 clause data. Defines its own structural `Timestamp` type. |
-| `@soteria/ui`         | `packages/ui`        | Shared component library, design tokens (DESIGN_DOC §14), and the custom icon set.                  |
-| `@soteria/firebase`   | `packages/firebase`  | Firebase initialization plus auth and Firestore helpers shared across apps.                         |
-| `@soteria/mobile`     | `apps/mobile`        | React Native (Expo) field-audit application.                                                        |
-| `@soteria/web`        | `apps/web`           | Next.js web dashboard and reporting application.                                                    |
-| `soteria-functions`   | `functions`          | Firebase Functions v2: AI Co-Pilot endpoints, report generation, notifications.                    |
+| Package           | Path             | Description                                                                                   |
+| ----------------- | ---------------- | --------------------------------------------------------------------------------------------- |
+| `@soteria/core`   | `packages/core`  | Dependency-free shared logic: types, constants, utils, and the canonical ISO 45001 clause data. |
+| `@soteria/ui`     | `packages/ui`    | Shared component library and design tokens.                                                   |
+| `@soteria/mobile` | `apps/mobile`    | React Native (Expo) field-audit application.                                                  |
+| `@soteria/web`    | `apps/web`       | Next.js dashboard and reporting application.                                                  |
+| `@soteria/e2e`    | `tests`          | Integration tests that exercise real RLS against a real database.                             |
+| Edge Functions    | `supabase/functions` | AI Co-Pilot, report generation, invitations, admin actions, reminders.                    |
 
-### Architectural rules (see `docs/multi-agent-guide.md`)
+### Architectural rules
 
-- **TypeScript strict mode everywhere.** No `any`, `as any`, or `@ts-ignore`
-  without an inline comment explaining why.
-- **All user-facing strings** live in `packages/core/src/constants/strings.ts`.
-- **All ISO 45001 clause data** lives in `packages/core/src/iso45001/` — never
-  hardcode clause numbers, titles, or requirements anywhere else.
-- **AI / secret access** happens only in Firebase Functions via `defineSecret()`.
-- **Tests for every function** (Jest); `@soteria/core` targets 90%+ coverage.
+- **The clause dataset is the single source of truth.** Never hardcode clause
+  numbers, titles or requirement text — read them through the standards
+  registry helpers. `packages/core/src/__tests__/standards.test.ts` pins the
+  exact 56-clause set of ISO 45001:2018 by set equality.
+- **Requirement text is paraphrased, never copied** from the published
+  standard. It ends up in client-delivered NCRs.
+- **Authorization lives in the database.** RLS policies carry both a tenant and
+  a role predicate; Edge Functions re-derive the caller's tenant from their
+  profile and never trust a body-supplied tenant id.
+- **Audit records are append-mostly.** `audit_logs` is immutable, evidence and
+  issued reports are write-once in storage, findings freeze once a report is
+  issued, and deletion is soft.
 
 ---
 
 ## Documentation
 
-- [`docs/DESIGN_DOC.md`](docs/DESIGN_DOC.md) — comprehensive product design document.
-- [`docs/multi-agent-guide.md`](docs/multi-agent-guide.md) — multi-agent contributor guide and non-negotiable rules.
+| Document                                     | What it covers                                    |
+| -------------------------------------------- | ------------------------------------------------- |
+| [docs/DOCKER_REVIEW.md](docs/DOCKER_REVIEW.md) | Running the full stack locally, with demo data  |
+| [docs/DESIGN_DOC.md](docs/DESIGN_DOC.md)     | Product design (§§6–8 describe the old stack)     |
+| [docs/multi-agent-guide.md](docs/multi-agent-guide.md) | Contributor guide                       |
+| `supabase/migrations/`                       | The schema, and the reasoning behind each change  |
 
----
-
-## Phase 1 MVP — implementation status
-
-Mirrors DESIGN_DOC §17 (Phase 1 — Core Audit Workflow):
-
-- [x] Authentication + multi-tenant setup — Email/Password + Google + Phone (web & mobile); `setTenantClaims` Cloud Function sets JWT custom claims; tenant-scoped Firestore rules + helpers
-- [x] Client / organization management — types, web & mobile screens
-- [x] Audit creation and planning — New Audit wizard (web), audit screens, `AuditPlan` model
-- [x] Clause-by-clause assessment (all 10 clauses, all sub-clauses) — canonical ISO 45001 dataset + clause navigator (web & mobile)
-- [x] Finding creation (MNC, NC, OFI, SP) — finding forms + `FINDING_TYPE_META`, AI-draft button
-- [x] Photo evidence capture and upload — mobile capture+compress+geotag service; tenant-scoped storage helpers
-- [x] Opening and closing meeting recording — audio capture + `summarizeMeeting` AI callable (summary / key decisions / action items) wired into the mobile meetings screen. (Automatic speech-to-text is the one remaining follow-up; the transcription is entered/pasted for now.)
-- [x] Basic audit report generation (PDF) — `generateReportPdf` renders the report model to PDF (pdf-lib), stores it under `tenants/{tenantId}/reports/`, and records a report document; `generateReport` still emits the HTML preview from the same model
-- [x] Offline mode (WatermelonDB sync) — mobile schema + models + background `syncManager`
-- [x] AI Co-Pilot (NCR drafting, clause questions) — `draftNCR`/`suggestQuestions` Cloud Functions + web panel + mobile service
-
-**Verification:** 345 unit/integration tests green (`@soteria/core` 160, `@soteria/ui` 38, `@soteria/firebase` 55, `functions` 92); `apps/web` `next build` produces the static Hosting/Vercel bundle; `apps/mobile` passes `tsc --noEmit` in a fully-provisioned Expo toolchain. Legend: `[x]` implemented · `[~]` partial / follow-up.
-
-**Not yet done (needs privileged access / native toolchain):** live Hosting deploy + provider enablement on `soteria-assurance` (org policy blocks service-account keys — use `firebase login:ci` or `bash scripts/deploy.sh`); native iOS/Android EAS build; E2E suites (Detox/Playwright).
-
----
-
-*Soteria Assurance v1.0.0 — ISO 45001:2018 compliant design. © Trainovate Technologies.*
+Each migration's header explains the bug or requirement it addresses. For the
+security-relevant ones that is the most accurate documentation in the repo.

@@ -1,5 +1,23 @@
 # Soteria Assurance — Agent Handoff (VS Code)
 
+> [!WARNING]
+> **Parts of this document are out of date.**
+>
+> This describes a Firebase / Firestore / Cloud Functions / Puppeteer
+> architecture. The product runs on **Supabase Postgres, Supabase Auth, Supabase
+> Storage, Edge Functions (Deno) and pdf-lib**. In particular, the "Firestore
+> Security Rules" named here as the tenant-isolation control **do not exist in
+> any form** — isolation is enforced by Postgres RLS in `supabase/migrations/`.
+>
+> Still accurate and still load-bearing: the product requirements, the clause
+> model, the finding grades, and the §7 RBAC matrix — though the matrix is now
+> authoritative in `packages/core/src/constants/rbac.ts`, which is what RLS is
+> derived from.
+>
+> Treat `supabase/migrations/` and `README.md` as the source of truth for
+> architecture.
+
+
 > Paste this to your VS Code coding agent (Claude/Copilot/Cursor) before it starts.
 > It captures the project state, conventions, gotchas, and how to build/test/deploy.
 

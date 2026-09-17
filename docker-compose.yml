@@ -1,0 +1,51 @@
+# =============================================================================
+# Soteria Assurance — local review stack
+# =============================================================================
+# Brings up the Next.js web app in a container, attached to the Docker network
+# that the Supabase CLI stack already runs on. The Supabase side (Postgres,
+# Auth, PostgREST, Storage, Edge Functions, Studio) is itself Docker — it is
+# orchestrated by `supabase start`, which applies supabase/migrations for you.
+#
+# Use scripts/docker-review.sh rather than calling this directly; it starts
+# Supabase first, seeds demo data, and injects the local keys below.
+#
+# THE TWO-URL PROBLEM, since it looks redundant:
+#   NEXT_PUBLIC_SUPABASE_URL is inlined into the browser bundle, so it must be
+#   the origin your BROWSER can reach  -> http://127.0.0.1:54521 (published port)
+#   SUPABASE_INTERNAL_URL is used only by Next's server-side/middleware code,
+#   which is inside the container    -> http://kong:8000 (Docker network)
+#   Both point at the same gateway. See apps/web/utils/supabase/server.ts.
+# =============================================================================
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: docker/web.Dockerfile
+      args:
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:?run via scripts/docker-review.sh}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:?run via scripts/docker-review.sh}
+    image: soteria/web:review
+    container_name: soteria_web_review
+    environment:
+      NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      SUPABASE_INTERNAL_URL: http://kong:8000
+    ports:
+      - '3000:3000'
+    networks:
+      - supabase
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD-SHELL', 'node -e "fetch(\"http://127.0.0.1:3000/login/\").then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+networks:
+  # Created by `supabase start`; we join it rather than defining our own so the
+  # web container can reach Kong by service name.
+  supabase:
+    external: true
+    name: supabase_network_soteria-local

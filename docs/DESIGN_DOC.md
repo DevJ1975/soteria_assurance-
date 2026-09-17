@@ -1,4 +1,13 @@
 # Soteria Assurance — Comprehensive Product Design Document
+
+> [!NOTE]
+> §§6–8 (technology stack, multi-tenant isolation, database schema) were
+> rewritten in September 2026 to describe the Supabase / Postgres / pdf-lib
+> platform the product actually runs on. Earlier revisions described a Firebase
+> architecture that was never built. Some later sections (§12 API design, §16
+> deployment) still carry Firebase-era wording; `supabase/migrations/` and
+> `README.md` are authoritative where they disagree.
+
 ### ISO 45001:2018 AI-Powered Audit Management Platform
 **Version:** 1.0.0  
 **Owner:** Trainovate Technologies | Jamil Kareem Jones, Founder & CPO  
@@ -16,7 +25,7 @@
 5. [System Architecture](#5-system-architecture)  
 6. [Technology Stack](#6-technology-stack)  
 7. [Multi-Tenant Architecture](#7-multi-tenant-architecture)  
-8. [Database Schema (Firestore)](#8-database-schema-firestore)  
+8. [Database Schema (Postgres)](#8-database-schema-postgres)  
 9. [Feature Specifications](#9-feature-specifications)  
 10. [AI Integration (Claude API)](#10-ai-integration-claude-api)  
 11. [Mobile-First UX & Field Mode](#11-mobile-first-ux--field-mode)  
@@ -212,7 +221,7 @@ ISO 45001:2018
          ┌─────────────────────┼──────────────────────────┐
          │                     │                          │
 ┌────────▼────────┐   ┌────────▼────────┐   ┌────────────▼────────┐
-│  Firebase Auth  │   │   Firestore DB  │   │  Firebase Storage   │
+│  Supabase Auth  │   │ Supabase Postgres│   │  Supabase Storage   │
 │  (Multi-tenant  │   │  (Multi-tenant  │   │  (Evidence Photos,  │
 │   JWT claims)   │   │   isolation)    │   │   Recordings, Docs) │
 └─────────────────┘   └────────┬────────┘   └─────────────────────┘
@@ -269,16 +278,19 @@ Soteria Assurance uses a monorepo (Turborepo) with shared packages to maximize c
 
 | Layer | Technology | Rationale |
 |---|---|---|
-| Database | Cloud Firestore | Real-time, offline sync, scalable |
-| Authentication | Firebase Auth | Multi-tenant, JWT custom claims |
-| File Storage | Firebase Storage | Evidence photos, recordings, PDFs |
-| Serverless Functions | Firebase Functions v2 (Node.js) | Event-driven, scales to zero |
-| AI Integration | Anthropic Claude API (claude-sonnet-4-6) | Best-in-class reasoning for audit |
-| Email | SendGrid | Transactional email delivery |
-| PDF Generation | Puppeteer (via Cloud Functions) | High-fidelity audit report PDFs |
-| Search | Algolia (or Typesense self-hosted) | Full-text wiki and finding search |
-| Monitoring | Firebase Crashlytics + Performance | Mobile error and perf monitoring |
-| Analytics | Firebase Analytics + Mixpanel | Product analytics |
+| Database | Supabase Postgres | Relational integrity for an audit record (FKs, CHECKs, triggers); row-level security enforces tenant AND role isolation in the database, not the client |
+| Authentication | Supabase Auth (GoTrue) | Email/password and phone OTP; the caller's tenant and role are read from their `profiles` row, never from a client-supplied claim |
+| File Storage | Supabase Storage | Private, tenant-prefixed buckets. Evidence, signatures and issued reports are write-once; a SHA-256 is recorded at upload |
+| Serverless | Supabase Edge Functions (Deno) | AI Co-Pilot, report generation, invitations, admin actions, reminders. Each re-derives the caller's tenant server-side |
+| AI Integration | Anthropic Claude API | Drafts for the auditor to accept, edit or discard — never a decision. Prompts carry explicit anti-fabrication constraints |
+| Email | SendGrid | Transactional email |
+| PDF Generation | pdf-lib, in an Edge Function | Deterministic, no headless browser to operate; renders the full ISO 19011 §6.5.1 content set |
+| Scheduling | pg_cron | Overdue corrective-action escalation runs in the database, so the record changes whether or not an email provider is reachable |
+
+> Earlier revisions of this document specified Cloud Firestore, Firebase Auth,
+> Firebase Functions and Puppeteer. None of that is in the repository. The
+> schema in `supabase/migrations/` is authoritative; each migration's header
+> records the requirement or defect it addresses.
 
 ### Development & DevOps
 
@@ -318,53 +330,40 @@ TENANT TYPES
     └── Billing: Per site or per user
 ```
 
-### Firebase Custom Claims (JWT)
+### Tenant and role isolation (Postgres RLS)
 
-Every Firebase Auth token will carry custom claims for tenant isolation:
+Isolation is enforced by row-level security in the database. Every business
+table carries a `tenant_id`, and every policy on it carries two predicates:
 
-```typescript
-interface FirebaseCustomClaims {
-  tenantId: string;           // Tenant document ID
-  tenantType: 'cb' | 'consultancy' | 'enterprise';
-  role: 'super_admin' | 'tenant_admin' | 'lead_auditor' | 'auditor' | 'auditee' | 'viewer';
-  permissions: string[];      // Granular permission array
-  clientIds?: string[];       // Which client orgs this auditor can access
-}
+```sql
+-- Reads: any active member of the tenant, excluding soft-deleted rows.
+using (tenant_id = public.current_tenant_id() and deleted_at is null)
+
+-- Writes: the tenant predicate AND a role predicate derived from the RBAC
+-- matrix below (20260914010000_enforce_roles_in_rls.sql).
+with check (tenant_id = public.current_tenant_id()
+            and public.current_role_in(variadic array['super_admin','tenant_admin','lead_auditor','auditor']))
 ```
 
-### Firestore Security Rules (Tenant Isolation)
+`current_tenant_id()` and `current_profile_role()` are `SECURITY DEFINER`
+functions that read the caller's own `profiles` row keyed on `auth.uid()`. The
+tenant is never taken from a client-supplied claim or request body: a client
+that could name its own tenant could read another's data or spend its quota.
 
-```javascript
-// All documents are scoped under /tenants/{tenantId}/
-// Security rules enforce that users can ONLY read/write within their own tenantId
+Edge Functions follow the same rule. Each verifies the bearer JWT, loads the
+caller's profile with the service client, and uses the tenant and role from
+that row. A body-supplied `tenantId` is compared against it and rejected on
+mismatch; only a `super_admin` may act across tenants.
 
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    
-    // Tenant-scoped data — EVERYTHING lives here
-    match /tenants/{tenantId}/{document=**} {
-      allow read, write: if request.auth != null 
-        && request.auth.token.tenantId == tenantId
-        && hasValidRole(request.auth.token.role);
-    }
-    
-    // Wiki (shared across tenants, read-only for standard articles)
-    match /wiki/{articleId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && isGlobalAdmin();
-    }
-    
-    function hasValidRole(role) {
-      return role in ['super_admin', 'tenant_admin', 'lead_auditor', 'auditor', 'auditee', 'viewer'];
-    }
-    
-    function isGlobalAdmin() {
-      return request.auth.token.role == 'super_admin';
-    }
-  }
-}
-```
+Storage buckets are private and tenant-prefixed: the first path segment of
+every object is the tenant id, and the bucket policy checks it against
+`current_tenant_id()`. The `evidence`, `signatures` and `reports` buckets are
+write-once — no UPDATE or DELETE policy exists — so a captured photograph or an
+issued report cannot be replaced in place.
+
+Hard DELETE is not reachable through the API on any audit-record table.
+Disposition is a role-gated soft delete (`deleted_at`) that read policies
+filter out, with a minimum retention of three years recorded on the tenant.
 
 ### Role-Based Access Control (RBAC)
 
@@ -384,697 +383,63 @@ service cloud.firestore {
 
 ---
 
-## 8. Database Schema (Firestore)
+## 8. Database Schema (Postgres)
 
-### Collection Hierarchy
+The schema lives in `supabase/migrations/` and is applied in order by
+`supabase start` / `supabase db reset`. **The migrations are the source of
+truth**; this section is an orientation map, not a copy.
 
-```
-firestore/
-├── tenants/{tenantId}
-│   ├── [TenantDocument]
-│   ├── users/{userId}
-│   │   └── [UserDocument]
-│   ├── clients/{clientId}
-│   │   └── [ClientDocument]
-│   ├── audits/{auditId}
-│   │   ├── [AuditDocument]
-│   │   ├── clauses/{clauseId}
-│   │   │   └── [ClauseAssessmentDocument]
-│   │   ├── findings/{findingId}
-│   │   │   └── [FindingDocument]
-│   │   ├── evidence/{evidenceId}
-│   │   │   └── [EvidenceDocument]
-│   │   ├── meetings/{meetingId}
-│   │   │   └── [MeetingDocument]
-│   │   └── witnessStatements/{statementId}
-│   │       └── [WitnessStatementDocument]
-│   ├── correctiveActions/{caId}
-│   │   └── [CorrectiveActionDocument]
-│   ├── templates/{templateId}
-│   │   └── [AuditTemplateDocument]
-│   └── reports/{reportId}
-│       └── [ReportDocument]
-├── wiki/{articleId}
-│   └── [WikiArticleDocument]
-└── system/config
-    └── [SystemConfigDocument]
-```
+### Tables
 
-### TypeScript Type Definitions
+| Table | Holds | Notes |
+|---|---|---|
+| `tenants` | The customer organization | `enabled_standards`, seat limits, `record_retention_years` (floor 3) |
+| `profiles` | Users, keyed on `auth.users.id` | `role` (`user_role` enum), `qualifications` jsonb, `tenant_id` |
+| `auditor_invitations` | Invitation-gated onboarding | Grant is immutable once issued; can never confer `super_admin` |
+| `clients` | The auditee organizations | Sites, contacts, certification status |
+| `audit_programmes` | A client's certification cycle | `certification_decision`; the decision maker cannot have been on the audit team (trigger) |
+| `audits` | One audit | `audit_type`, `audit_stage` (CHECK-constrained), `programme_id`, `audit_plan` jsonb, lifecycle dates |
+| `auditor_declarations` | Per-audit competence and impartiality | One per auditor per audit; cannot be self-reviewed (trigger) |
+| `meetings` | Opening and closing meetings | Attendance, minutes, decisions, `findings_summary_presented` snapshot; one per `(audit, type)` |
+| `clause_assessments` | Clause-by-clause verdicts | `conformity_status` CHECK-constrained; score derived from sub-clause verdicts |
+| `findings` | MNC / NC / OFI / SP / OBS | Requirement, objective evidence, statement, `target_closure_date`; frozen once the report is issued (trigger) |
+| `evidence` | Captured artefacts | Storage ref, `content_sha256` (immutable once set), provenance columns immutable (trigger) |
+| `corrective_actions` | Root cause, actions, effectiveness | Closure only through `record_effectiveness_review()`; escalation by pg_cron |
+| `reports` | Issued PDF metadata | `content_sha256`; the object itself is write-once in storage |
+| `audit_logs` | Append-only change history | Before/after JSON snapshots of every core-table change; TRUNCATE revoked, UPDATE/DELETE raise |
+| `ai_logs` | AI usage | Written only by Edge Functions; drives the per-tenant hourly rate limit |
+| `document_sequences` | Atomic numbering | `next_document_seq()` and `reserve_document_seq_block()` for offline devices |
+| `standards` | Reference data | Three rows; `is_available` is false for ISO 9001/14001 until their datasets are authored |
 
-```typescript
-// ============================================
-// TENANT
-// ============================================
-interface Tenant {
-  id: string;
-  name: string;
-  type: 'certification_body' | 'consultancy' | 'enterprise';
-  logo?: string;           // Firebase Storage URL
-  subscriptionTier: 'starter' | 'professional' | 'enterprise';
-  subscriptionStatus: 'active' | 'trialing' | 'past_due' | 'canceled';
-  maxAuditors: number;
-  maxAuditsPerMonth: number;
-  settings: TenantSettings;
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
-}
+### Invariants enforced by the database, not the client
 
-interface TenantSettings {
-  timezone: string;
-  defaultLanguage: string;
-  requireEvidencePerFinding: boolean;
-  requireWitnessStatement: boolean;
-  autoGenerateNCRNumbers: boolean;
-  ncrPrefix: string;       // e.g., "NCR-2026-"
-  reportTemplate: 'standard' | 'minimal' | 'comprehensive';
-  brandingColor?: string;
-  brandingLogo?: string;
-}
+These are the rules a form cannot bypass. Each is a trigger or constraint,
+and each has an integration test in `tests/src/`.
 
-// ============================================
-// USER
-// ============================================
-interface User {
-  id: string;
-  tenantId: string;
-  email: string;
-  displayName: string;
-  avatarUrl?: string;
-  role: UserRole;
-  qualifications: AuditorQualification[];
-  clientIds: string[];     // Which clients this user can access
-  isActive: boolean;
-  lastLoginAt?: Timestamp;
-  createdAt: Timestamp;
-}
+- The audited party (`auditee`) and a `viewer` cannot write findings, audits,
+  clause assessments or evidence in their own tenant. The auditee CAN write
+  their own corrective action (ISO 45001 §10.2 puts it with the organization).
+- Findings and clause assessments cannot be edited once their audit reaches
+  `report_issued` or `closed`.
+- An auditor cannot review their own impartiality declaration.
+- A certification decision cannot be recorded by anyone who was on the
+  cycle's audit team (ISO/IEC 17021-1 §9.5.1).
+- An invitation cannot grant `super_admin`, and its recipient, role and
+  expiry are immutable once issued.
+- `audit_logs` rows cannot be updated or deleted through the API.
+- A recorded `content_sha256` cannot be changed.
+- `audit_type`, `audit_stage`, `conformity_status`, `certification_status`,
+  `root_cause_method`, evidence `type` and finding `severity` are
+  CHECK-constrained to their TypeScript unions, so an out-of-union value cannot
+  be written and later cast straight through a typed row mapper.
 
-type UserRole = 'super_admin' | 'tenant_admin' | 'lead_auditor' | 'auditor' | 'auditee' | 'viewer';
+### TypeScript types
 
-interface AuditorQualification {
-  standard: string;        // e.g., "ISO 45001:2018"
-  level: 'lead_auditor' | 'auditor' | 'trainee';
-  certBody: string;
-  certNumber: string;
-  issuedDate: string;      // ISO date string
-  expiryDate: string;
-  documentUrl?: string;    // Firebase Storage URL
-}
-
-// ============================================
-// CLIENT (Organization being audited)
-// ============================================
-interface Client {
-  id: string;
-  tenantId: string;
-  organizationName: string;
-  industry: string;
-  address: ClientAddress;
-  contactName: string;
-  contactEmail: string;
-  contactPhone: string;
-  numberOfEmployees: number;
-  numberOfSites: number;
-  sites: ClientSite[];
-  certificationStatus: 'not_certified' | 'certified' | 'expired' | 'suspended';
-  certificationBody?: string;
-  certificationExpiry?: string;
-  auditHistory: string[];  // Array of auditId references
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
-}
-
-interface ClientAddress {
-  street: string;
-  city: string;
-  state: string;
-  country: string;
-  postalCode: string;
-  coordinates?: { lat: number; lng: number };
-}
-
-interface ClientSite {
-  siteId: string;
-  siteName: string;
-  address: ClientAddress;
-  siteContactName: string;
-  siteContactEmail: string;
-  numberOfWorkers: number;
-  hazardCategory: 'low' | 'medium' | 'high' | 'very_high';
-}
-
-// ============================================
-// AUDIT
-// ============================================
-interface Audit {
-  id: string;
-  tenantId: string;
-  clientId: string;
-  auditNumber: string;     // Auto-generated: "AUD-2026-001"
-  auditType: AuditType;
-  auditStage: AuditStage;  // Stage 1 or Stage 2 (for certification)
-  standard: 'ISO 45001:2018';
-  scope: string;           // Scope of the OH&S management system
-  status: AuditStatus;
-  
-  // Audit Team
-  leadAuditorId: string;
-  auditTeam: AuditTeamMember[];
-  
-  // Client Representatives
-  managementRepresentativeId?: string;
-  managementRepresentativeName: string;
-  
-  // Scheduling
-  plannedStartDate: string;
-  plannedEndDate: string;
-  actualStartDate?: string;
-  actualEndDate?: string;
-  auditDays: number;
-  
-  // Sites
-  sitesInScope: string[];  // Array of ClientSite.siteId
-  
-  // Planning
-  auditPlan: AuditPlan;
-  
-  // Findings Summary (aggregated)
-  findings: AuditFindingsSummary;
-  
-  // AI Assessment
-  aiCertificationReadinessScore?: number;  // 0-100
-  aiRiskFlags?: string[];
-  
-  // Metadata
-  confidentiality: 'standard' | 'restricted';
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
-  completedAt?: Timestamp;
-  reportIssuedAt?: Timestamp;
-}
-
-type AuditType = 'initial_certification' | 'surveillance' | 'recertification' | 'internal' | 'special';
-type AuditStage = 'stage_1' | 'stage_2' | 'not_applicable';
-type AuditStatus = 'planned' | 'in_progress' | 'findings_review' | 'report_pending' | 'report_issued' | 'closed' | 'canceled';
-
-interface AuditTeamMember {
-  userId: string;
-  displayName: string;
-  role: 'lead_auditor' | 'auditor' | 'technical_expert' | 'observer';
-  clauseAssignments: string[];  // Clause IDs assigned to this auditor
-}
-
-interface AuditPlan {
-  activities: AuditPlanActivity[];
-  documentReviewList: string[];
-  intervieweeList: AuditInterviewee[];
-  areaInspectionList: AuditInspectionArea[];
-}
-
-interface AuditPlanActivity {
-  activityId: string;
-  time: string;
-  duration: number;           // minutes
-  activity: string;
-  clauses: string[];          // ISO clause references
-  location: string;
-  auditorIds: string[];
-  intervieweeIds: string[];
-}
-
-interface AuditInterviewee {
-  intervieweeId: string;
-  name: string;
-  jobTitle: string;
-  department: string;
-  topics: string[];           // Topics to be discussed
-  scheduledTime?: string;
-}
-
-interface AuditInspectionArea {
-  areaId: string;
-  name: string;               // e.g., "Machine Shop", "Chemical Store"
-  hazards: string[];
-  clauses: string[];
-  scheduledTime?: string;
-}
-
-interface AuditFindingsSummary {
-  totalFindings: number;
-  majorNCs: number;
-  minorNCs: number;
-  ofis: number;
-  strongPoints: number;
-  observations: number;
-  closedNCs: number;
-  openNCs: number;
-}
-
-// ============================================
-// CLAUSE ASSESSMENT
-// ============================================
-interface ClauseAssessment {
-  id: string;
-  auditId: string;
-  tenantId: string;
-  clauseNumber: string;       // e.g., "4.1", "6.1.2", "9.2.1"
-  clauseTitle: string;
-  assignedAuditorId: string;
-  
-  // Assessment Results
-  conformityStatus: ConformityStatus;
-  score: number;              // 0-100 percentage conformance
-  
-  // Notes
-  auditorNotes: string;
-  aiGeneratedSummary?: string;
-  
-  // Evidence References
-  evidenceIds: string[];
-  findingIds: string[];
-  
-  // Interview Notes by Sub-clause
-  subClauseNotes: SubClauseNote[];
-  
-  // Completion
-  isComplete: boolean;
-  completedAt?: Timestamp;
-  updatedAt: Timestamp;
-}
-
-type ConformityStatus = 'conforming' | 'major_nc' | 'minor_nc' | 'not_audited' | 'not_applicable';
-
-interface SubClauseNote {
-  subClauseNumber: string;    // e.g., "6.1.2.a"
-  requirementText: string;    // Actual ISO requirement text
-  auditQuestion: string;      // Standard audit question
-  auditorResponse: string;    // What was found
-  conformityVerdict: 'yes' | 'no' | 'partial' | 'na';
-  aiSuggestedFollowUp?: string;
-}
-
-// ============================================
-// FINDING (NCR / OFI / Strong Point)
-// ============================================
-interface Finding {
-  id: string;
-  auditId: string;
-  tenantId: string;
-  clientId: string;
-  
-  // Classification
-  findingNumber: string;      // e.g., "NCR-2026-001"
-  type: FindingType;
-  severity?: 'major' | 'minor';  // Only for NCs
-  
-  // Standard Reference
-  clauseNumber: string;       // e.g., "6.1.2"
-  clauseTitle: string;
-  requirement: string;        // Exact ISO requirement text
-  
-  // Finding Content
-  title: string;              // Short descriptive title
-  objectiveEvidence: string;  // What was observed
-  nonconformityStatement: string;  // Formal NCR statement
-  aiDraftStatement?: string;  // AI-generated draft
-  
-  // Location
-  siteId?: string;
-  department?: string;
-  area?: string;
-  
-  // Evidence
-  evidenceIds: string[];
-  
-  // Auditor
-  raisedByAuditorId: string;
-  raisedByAuditorName: string;
-  raisedAt: Timestamp;
-  
-  // Acceptance
-  acknowledgedByName?: string;
-  acknowledgedBySignatureUrl?: string;
-  acknowledgedAt?: Timestamp;
-  
-  // Corrective Action
-  correctiveActionId?: string;
-  correctiveActionStatus?: CAStatus;
-  targetClosureDate?: string;
-  actualClosureDate?: string;
-  
-  // Status
-  status: FindingStatus;
-  closedAt?: Timestamp;
-  closedByAuditorId?: string;
-  
-  updatedAt: Timestamp;
-}
-
-type FindingType = 'major_nc' | 'minor_nc' | 'ofi' | 'strong_point' | 'observation';
-type FindingStatus = 'open' | 'acknowledged' | 'ca_submitted' | 'ca_review' | 'closed' | 'overdue';
-type CAStatus = 'pending' | 'in_progress' | 'submitted' | 'accepted' | 'rejected' | 'closed';
-
-// ============================================
-// EVIDENCE
-// ============================================
-interface Evidence {
-  id: string;
-  auditId: string;
-  tenantId: string;
-  
-  type: EvidenceType;
-  title: string;
-  description: string;
-  
-  // File Info
-  fileUrl: string;            // Firebase Storage URL
-  fileName: string;
-  fileSize: number;           // bytes
-  mimeType: string;
-  thumbnailUrl?: string;
-  
-  // Metadata
-  capturedAt: Timestamp;
-  capturedByAuditorId: string;
-  
-  // Geolocation (for photos taken in field)
-  geoLocation?: {
-    lat: number;
-    lng: number;
-    accuracy: number;
-    address?: string;
-  };
-  
-  // References
-  clauseNumbers: string[];
-  findingIds: string[];
-  
-  // AI Analysis (for images)
-  aiAnalysis?: string;        // AI description of what's in photo
-  aiHazardsDetected?: string[];
-  
-  isVerified: boolean;
-  verifiedAt?: Timestamp;
-  verifiedByAuditorId?: string;
-}
-
-type EvidenceType = 'photo' | 'video' | 'document' | 'screenshot' | 'audio' | 'signature';
-
-// ============================================
-// MEETING (Opening / Closing)
-// ============================================
-interface Meeting {
-  id: string;
-  auditId: string;
-  tenantId: string;
-  
-  type: 'opening' | 'closing';
-  scheduledAt: Timestamp;
-  actualStartAt?: Timestamp;
-  actualEndAt?: Timestamp;
-  duration?: number;          // seconds
-  
-  // Location
-  location: string;           // "Conference Room A" or "Virtual - Teams"
-  isVirtual: boolean;
-  virtualLink?: string;
-  
-  // Attendees
-  attendees: MeetingAttendee[];
-  
-  // Agenda
-  agendaItems: MeetingAgendaItem[];
-  
-  // Recording
-  recordingUrl?: string;      // Firebase Storage URL
-  recordingDuration?: number; // seconds
-  transcription?: string;     // Full AI-generated transcription
-  aiSummary?: string;         // AI-generated meeting summary
-  keyDecisions?: string[];    // AI-extracted key decisions
-  actionItems?: MeetingActionItem[];
-  
-  // Presenter Notes (for closing)
-  findingsSummaryPresented?: AuditFindingsSummary;
-  
-  // Signatures
-  signatureUrls: MeetingSignature[];
-  
-  status: 'scheduled' | 'in_progress' | 'completed' | 'canceled';
-  notes: string;
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
-}
-
-interface MeetingAttendee {
-  attendeeId: string;
-  name: string;
-  jobTitle: string;
-  organization: string;
-  role: 'auditor' | 'auditee' | 'observer';
-  isPresent: boolean;
-  signatureUrl?: string;
-}
-
-interface MeetingAgendaItem {
-  order: number;
-  title: string;
-  description?: string;
-  durationMinutes: number;
-  presenter: string;
-  isoClauseReference?: string;
-}
-
-interface MeetingActionItem {
-  actionId: string;
-  description: string;
-  owner: string;
-  dueDate?: string;
-  isCompleted: boolean;
-}
-
-interface MeetingSignature {
-  signerName: string;
-  signerTitle: string;
-  signatureUrl: string;
-  signedAt: Timestamp;
-}
-
-// ============================================
-// WITNESS STATEMENT
-// ============================================
-interface WitnessStatement {
-  id: string;
-  auditId: string;
-  tenantId: string;
-  
-  // Interviewee
-  intervieweeName: string;
-  intervieweeJobTitle: string;
-  intervieweeDepartment: string;
-  intervieweeEmployeeId?: string;
-  
-  // Interview Context
-  clausesDiscussed: string[];
-  interviewDate: Timestamp;
-  interviewDuration: number;    // minutes
-  location: string;
-  
-  // Content
-  questions: WitnessQuestion[];
-  generalNotes: string;
-  aiInterviewSummary?: string;
-  
-  // Recording
-  audioRecordingUrl?: string;
-  audioTranscription?: string;
-  
-  // Consent & Signature
-  consentGiven: boolean;
-  intervieweeSignatureUrl?: string;
-  auditorSignatureUrl?: string;
-  
-  conductedByAuditorId: string;
-  conductedByAuditorName: string;
-  
-  createdAt: Timestamp;
-}
-
-interface WitnessQuestion {
-  questionId: string;
-  clauseReference: string;
-  question: string;
-  response: string;
-  auditorNote?: string;
-  isKey: boolean;             // Mark as key finding
-}
-
-// ============================================
-// CORRECTIVE ACTION
-// ============================================
-interface CorrectiveAction {
-  id: string;
-  tenantId: string;
-  clientId: string;
-  auditId: string;
-  findingId: string;
-  
-  caNumber: string;           // e.g., "CA-2026-001"
-  title: string;
-  
-  // Root Cause Analysis
-  rootCauseMethod: 'five_why' | '8d' | 'fishbone' | 'free_form';
-  rootCauseAnalysis: string;
-  
-  // Actions
-  immediateAction: string;    // Containment action
-  correctiveAction: string;   // Systemic fix
-  preventiveAction: string;   // Prevent recurrence
-  
-  // Effectiveness
-  effectivenessCheck: string;
-  effectivenessCheckDate?: string;
-  effectivenessResult?: 'effective' | 'not_effective';
-  
-  // Ownership
-  responsiblePersonName: string;
-  responsiblePersonEmail: string;
-  
-  // Timeline
-  targetDate: string;         // ISO date string
-  submittedDate?: string;
-  reviewedDate?: string;
-  closedDate?: string;
-  
-  // Evidence of Closure
-  closureEvidenceIds: string[];
-  closureNotes?: string;
-  
-  // Review
-  reviewedByAuditorId?: string;
-  reviewNotes?: string;
-  
-  status: CAStatus;
-  aiRootCauseSuggestion?: string;
-  
-  history: CAHistoryEntry[];
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
-}
-
-interface CAHistoryEntry {
-  timestamp: Timestamp;
-  action: string;
-  performedBy: string;
-  notes?: string;
-}
-
-// ============================================
-// AUDIT TEMPLATE
-// ============================================
-interface AuditTemplate {
-  id: string;
-  tenantId: string;
-  name: string;
-  description: string;
-  standard: 'ISO 45001:2018';
-  auditType: AuditType;
-  
-  // Template Content
-  clauseQuestions: ClauseQuestionSet[];
-  standardAgendaItems: MeetingAgendaItem[];
-  openingMeetingScript: string;
-  closingMeetingScript: string;
-  documentReviewChecklist: DocumentReviewItem[];
-  inspectionChecklist: InspectionChecklistItem[];
-  
-  isDefault: boolean;         // System default template
-  isPublic: boolean;          // Shared across tenant
-  
-  createdByUserId: string;
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
-}
-
-interface ClauseQuestionSet {
-  clauseNumber: string;
-  clauseTitle: string;
-  questions: AuditQuestion[];
-}
-
-interface AuditQuestion {
-  questionId: string;
-  questionText: string;
-  requirementReference: string;  // ISO 45001 clause requirement text
-  evidenceExpected: string;
-  aiPromptHint?: string;
-  isRequired: boolean;
-  order: number;
-}
-
-interface DocumentReviewItem {
-  itemId: string;
-  documentName: string;
-  clauseReference: string;
-  isRequired: boolean;
-  purpose: string;
-}
-
-interface InspectionChecklistItem {
-  itemId: string;
-  area: string;
-  checkPoint: string;
-  clauseReference: string;
-  hazardType?: string;
-  isRequired: boolean;
-}
-
-// ============================================
-// WIKI ARTICLE
-// ============================================
-interface WikiArticle {
-  id: string;
-  tenantId?: string;         // null = global wiki article
-  
-  // Classification
-  category: WikiCategory;
-  clauseReference?: string;  // e.g., "6.1.2"
-  tags: string[];
-  
-  // Content
-  title: string;
-  summary: string;
-  content: string;           // Markdown content
-  
-  // Metadata
-  author: string;
-  version: string;
-  lastReviewDate: string;
-  
-  // Related
-  relatedArticleIds: string[];
-  relatedClauseNumbers: string[];
-  
-  // Access
-  isPublished: boolean;
-  isFeatured: boolean;
-  
-  viewCount: number;
-  helpfulVotes: number;
-  
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
-}
-
-type WikiCategory = 
-  | 'clause_guide'       // Clause-by-clause ISO 45001 guidance
-  | 'audit_technique'    // How to audit effectively
-  | 'finding_guidance'   // How to write findings
-  | 'legal_reference'    // OH&S legislation references
-  | 'best_practice'      // Industry best practices
-  | 'template_guide'     // How to use templates
-  | 'platform_help'      // Platform how-to articles
-  | 'glossary';          // ISO/audit terminology
-```
+The application-level shapes are in `packages/core/src/types/`. The web row
+mappers in `apps/web/lib/supabase-data.ts` and the mobile mappers in
+`apps/mobile/services/mappers.ts` translate between them and the column
+names above. `Timestamp` is a structural type defined in `@soteria/core`; it
+is serialized to ISO strings at the database boundary.
 
 ---
 
@@ -1450,18 +815,18 @@ When a photo is captured as evidence:
 ### Offline-First Architecture
 
 ```typescript
-// WatermelonDB local schema mirrors Firestore collections
+// WatermelonDB local schema mirrors the Postgres tables
 // Sync manager handles bidirectional sync with conflict resolution
 
 const syncManager = {
-  // Push local changes to Firestore
+  // Push local changes to Postgres via PostgREST
   pushLocalChanges: async (db: Database) => {
     const unsyncedAudits = await db.collections.get<Audit>('audits')
       .query(Q.where('_status', Q.notEq('synced'))).fetch();
     // Push each changed record...
   },
   
-  // Pull remote changes from Firestore
+  // Pull remote changes from Postgres via PostgREST
   pullRemoteChanges: async (db: Database, lastSyncTimestamp: number) => {
     const snapshot = await firestore()
       .collection(`tenants/${tenantId}/audits`)
@@ -1533,7 +898,7 @@ Visual sync status always visible in header:
 - Custom claims verified server-side on every function call
 - API keys for Claude stored in Firebase Secret Manager (never in client)
 - No PHI or PII stored beyond what is necessary for audit record-keeping
-- Audit log for all create/update/delete operations (immutable Firestore collection)
+- Audit log for all create/update/delete operations (`audit_logs`: append-only Postgres table with before/after JSON snapshots; UPDATE and DELETE raise, TRUNCATE is revoked)
 
 ### Audit Data Immutability
 
@@ -1541,7 +906,7 @@ Once an audit report is issued (`status: 'report_issued'`):
 - Findings become read-only
 - Evidence files cannot be deleted
 - All subsequent changes create new versioned records
-- Firestore security rules enforce immutability at the database level
+- Immutability is enforced by database triggers, not by client code: `audit_logs` rows, recorded evidence digests, evidence provenance, and findings on an issued audit cannot be altered through the API
 
 ### GDPR / Privacy
 
