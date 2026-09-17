@@ -64,7 +64,21 @@ export interface AICallContext {
 }
 
 /**
- * Authenticates, pins the tenant, and enforces the rate limit.
+ * Roles granted `ai_copilot` in ROLE_PERMISSIONS
+ * (packages/core/src/constants/rbac.ts). Neither `auditee` — the organization
+ * being audited — nor `viewer` holds it.
+ *
+ * Without this check an auditee could invoke `draft-ncr` against their own
+ * tenant's data, generating AI-drafted nonconformity text about themselves and
+ * spending the tenant's hourly quota, while ai_logs attributed genuine
+ * co-pilot usage to a role the matrix says has none. `generate-report-pdf`
+ * already gated this way; the AI functions did not.
+ */
+const AI_ALLOWED_ROLES = new Set(['super_admin', 'tenant_admin', 'lead_auditor', 'auditor']);
+
+/**
+ * Authenticates, checks the AI permission, pins the tenant, and enforces the
+ * rate limit.
  *
  * The tenant is taken from the caller's own profile and the body's tenantId is
  * only ever compared against it — never trusted. A client that could name its
@@ -75,6 +89,9 @@ export async function beginAICall(
   bodyTenantId: unknown,
 ): Promise<AICallContext> {
   const caller = await requireCaller(request);
+  if (!AI_ALLOWED_ROLES.has(caller.role)) {
+    throw new HttpError(403, 'You do not have permission to use the AI co-pilot.');
+  }
   if (typeof bodyTenantId === 'string' && bodyTenantId !== caller.tenantId) {
     throw new HttpError(403, 'That tenant does not match your account.');
   }

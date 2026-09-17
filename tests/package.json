@@ -4,6 +4,7 @@
   "private": true,
   "description": "Authenticated end-to-end tests against a local Supabase stack",
   "scripts": {
+    "test": "echo '@soteria/e2e is an INTEGRATION suite: it needs a running Supabase stack, so `pnpm test` does not run it. Use: supabase start && pnpm --filter @soteria/e2e test:e2e (CI runs it as its own job).'",
     "test:e2e": "jest --runInBand",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src"
