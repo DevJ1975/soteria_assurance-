@@ -3,6 +3,7 @@ export * from './tenant';
 export * from './user';
 export * from './client';
 export * from './audit';
+export * from './programme';
 export * from './clause';
 export * from './finding';
 export * from './evidence';

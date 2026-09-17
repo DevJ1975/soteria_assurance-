@@ -83,6 +83,12 @@ export interface AuditPlan {
 export interface Audit {
   id: string;
   tenantId: string;
+  /**
+   * The certification cycle this audit belongs to. Optional for `internal`
+   * and `special` audits; expected for initial certification, surveillance
+   * and recertification so the cycle is traceable end to end.
+   */
+  programmeId?: string;
   clientId: string;
   /** Auto-generated, e.g. "AUD-2026-001". */
   auditNumber: string;

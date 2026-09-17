@@ -3,9 +3,14 @@ import type { StandardClause } from '../types';
 /**
  * Canonical ISO 45001:2018 clause dataset.
  *
- * Covers every clause group (4–10) and every sub-clause / grandchild from the
- * standard's structure (including deep nodes such as 6.1.2, 8.1.4.1–8.1.4.3,
- * 9.2.1/9.2.2, 9.3.1–9.3.3, 10.1–10.3).
+ * Covers all 56 clauses of groups 4–10, at every level the standard actually
+ * defines: the deep nodes 6.1.2.1–6.1.2.3, 7.4.1–7.4.3, 8.1.4.1–8.1.4.3,
+ * 9.1.1/9.1.2, 9.2.1/9.2.2 and 10.1–10.3.
+ *
+ * Note that 9.3 Management review is a SINGLE undivided clause in ISO 45001.
+ * The 9.3.1 General / 9.3.2 Inputs / 9.3.3 Outputs split belongs to
+ * ISO 9001:2015 — do not reintroduce it here. The expected clause set is
+ * pinned by set-equality assertion in packages/core/src/__tests__/standards.test.ts.
  *
  * IMPORTANT: requirementText values are PARAPHRASED for IP safety. They convey
  * the audit-relevant intent of each requirement without reproducing the
@@ -384,7 +389,7 @@ export const ISO45001_CLAUSES: StandardClause[] = [
   },
   {
     number: '6.1.2',
-    title: 'Hazard identification and assessment of OH&S risks',
+    title: 'Hazard identification and assessment of risks and opportunities',
     parentNumber: '6.1',
     level: 3,
     requirementText:
@@ -412,7 +417,123 @@ export const ISO45001_CLAUSES: StandardClause[] = [
       'Risk assessment methodology / criteria',
       'Job safety analyses and task-based risk assessments',
     ],
-    crossReferences: ['5.4', '6.1.1', '6.1.4', '8.1.2', '8.2', '10.2'],
+    crossReferences: [
+      '5.4',
+      '6.1.1',
+      '6.1.2.1',
+      '6.1.2.2',
+      '6.1.2.3',
+      '6.1.4',
+      '8.1.2',
+      '8.2',
+      '10.2',
+    ],
+  },
+  {
+    number: '6.1.2.1',
+    title: 'Hazard identification',
+    parentNumber: '6.1.2',
+    level: 4,
+    requirementText:
+      'The organization must establish, implement and maintain processes for ongoing and proactive hazard identification. The processes must take into account how work is organized, social factors (including workload, work hours, victimization, harassment and bullying), leadership and the culture of the organization; routine and non-routine activities and situations, including hazards arising from infrastructure, equipment, materials, substances and the physical conditions of the workplace, from product and service design, research, development, testing, production, assembly, construction, delivery, maintenance and disposal, from human factors, and from how the work is actually performed; past relevant incidents, internal or external to the organization, including emergencies, and their causes; potential emergency situations; people, including those with access to the workplace and their activities such as workers, contractors, visitors and other persons, and those in the vicinity who can be affected; other issues including the design of work areas, processes, installations, machinery, operating procedures and work organization, including their adaptation to the needs and capabilities of the workers involved; situations occurring in the vicinity of the workplace caused by work-related activities under the control of the organization; and actual or proposed changes in organization, operations, processes, activities and the management system.',
+    auditFocus: [
+      'Hazard identification is ongoing and proactive rather than triggered only by incidents',
+      'Social factors — workload, work hours, harassment, bullying, victimization — are identified as hazards, not only physical ones',
+      'Routine, non-routine and emergency situations are all covered',
+      'Persons in the vicinity and those not directly employed (contractors, visitors) are considered',
+      'Proposed changes trigger hazard identification before they are implemented',
+      'Workers are involved in identifying hazards in their own work areas',
+    ],
+    typicalAuditQuestions: [
+      'How are hazards identified, how often, and what triggers a fresh identification?',
+      'Show me where work-related psychosocial hazards such as workload or bullying have been identified.',
+      'How do you identify hazards arising from non-routine tasks and from potential emergencies?',
+      'How were hazards identified for the last significant change you made?',
+      'How are workers involved in identifying the hazards in their own areas?',
+    ],
+    commonNonconformities: [
+      'Hazard identification is reactive — the register is only updated after an incident',
+      'Only physical hazards identified; social and psychosocial factors entirely absent',
+      'Non-routine tasks, maintenance and emergency situations not covered',
+      'Contractors, visitors and persons in the vicinity not considered',
+      'Change occurs without any hazard identification beforehand',
+      'Workers not involved; the register is authored solely by the OH&S function',
+    ],
+    expectedDocuments: [
+      'Hazard register / hazard identification records',
+      'Job safety analyses and task-based hazard identification for non-routine work',
+      'Records of worker involvement in hazard identification',
+      'Management-of-change hazard reviews',
+    ],
+    crossReferences: ['5.4', '6.1.2.2', '6.1.2.3', '8.1.2', '8.1.3', '8.2', '10.2'],
+  },
+  {
+    number: '6.1.2.2',
+    title:
+      'Assessment of OH&S risks and other risks to the OH&S management system',
+    parentNumber: '6.1.2',
+    level: 4,
+    requirementText:
+      'The organization must establish, implement and maintain processes to assess OH&S risks from the identified hazards, taking into account the effectiveness of existing controls, and to determine and assess the other risks related to the establishment, implementation, operation and maintenance of the OH&S management system. The methodologies and criteria for assessing OH&S risks must be defined with respect to scope, nature and timing, to ensure they are proactive rather than reactive, and must be used and maintained in a systematic way. Documented information on the methodologies and criteria must be maintained and retained.',
+    auditFocus: [
+      'A defined, documented risk assessment methodology with explicit criteria',
+      'Assessment accounts for the effectiveness of controls already in place, not the unmitigated hazard alone',
+      'Risks to the management system itself are assessed, distinctly from OH&S risks to people',
+      'The methodology is applied consistently across areas, assessors and time',
+      'Criteria are proactive — risk is assessed before harm occurs, not ranked by incident history',
+    ],
+    typicalAuditQuestions: [
+      'What methodology and risk criteria do you use, and where are they documented?',
+      'How does the assessment take account of the controls already in place?',
+      'What risks to the management system itself have you identified?',
+      'Show me the same hazard assessed by two different assessors — how consistent is the result?',
+    ],
+    commonNonconformities: [
+      'Risk assessment methodology undefined, or defined but not followed',
+      'Existing controls ignored, so residual risk is never established',
+      'Risks to the management system conflated with OH&S risks to people, or not assessed at all',
+      'Scoring applied inconsistently between areas or assessors',
+      'Documented information on methodology and criteria not maintained',
+    ],
+    expectedDocuments: [
+      'Risk assessment methodology and criteria',
+      'Risk assessment records showing residual risk after existing controls',
+      'Register of risks to the OH&S management system',
+    ],
+    crossReferences: ['6.1.1', '6.1.2.1', '6.1.4', '8.1.2', '9.1.1'],
+  },
+  {
+    number: '6.1.2.3',
+    title:
+      'Assessment of OH&S opportunities and other opportunities to the OH&S management system',
+    parentNumber: '6.1.2',
+    level: 4,
+    requirementText:
+      'The organization must establish, implement and maintain processes to assess OH&S opportunities to enhance OH&S performance — while taking into account planned changes to the organization, its policies, its processes or its activities — including opportunities to adapt work, work organization and the work environment to workers, and opportunities to eliminate hazards and reduce OH&S risks; and to assess other opportunities for improving the OH&S management system.',
+    auditFocus: [
+      'Opportunities are assessed as a distinct process, not treated as the inverse of risk',
+      'Opportunities to adapt work and the work environment to workers are considered',
+      'Planned changes are examined for the opportunities they create, not only the risks',
+      'Opportunities to improve the management system itself are assessed separately',
+      'Assessed opportunities feed the OH&S objectives and planning',
+    ],
+    typicalAuditQuestions: [
+      'How do you identify and assess OH&S opportunities, as distinct from risks?',
+      'What opportunities to adapt work or the work environment to workers have you assessed?',
+      'What OH&S opportunities arose from your last planned change?',
+      'How do assessed opportunities translate into objectives or actions?',
+    ],
+    commonNonconformities: [
+      'Opportunity assessment absent — the process addresses risk only',
+      'Opportunities recorded but never assessed or carried into planning',
+      'Opportunities limited to hazard elimination; work adaptation and system improvement not considered',
+    ],
+    expectedDocuments: [
+      'OH&S opportunity register and assessment records',
+      'Change review records addressing opportunities alongside risks',
+      'Traceability from assessed opportunities into OH&S objectives',
+    ],
+    crossReferences: ['6.1.1', '6.1.2.1', '6.1.4', '6.2.1', '8.1.3', '10.3'],
   },
   {
     number: '6.1.3',
@@ -694,7 +815,98 @@ export const ISO45001_CLAUSES: StandardClause[] = [
       'Communication procedure / matrix',
       'Records of internal and external OH&S communications',
     ],
-    crossReferences: ['4.2', '5.4', '7.3', '10.2'],
+    crossReferences: ['4.2', '5.4', '7.3', '7.4.1', '7.4.2', '7.4.3', '10.2'],
+  },
+  {
+    number: '7.4.1',
+    title: 'General',
+    parentNumber: '7.4',
+    level: 3,
+    requirementText:
+      'The organization must establish, implement and maintain the processes needed for internal and external communication relevant to the OH&S management system, including determining what it will communicate, when, with whom and how. It must take account of diversity aspects such as gender, language, culture, literacy and disability, ensure the views of external interested parties are considered, take legal and other requirements into account, and ensure the OH&S information communicated is consistent with information generated within the system and is reliable. The organization must respond to relevant communications and retain documented information as evidence of its communications.',
+    auditFocus: [
+      'A defined communication process specifying what, when, with whom and how',
+      'Diversity aspects (language, literacy, culture, disability) demonstrably considered',
+      'Legal and other requirements reflected in what must be communicated',
+      'Communicated OH&S information is consistent with the system’s own records and is reliable',
+      'Relevant incoming communications are responded to and retained',
+    ],
+    typicalAuditQuestions: [
+      'How do you decide what OH&S information to communicate, to whom, when and by what method?',
+      'How do you account for diversity, such as non-native-language or low-literacy workers?',
+      'How do you make sure what is communicated is consistent with what the system actually records?',
+      'How do you respond to and retain relevant communications received?',
+    ],
+    commonNonconformities: [
+      'No defined communication process; communication is ad hoc and undocumented',
+      'Diversity aspects not considered, so communications do not reach part of the workforce',
+      'Communicated performance information contradicts the system’s own monitoring records',
+      'Incoming OH&S communications received but not responded to or retained',
+    ],
+    expectedDocuments: [
+      'Communication procedure / communication matrix',
+      'Records of OH&S communications sent and received',
+      'Evidence of responses to relevant communications',
+    ],
+    crossReferences: ['4.2', '5.4', '7.3', '7.4.2', '7.4.3', '7.5.3'],
+  },
+  {
+    number: '7.4.2',
+    title: 'Internal communication',
+    parentNumber: '7.4',
+    level: 3,
+    requirementText:
+      'The organization must internally communicate information relevant to the OH&S management system among the various levels and functions of the organization, including communicating changes to the system. It must ensure its communication processes enable workers to contribute to continual improvement.',
+    auditFocus: [
+      'OH&S information reaches every level and function, not only supervisors and managers',
+      'Changes to the management system are communicated to those affected',
+      'Mechanisms exist through which workers can raise OH&S matters and contribute to improvement, and those mechanisms are used',
+    ],
+    typicalAuditQuestions: [
+      'How is OH&S information communicated across levels and functions?',
+      'How were the most recent changes to the management system communicated, and to whom?',
+      'How can a worker raise an OH&S concern or improvement suggestion, and what happens to it?',
+    ],
+    commonNonconformities: [
+      'Communication flows downward only; no route for workers to contribute',
+      'Changes to the system not communicated to affected workers, including contractors on site',
+      'Worker suggestions collected but never acknowledged or acted on',
+    ],
+    expectedDocuments: [
+      'Toolbox talk / safety briefing records',
+      'Notice board, intranet or bulletin content and distribution records',
+      'Worker suggestion, concern and feedback records with their outcomes',
+    ],
+    crossReferences: ['5.4', '7.3', '7.4.1', '10.1'],
+  },
+  {
+    number: '7.4.3',
+    title: 'External communication',
+    parentNumber: '7.4',
+    level: 3,
+    requirementText:
+      'The organization must externally communicate information relevant to the OH&S management system as established by its communication processes and as required by its legal and other requirements.',
+    auditFocus: [
+      'External OH&S communications are identified, controlled and consistent with the internal record',
+      'Statutory notifications (for example reportable incidents to the regulator) are made within the required timeframes',
+      'Communication with contractors, visitors, neighbours and other external interested parties is addressed',
+    ],
+    typicalAuditQuestions: [
+      'What OH&S information are you legally required to communicate externally, and to whom?',
+      'How do you demonstrate a reportable incident was notified to the regulator within the required period?',
+      'How do you communicate OH&S requirements to contractors and visitors?',
+    ],
+    commonNonconformities: [
+      'Statutory notifications late, incomplete or unevidenced',
+      'External OH&S communications unmanaged, with no record of what was sent or by whom',
+      'Contractors and visitors not given the OH&S information relevant to their activities',
+    ],
+    expectedDocuments: [
+      'Regulator notifications and correspondence',
+      'Contractor and visitor OH&S induction material and records',
+      'Register of external OH&S communications',
+    ],
+    crossReferences: ['4.2', '6.1.3', '7.4.1', '8.1.4.2', '10.2'],
   },
   {
     number: '7.5',
@@ -1283,107 +1495,36 @@ export const ISO45001_CLAUSES: StandardClause[] = [
     parentNumber: '9',
     level: 2,
     requirementText:
-      'Top management must review the OH&S management system at planned intervals to ensure its continuing suitability, adequacy and effectiveness, considering defined inputs and producing defined outputs, and retain documented information as evidence of the reviews.',
+      'Top management must review the OH&S management system at planned intervals to ensure its continuing suitability, adequacy and effectiveness. The review must consider the status of actions from previous reviews; changes in external and internal issues, interested-party needs, legal and other requirements, and risks and opportunities; the extent to which the policy and objectives have been met; OH&S performance information including incidents, nonconformities and corrective actions, monitoring and measurement results, compliance evaluation, audit results, worker consultation and participation; the adequacy of resources; relevant communications with interested parties; and opportunities for continual improvement. Its outputs must include decisions on the continuing suitability, adequacy and effectiveness of the system, improvement opportunities, any need for change, resource needs, actions where objectives have not been met, opportunities to improve integration with other business processes, and any implications for strategic direction. Relevant outputs must be communicated to workers and worker representatives, and documented information retained as evidence of the reviews.',
     auditFocus: [
-      'Reviews held at planned intervals by top management',
-      'All required inputs are considered and decisions/outputs are recorded',
-      'Outputs drive change, resourcing and improvement',
+      'Reviews held at planned intervals with demonstrable top management participation',
+      'Review explicitly addresses continuing suitability, adequacy and effectiveness',
+      'All required inputs are present, including incidents, audit results, compliance evaluation and worker consultation',
+      'Outputs record decisions on improvement, change, resources and unmet objectives, and are tracked to closure',
+      'Relevant outputs are communicated to workers and their representatives',
     ],
     typicalAuditQuestions: [
-      'How often does top management review the OH&S management system?',
-      'What inputs are considered and what decisions resulted from the last review?',
-      'How are management review outputs followed through?',
+      'How often does top management review the OH&S management system, and who participates?',
+      'Which inputs were considered in your last review, and how were incident trends, audit results and compliance status presented?',
+      'How was worker consultation and participation reflected in the review inputs?',
+      'What decisions and actions resulted from the last review, and how are they tracked to closure?',
+      'How were relevant review outputs communicated to workers?',
     ],
     commonNonconformities: [
-      'Management review not conducted at planned intervals',
-      'Required inputs missing from the review',
-      'Review produces no decisions or actions',
+      'Management review not conducted at planned intervals, or conducted without top management involvement',
+      'One or more required inputs (commonly compliance evaluation or worker consultation) omitted',
+      'Inputs presented as raw data with no analysis, and the review produces no decisions or actions',
+      'Outputs not communicated to workers or their representatives',
+      'Actions arising from the review not tracked or not completed',
     ],
     expectedDocuments: [
       'Management review minutes / records',
-      'Management review input and output documentation',
-    ],
-    crossReferences: ['9.3.1', '9.3.2', '9.3.3', '10.3'],
-  },
-  {
-    number: '9.3.1',
-    title: 'General',
-    parentNumber: '9.3',
-    level: 3,
-    requirementText:
-      'Top management must review the organization’s OH&S management system at planned intervals to ensure its continuing suitability, adequacy and effectiveness in achieving the intended outcomes.',
-    auditFocus: [
-      'Review is conducted by top management at planned intervals',
-      'Review explicitly addresses suitability, adequacy and effectiveness',
-    ],
-    typicalAuditQuestions: [
-      'Who participates in the management review and how is top management involved?',
-      'How does the review address the suitability, adequacy and effectiveness of the system?',
-    ],
-    commonNonconformities: [
-      'Management review conducted without top management involvement',
-      'Review does not address suitability, adequacy and effectiveness',
-    ],
-    expectedDocuments: [
-      'Management review schedule',
-      'Management review attendance records',
-    ],
-    crossReferences: ['5.1', '9.3.2', '9.3.3'],
-  },
-  {
-    number: '9.3.2',
-    title: 'Management review inputs',
-    parentNumber: '9.3',
-    level: 3,
-    requirementText:
-      'The management review must consider the status of actions from previous reviews; changes in external and internal issues relevant to the system (including interested-party needs, legal/other requirements, and risks and opportunities); the extent to which the policy and objectives have been met; information on OH&S performance (including incidents, nonconformities and corrective actions, monitoring results, compliance evaluation, audit results, worker consultation and participation, and risks and opportunities); the adequacy of resources; relevant communications with interested parties; and opportunities for continual improvement.',
-    auditFocus: [
-      'All mandatory inputs are present in the review',
-      'Inputs include incidents, audit results, compliance status and worker consultation',
-      'Resource adequacy and improvement opportunities are considered',
-    ],
-    typicalAuditQuestions: [
-      'Which inputs were considered in your last management review?',
-      'How were incident trends, audit results and compliance status presented?',
-      'How was worker consultation and participation reflected in the review inputs?',
-    ],
-    commonNonconformities: [
-      'One or more required inputs (e.g. compliance evaluation, worker consultation) omitted',
-      'Inputs presented as raw data without analysis',
-    ],
-    expectedDocuments: [
-      'Management review input pack / agenda',
-      'Performance and incident data presented to the review',
-    ],
-    crossReferences: ['9.1.1', '9.1.2', '9.2.2', '9.3.1', '9.3.3'],
-  },
-  {
-    number: '9.3.3',
-    title: 'Management review results',
-    parentNumber: '9.3',
-    level: 3,
-    requirementText:
-      'The outputs of the management review must include decisions related to the continuing suitability, adequacy and effectiveness of the system in achieving its intended outcomes; opportunities for continual improvement; any need for changes to the system; resource needs; actions where objectives have not been achieved; opportunities to improve integration with other business processes; and any implications for the strategic direction; relevant outputs must be communicated to workers and worker representatives.',
-    auditFocus: [
-      'Review outputs include decisions on improvement, change, resources and objectives',
-      'Relevant outputs are communicated to workers and their representatives',
-      'Actions arising from the review are tracked to completion',
-    ],
-    typicalAuditQuestions: [
-      'What decisions and actions resulted from your last management review?',
-      'How were relevant review outputs communicated to workers?',
-      'How do you track management review actions to closure?',
-    ],
-    commonNonconformities: [
-      'Review records lack decisions, actions or resource commitments',
-      'Outputs not communicated to workers or their representatives',
-      'Actions from the review not tracked or not completed',
-    ],
-    expectedDocuments: [
+      'Management review schedule and attendance records',
+      'Management review input pack / agenda and the performance data presented',
       'Management review output / action log',
-      'Communication of review outcomes to workers',
+      'Evidence that review outcomes were communicated to workers',
     ],
-    crossReferences: ['7.1', '9.3.2', '10.1', '10.3'],
+    crossReferences: ['5.1', '7.1', '9.1.1', '9.1.2', '9.2.2', '10.1', '10.3'],
   },
 
   // ==========================================================================
@@ -1438,7 +1579,7 @@ export const ISO45001_CLAUSES: StandardClause[] = [
       'Improvement opportunity register',
       'Improvement action records',
     ],
-    crossReferences: ['9.3.3', '10.2', '10.3'],
+    crossReferences: ['9.3', '10.2', '10.3'],
   },
   {
     number: '10.2',
@@ -1497,6 +1638,6 @@ export const ISO45001_CLAUSES: StandardClause[] = [
       'Trend analysis of OH&S performance',
       'Continual improvement records and communications',
     ],
-    crossReferences: ['4.4', '9.3.3', '10.1', '10.2'],
+    crossReferences: ['4.4', '9.3', '10.1', '10.2'],
   },
 ];

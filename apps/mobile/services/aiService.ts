@@ -51,7 +51,7 @@ export interface SuggestQuestionsResult {
  */
 export async function draftNCR(payload: DraftNCRPayload): Promise<DraftNCRResult> {
   return invokeFunction<DraftNCRResult>(
-    'draft-n-c-r',
+    'draft-ncr',
     payload as unknown as Record<string, unknown>,
   );
 }

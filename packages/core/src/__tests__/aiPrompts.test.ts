@@ -39,6 +39,22 @@ describe('buildAuditorSystemPrompt', () => {
   });
 });
 
+describe('anti-fabrication guardrails', () => {
+  // The model has observed nothing. Every one of these clauses exists because
+  // an invented "objective evidence" sentence the auditor accepts under time
+  // pressure is an evidence-fabrication event in a certification record.
+  const prompt = buildAuditorSystemPrompt('iso45001');
+
+  it.each([
+    'NEVER invent evidence',
+    'NEVER invent or guess a clause number',
+    'You did not attend the audit',
+    'The auditor is the author of record',
+  ])('states: %s', (clause) => {
+    expect(prompt).toContain(clause);
+  });
+});
+
 describe('buildNCRPrompt', () => {
   const request: NCRDraftRequest = {
     standardId: 'iso45001',
@@ -61,17 +77,36 @@ describe('buildNCRPrompt', () => {
     expect(buildNCRPrompt(request)).toContain(AI_DISCLAIMER);
   });
 
-  it('omits the evidence block when no evidence description is given', () => {
-    expect(buildNCRPrompt(request)).not.toContain('EVIDENCE DESCRIPTION');
-  });
-
-  it('includes the evidence block when an evidence description is given', () => {
+  it('includes the evidence supplied by the auditor', () => {
     const prompt = buildNCRPrompt({
       ...request,
       evidenceDescription: 'Photo of unlabeled drums.',
     });
-    expect(prompt).toContain('EVIDENCE DESCRIPTION');
+    expect(prompt).toContain('OBJECTIVE EVIDENCE SUPPLIED BY THE AUDITOR');
     expect(prompt).toContain('unlabeled drums');
+  });
+
+  it('states plainly when no evidence was supplied, rather than leaving a gap', () => {
+    // A silent omission is the dangerous case: the model is still asked for an
+    // "objective evidence" section and will fill it with something plausible.
+    const prompt = buildNCRPrompt(request);
+    expect(prompt).toContain('OBJECTIVE EVIDENCE SUPPLIED BY THE AUDITOR');
+    expect(prompt).toContain('(none supplied)');
+  });
+
+  it('instructs the model to refuse rather than invent evidence', () => {
+    expect(buildNCRPrompt(request)).toContain(
+      'Insufficient objective evidence supplied to support a nonconformity',
+    );
+  });
+
+  it('forbids inventing evidence, and asks for severity considerations not a grade', () => {
+    const prompt = buildNCRPrompt(request);
+    expect(prompt).toContain('Do not invent evidence');
+    // Classifying a nonconformity is the audit team's determination
+    // (ISO 19011 6.4.8) — the model must not anchor it.
+    expect(prompt).toContain('SEVERITY CONSIDERATIONS FOR THE AUDITOR');
+    expect(prompt).not.toContain('RECOMMENDED SEVERITY');
   });
 
   it('is deterministic for identical inputs', () => {

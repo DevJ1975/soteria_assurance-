@@ -144,6 +144,8 @@ describe.each(listAvailableStandards().map((s) => [s.id, s] as const))(
   (id, standard) => {
     it('contains a substantial, complete set of clauses', () => {
       expect(standard.clauses.length).toBeGreaterThanOrEqual(45);
+      // Per-standard exact counts are pinned separately; see the
+      // set-equality assertion in the ISO 45001 block below.
     });
 
     it('has unique clause numbers', () => {
@@ -253,51 +255,76 @@ describe.each(listAvailableStandards().map((s) => [s.id, s] as const))(
 describe('ISO 45001 dataset', () => {
   const ISO45001: StandardId = 'iso45001';
 
-  it('covers the required deep sub-clauses from the standard structure', () => {
-    const required = [
-      '6.1.1',
-      '6.1.2',
-      '6.1.3',
-      '6.1.4',
-      '6.2.1',
-      '6.2.2',
-      '7.5.1',
-      '7.5.2',
-      '7.5.3',
-      '8.1.1',
-      '8.1.2',
-      '8.1.3',
-      '8.1.4',
-      '8.1.4.1',
-      '8.1.4.2',
-      '8.1.4.3',
-      '8.2',
-      '9.1.1',
-      '9.1.2',
-      '9.2.1',
-      '9.2.2',
-      '9.3.1',
-      '9.3.2',
-      '9.3.3',
-      '10.1',
-      '10.2',
-      '10.3',
-    ];
-    for (const number of required) {
-      expect(getClauseByNumber(ISO45001, number)).toBeDefined();
+  /**
+   * The complete, reviewed clause set of ISO 45001:2018, groups 4–10.
+   *
+   * This list is hand-verified against the published standard and is the
+   * authority — not the dataset. Asserting SET EQUALITY (rather than mere
+   * presence) is what makes this test able to fail: a subset check cannot
+   * detect an INVENTED clause, and that is exactly how 9.3.1/9.3.2/9.3.3 —
+   * which belong to ISO 9001:2015, not ISO 45001 — once shipped here
+   * undetected while 6.1.2.1–.3 and 7.4.1–.3 were missing.
+   *
+   * Changing this list is a deliberate act: it means the standard changed.
+   */
+  const ISO45001_EXPECTED_CLAUSES = [
+    '4', '4.1', '4.2', '4.3', '4.4',
+    '5', '5.1', '5.2', '5.3', '5.4',
+    '6', '6.1', '6.1.1',
+    '6.1.2', '6.1.2.1', '6.1.2.2', '6.1.2.3',
+    '6.1.3', '6.1.4', '6.2', '6.2.1', '6.2.2',
+    '7', '7.1', '7.2', '7.3',
+    '7.4', '7.4.1', '7.4.2', '7.4.3',
+    '7.5', '7.5.1', '7.5.2', '7.5.3',
+    '8', '8.1', '8.1.1', '8.1.2', '8.1.3',
+    '8.1.4', '8.1.4.1', '8.1.4.2', '8.1.4.3', '8.2',
+    '9', '9.1', '9.1.1', '9.1.2', '9.2', '9.2.1', '9.2.2', '9.3',
+    '10', '10.1', '10.2', '10.3',
+  ];
+
+  it('contains exactly the clause set of ISO 45001:2018 — no more, no fewer', () => {
+    const actual = ISO45001_CLAUSES.map((c) => c.number).sort();
+    expect(actual).toEqual([...ISO45001_EXPECTED_CLAUSES].sort());
+  });
+
+  it('does not define sub-clauses under 9.3, which is undivided in ISO 45001', () => {
+    // 9.3.1 General / 9.3.2 Inputs / 9.3.3 Outputs is the ISO 9001:2015
+    // structure. A finding raised against "9.3.2" cites a criterion that does
+    // not exist and is rejectable on its face by the auditee.
+    expect(getChildClauses(ISO45001, '9.3')).toEqual([]);
+    for (const invented of ['9.3.1', '9.3.2', '9.3.3']) {
+      expect(getClauseByNumber(ISO45001, invented)).toBeUndefined();
     }
   });
 
-  it('has a level-4 clause exactly for the procurement grandchildren', () => {
+  it('resolves every cross-reference in the dataset to a real clause', () => {
+    const known = new Set(ISO45001_CLAUSES.map((c) => c.number));
+    for (const clause of ISO45001_CLAUSES) {
+      for (const ref of clause.crossReferences) {
+        expect(known.has(ref)).toBe(true);
+      }
+    }
+  });
+
+  it('has level-4 clauses exactly for the risk and procurement grandchildren', () => {
     const levelFour = ISO45001_CLAUSES.filter((c) => c.level === 4).map((c) => c.number);
-    expect(levelFour.sort()).toEqual(['8.1.4.1', '8.1.4.2', '8.1.4.3']);
+    expect(levelFour.sort()).toEqual([
+      '6.1.2.1',
+      '6.1.2.2',
+      '6.1.2.3',
+      '8.1.4.1',
+      '8.1.4.2',
+      '8.1.4.3',
+    ]);
   });
 
   describe('getClauseByNumber', () => {
     it('returns the matching clause', () => {
       const clause = getClauseByNumber(ISO45001, '6.1.2');
       expect(clause).toBeDefined();
-      expect(clause?.title).toBe('Hazard identification and assessment of OH&S risks');
+      expect(clause?.title).toBe(
+        'Hazard identification and assessment of risks and opportunities',
+      );
       expect(clause?.parentNumber).toBe('6.1');
       expect(clause?.level).toBe(3);
     });

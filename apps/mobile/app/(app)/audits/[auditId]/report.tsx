@@ -1,10 +1,16 @@
 /**
  * Report (DESIGN_DOC §9.7) — a live pre-report summary computed entirely from
  * local data: the findings summary (`computeFindingsSummary`) and the
- * certification-readiness score (`computeCertificationReadinessScore`), both
- * from `@soteria/core` so the math is identical to the backend report
- * generator. The PDF itself is produced server-side (`generateReport`); this
- * screen is the auditor's on-device preview before issuing.
+ * clause conformance score (`computeCertificationReadiness`), both from
+ * `@soteria/core` so the math is identical to the backend report generator.
+ * The PDF itself is produced server-side (`generateReport`); this screen is
+ * the auditor's on-device preview before issuing.
+ *
+ * The headline figure is a CONFORMANCE score, and the card says so. It is not
+ * a certification verdict: under ISO/IEC 17021-1 an open major nonconformity
+ * bars a certification decision however well every other clause scored, so
+ * the card carries that state separately rather than folding it into a
+ * percentage.
  */
 import type React from 'react';
 import { useMemo, useState } from 'react';
@@ -17,7 +23,7 @@ import type {
 } from '@soteria/core';
 import {
   SoteriaStrings,
-  computeCertificationReadinessScore,
+  computeCertificationReadiness,
   computeFindingsSummary,
 } from '@soteria/core';
 import { getDownloadUrlForPath } from '../../../../lib/storage';
@@ -64,14 +70,16 @@ export default function ReportScreen(): React.JSX.Element {
   );
 
   const readiness = useMemo(
-    // The readiness scorer reads only `conformityStatus` + `score`.
+    // The scorer reads only `conformityStatus` + `score` from each assessment,
+    // and `type` + `status` from each finding.
     () =>
-      computeCertificationReadinessScore(
+      computeCertificationReadiness(
         assessments.map(
           (a) => ({ conformityStatus: a.conformityStatus, score: a.score }) as ClauseDoc,
         ),
+        findings.map((f) => ({ type: f.type, status: f.status })),
       ),
-    [assessments],
+    [assessments, findings],
   );
 
   if (findingsLoading || clausesLoading) {
@@ -85,8 +93,15 @@ export default function ReportScreen(): React.JSX.Element {
   return (
     <Screen name="report" scroll>
       <View style={styles.readinessCard}>
-        <Text style={styles.readinessValue}>{readiness}%</Text>
-        <Text style={styles.readinessLabel}>{SoteriaStrings.audit.certificationReadiness}</Text>
+        <Text style={styles.readinessValue}>{readiness.conformanceScore}%</Text>
+        <Text style={styles.readinessLabel}>Clause conformance</Text>
+        {readiness.certifiable ? null : (
+          <Text style={styles.notCertifiable}>
+            {`Not certifiable — ${readiness.blockingMajorNCs} open major NC${
+              readiness.blockingMajorNCs === 1 ? '' : 's'
+            }`}
+          </Text>
+        )}
       </View>
 
       <SectionHeading title={SoteriaStrings.findings.listTitle} />
@@ -141,6 +156,13 @@ const styles = StyleSheet.create({
     color: colors.gold[600],
   },
   readinessLabel: { fontSize: fontSize.md, color: colors.textSecondary },
+  notCertifiable: {
+    marginTop: spacing.sm,
+    fontSize: fontSize.sm,
+    fontWeight: '700',
+    color: colors.majorNC,
+    textAlign: 'center',
+  },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   statCard: {
     ...cardSurface,

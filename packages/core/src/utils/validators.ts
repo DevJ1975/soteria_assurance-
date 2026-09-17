@@ -1,5 +1,7 @@
 import type { Finding, FindingType } from '../types/finding';
 import { FINDING_TYPE_META } from '../constants/findingTypes';
+import { getClauseByNumber } from '../standards/helpers';
+import type { StandardId } from '../standards/types';
 
 /**
  * Matches dotted clause numbers such as `4`, `6.1`, `8.1.4.2`. The Annex SL
@@ -57,9 +59,15 @@ function isFindingType(value: unknown): value is FindingType {
  * Checks the minimum fields required to raise a finding: a recognised type,
  * a valid clause number, a non-empty title and objective evidence, and — for
  * nonconformities — a matching `severity`.
+ *
+ * Pass `standardId` to also check the clause EXISTS, not merely that it is
+ * well-formed. Without it a finding can be persisted against "99.42.7" — the
+ * shape is valid and nothing else checks — which renders the NCR unanswerable
+ * and is invisible until the client reads the report.
  */
 export function validateFindingDraft(
   draft: Partial<Finding>,
+  standardId?: StandardId,
 ): FindingValidationResult {
   const errors: ValidationError[] = [];
 
@@ -71,6 +79,14 @@ export function validateFindingDraft(
     errors.push({
       field: 'clauseNumber',
       message: 'A valid clause number is required (e.g. "6.1.2").',
+    });
+  } else if (
+    standardId !== undefined &&
+    getClauseByNumber(standardId, draft.clauseNumber) === undefined
+  ) {
+    errors.push({
+      field: 'clauseNumber',
+      message: `Clause ${draft.clauseNumber} does not exist in this standard.`,
     });
   }
 

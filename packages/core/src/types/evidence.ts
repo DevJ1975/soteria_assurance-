@@ -52,6 +52,15 @@ export interface Evidence {
   aiAnalysis?: string;
   aiHazardsDetected?: string[];
 
+  /**
+   * Lowercase hex SHA-256 of the captured bytes, recorded at upload.
+   *
+   * `undefined` means the row predates digest recording and its integrity
+   * cannot be demonstrated — which is the honest answer, and better than
+   * implying a verification the record cannot support.
+   */
+  contentSha256?: string;
+
   isVerified: boolean;
   verifiedAt?: Timestamp;
   verifiedByAuditorId?: string;

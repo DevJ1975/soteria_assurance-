@@ -43,7 +43,21 @@ export interface Finding {
   /** e.g. "6.1.2". */
   clauseNumber: string;
   clauseTitle: string;
-  /** Exact ISO requirement text. */
+  /**
+   * PARAPHRASED requirement text, copied from the clause dataset when the
+   * finding is raised.
+   *
+   * This said "Exact ISO requirement text", which contradicted the rest of the
+   * codebase: `StandardClause.requirementText` is deliberately paraphrased and
+   * never copied verbatim from the published standard, precisely because this
+   * value ends up in a client-delivered NCR. Following the old instruction
+   * would have put copyrighted ISO text into a deliverable; not following it
+   * meant the field carried a paraphrase while the type claimed otherwise, and
+   * an auditee challenging an NCR on the exact wording of the requirement got
+   * a paraphrase presented as exact.
+   *
+   * Populate from `getClauseByNumber(standardId, clauseNumber)?.requirementText`.
+   */
   requirement: string;
 
   // Finding Content

@@ -31,18 +31,35 @@ export function daysBetween(a: Date, b: Date): number {
  * Returns `null` when the finding type has no mandatory corrective action
  * (OFI, strong point, observation) per DESIGN_DOC §4.
  *
- * @param type     - The finding type.
- * @param raisedAt - When the finding was raised.
+ * ANCHOR THE CLOCK TO THE END OF THE AUDIT, NOT TO EACH FINDING
+ * Certification-body practice and ISO/IEC 17021-1 §9.4.5.2 start the
+ * corrective-action period at the closing meeting — the point at which the
+ * auditee is formally presented with the findings. Anchoring each finding to
+ * the moment it happened to be typed gives a finding raised on day 1 of a
+ * 5-day audit a deadline four days earlier than an identical finding raised on
+ * day 5, which is inconsistent and indefensible to an auditee who notices.
+ *
+ * Pass the audit's end date as `anchor`. Callers that genuinely have no audit
+ * end date yet (a finding raised mid-fieldwork before the end date is set) may
+ * pass the raise date and correct it when the audit closes.
+ *
+ * @param type        - The finding type.
+ * @param anchor      - The audit end date, or the raise date as a fallback.
+ * @param overrideDays - A certification body's own window, when its procedure
+ *                       differs from the defaults in FINDING_TYPE_META. Only
+ *                       applies to types that require corrective action at all.
  */
 export function calculateTargetClosureDate(
   type: FindingType,
-  raisedAt: Date,
+  anchor: Date,
+  overrideDays?: number,
 ): Date | null {
-  const days = FINDING_TYPE_META[type].correctiveActionDays;
-  if (days === null) {
+  const defaultDays = FINDING_TYPE_META[type].correctiveActionDays;
+  if (defaultDays === null) {
     return null;
   }
-  return addDays(raisedAt, days);
+  const days = overrideDays !== undefined && overrideDays > 0 ? overrideDays : defaultDays;
+  return addDays(anchor, days);
 }
 
 /**

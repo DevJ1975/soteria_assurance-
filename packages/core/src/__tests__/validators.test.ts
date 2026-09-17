@@ -102,3 +102,33 @@ describe('validateFindingDraft', () => {
     expect(result.errors.length).toBeGreaterThan(1);
   });
 });
+
+describe('validateFindingDraft — clause existence', () => {
+  const base = {
+    type: 'minor_nc' as const,
+    severity: 'minor' as const,
+    title: 'A finding',
+    objectiveEvidence: 'Something observed.',
+  };
+
+  it('accepts a well-formed clause number with no standard given', () => {
+    // Backwards compatible: without a standard it stays format-only.
+    const result = validateFindingDraft({ ...base, clauseNumber: '99.42.7' });
+    expect(result.errors.some((e) => e.field === 'clauseNumber')).toBe(false);
+  });
+
+  it('rejects a well-formed clause number that does not exist in the standard', () => {
+    const result = validateFindingDraft({ ...base, clauseNumber: '99.42.7' }, 'iso45001');
+    expect(result.errors.some((e) => e.field === 'clauseNumber')).toBe(true);
+  });
+
+  it('rejects 9.3.2, which belongs to ISO 9001 and not to ISO 45001', () => {
+    const result = validateFindingDraft({ ...base, clauseNumber: '9.3.2' }, 'iso45001');
+    expect(result.errors.some((e) => e.field === 'clauseNumber')).toBe(true);
+  });
+
+  it('accepts a real ISO 45001 clause', () => {
+    const result = validateFindingDraft({ ...base, clauseNumber: '6.1.2.1' }, 'iso45001');
+    expect(result.errors.some((e) => e.field === 'clauseNumber')).toBe(false);
+  });
+});

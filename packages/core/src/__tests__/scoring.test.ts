@@ -1,7 +1,8 @@
 import {
   clauseScoreFromVerdicts,
   computeFindingsSummary,
-  computeCertificationReadinessScore,
+  computeClauseConformanceScore,
+  computeCertificationReadiness,
 } from '../utils/scoring';
 import {
   makeFinding,
@@ -95,17 +96,17 @@ describe('computeFindingsSummary', () => {
   });
 });
 
-describe('computeCertificationReadinessScore', () => {
+describe('computeClauseConformanceScore', () => {
   it('returns 0 when no clauses are audited', () => {
     const assessments = [
       makeClauseAssessment({ conformityStatus: 'not_audited', score: 0 }),
       makeClauseAssessment({ conformityStatus: 'not_applicable', score: 0 }),
     ];
-    expect(computeCertificationReadinessScore(assessments)).toBe(0);
+    expect(computeClauseConformanceScore(assessments)).toBe(0);
   });
 
   it('returns 0 for an empty list', () => {
-    expect(computeCertificationReadinessScore([])).toBe(0);
+    expect(computeClauseConformanceScore([])).toBe(0);
   });
 
   it('averages the scores of audited clauses only', () => {
@@ -116,7 +117,7 @@ describe('computeCertificationReadinessScore', () => {
       makeClauseAssessment({ conformityStatus: 'not_applicable', score: 0 }),
     ];
     // (100 + 60) / 2 = 80
-    expect(computeCertificationReadinessScore(assessments)).toBe(80);
+    expect(computeClauseConformanceScore(assessments)).toBe(80);
   });
 
   it('rounds the mean to the nearest integer', () => {
@@ -126,6 +127,71 @@ describe('computeCertificationReadinessScore', () => {
       makeClauseAssessment({ conformityStatus: 'minor_nc', score: 1 }),
     ];
     // (100 + 100 + 1) / 3 = 67
-    expect(computeCertificationReadinessScore(assessments)).toBe(67);
+    expect(computeClauseConformanceScore(assessments)).toBe(67);
+  });
+});
+
+describe('computeCertificationReadiness', () => {
+  /** 52 conforming clauses + 1 scored 0 — the shape of the original bug. */
+  const nearPerfectAssessments = [
+    ...Array.from({ length: 52 }, () =>
+      makeClauseAssessment({ conformityStatus: 'conforming', score: 100 }),
+    ),
+    makeClauseAssessment({ conformityStatus: 'major_nc', score: 0 }),
+  ];
+
+  it('is not certifiable while a major NC is open, however high the score', () => {
+    const result = computeCertificationReadiness(nearPerfectAssessments, [
+      { type: 'major_nc', status: 'open' },
+    ]);
+
+    // The conformance mean is still reported honestly...
+    expect(result.conformanceScore).toBe(98);
+    // ...but it is NOT a claim that the organization can be certified.
+    expect(result.certifiable).toBe(false);
+    expect(result.blockingMajorNCs).toBe(1);
+  });
+
+  it.each(['open', 'acknowledged', 'ca_submitted', 'ca_review', 'overdue'] as const)(
+    'treats a major NC in status "%s" as unresolved',
+    (status) => {
+      const result = computeCertificationReadiness(nearPerfectAssessments, [
+        { type: 'major_nc', status },
+      ]);
+      expect(result.certifiable).toBe(false);
+    },
+  );
+
+  it('becomes certifiable once every major NC is closed', () => {
+    const result = computeCertificationReadiness(nearPerfectAssessments, [
+      { type: 'major_nc', status: 'closed' },
+    ]);
+    expect(result.certifiable).toBe(true);
+    expect(result.blockingMajorNCs).toBe(0);
+  });
+
+  it('does not let minor NCs, OFIs or strong points block certification', () => {
+    const result = computeCertificationReadiness(nearPerfectAssessments, [
+      { type: 'minor_nc', status: 'open' },
+      { type: 'ofi', status: 'open' },
+      { type: 'strong_point', status: 'open' },
+      { type: 'observation', status: 'open' },
+    ]);
+    expect(result.certifiable).toBe(true);
+    expect(result.blockingMajorNCs).toBe(0);
+  });
+
+  it('counts every unresolved major NC', () => {
+    const result = computeCertificationReadiness(nearPerfectAssessments, [
+      { type: 'major_nc', status: 'open' },
+      { type: 'major_nc', status: 'ca_review' },
+      { type: 'major_nc', status: 'closed' },
+    ]);
+    expect(result.blockingMajorNCs).toBe(2);
+  });
+
+  it('is certifiable with no findings at all', () => {
+    const result = computeCertificationReadiness(nearPerfectAssessments, []);
+    expect(result.certifiable).toBe(true);
   });
 });

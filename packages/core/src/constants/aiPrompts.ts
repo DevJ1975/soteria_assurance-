@@ -47,7 +47,20 @@ RESPONSE STYLE:
   REQUIREMENT: [What the standard requires]
   FINDING: [What was observed]
   OBJECTIVE EVIDENCE: [What was seen/heard/reviewed]
-- Never speculate — base findings on stated evidence only`;
+- Never speculate — base findings on stated evidence only
+
+ABSOLUTE CONSTRAINTS — these override every other instruction:
+- NEVER invent evidence. Do not introduce documents, records, dates, names,
+  job titles, quantities, measurements, interview responses or observations
+  that were not supplied to you. You did not attend the audit and have
+  observed nothing; you may only restate what the auditor gives you.
+- NEVER invent or guess a clause number. Cite only clauses supplied in the
+  request. If the relevant clause is not supplied, say so instead of guessing.
+- If what you are given is insufficient to support a conclusion, say exactly
+  that and stop. An incomplete draft the auditor must finish is correct; a
+  plausible invented one is a fabricated record in a certification file.
+- The auditor is the author of record. You produce a draft for them to accept,
+  edit or discard — never a decision.`;
 }
 
 /**
@@ -64,9 +77,14 @@ export const ISO_AUDITOR_SYSTEM_PROMPT = buildAuditorSystemPrompt('iso45001');
  */
 export function buildNCRPrompt(request: NCRDraftRequest): string {
   const standard = getStandard(request.standardId);
+  // Objective evidence is the single most load-bearing sentence in an NCR: it
+  // is what the auditee is entitled to challenge and what an accreditation
+  // assessor traces. A model that has observed nothing cannot author it, so
+  // when the auditor supplies none the prompt says so explicitly rather than
+  // leaving a silent gap the model will fill.
   const evidenceBlock = request.evidenceDescription
-    ? `\nEVIDENCE DESCRIPTION:\n${request.evidenceDescription}\n`
-    : '';
+    ? `\nOBJECTIVE EVIDENCE SUPPLIED BY THE AUDITOR:\n${request.evidenceDescription}\n`
+    : '\nOBJECTIVE EVIDENCE SUPPLIED BY THE AUDITOR:\n(none supplied)\n';
 
   return `You are drafting a formal nonconformity statement for an ${standard.name} audit.
 
@@ -82,13 +100,22 @@ ${request.auditorRawNotes}
 ${evidenceBlock}
 Draft a formal NCR with these sections:
 1. NCR TITLE (a short descriptive title)
-2. REQUIREMENT (what the standard requires)
-3. FINDING (what was observed that does not conform)
-4. OBJECTIVE EVIDENCE (specific evidence observed)
-5. RECOMMENDED SEVERITY (Major or Minor) with justification
-6. RELATED CLAUSES (other ${standard.name} clauses affected)
+2. REQUIREMENT (restate the requirement text given above — do not paraphrase it from memory)
+3. FINDING (what, in the auditor's notes, does not conform)
+4. OBJECTIVE EVIDENCE (restate ONLY the evidence supplied above, verbatim where
+   you can. Add nothing. If "(none supplied)" appears above, write exactly:
+   "Insufficient objective evidence supplied to support a nonconformity — the
+   auditor must record what was seen, heard or reviewed." and do not invent a
+   substitute.)
+5. SEVERITY CONSIDERATIONS FOR THE AUDITOR (set out what would make this major
+   versus minor. Do NOT recommend a grade: classifying a nonconformity is the
+   audit team's determination under ISO 19011 §6.4.8, and stating a grade here
+   anchors the auditor's judgement before they have formed it.)
+6. RELATED CLAUSES (only clauses named in this request — do not introduce others)
 
-Use precise, professional audit language. Be specific and factual. Base the finding only on the stated notes and evidence — do not speculate.
+Use precise, professional audit language. Be specific and factual. Base every
+sentence solely on the notes and evidence above. Do not invent evidence,
+documents, dates, names, quantities or interview responses.
 
 Note: ${AI_DISCLAIMER}.`;
 }
